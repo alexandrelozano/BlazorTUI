@@ -1,0 +1,624 @@
+﻿.containerfs {
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: fairfaxhd, monospace;
+}
+
+.gridfs {
+  height: 90vMin;
+  width: 90vMin;
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+}
+
+.tilefs {
+  display: block;
+  border: none;
+  text-align: center;
+  box-sizing: content-box;
+  cursor: default;
+}
+
+.sizefs-1 .tilefs {
+  width: 45vMin;
+  min-width: 45vMin;
+  max-width: 45vMin;
+  height: 90vMin;
+  min-height: 90vMin;
+  max-height: 90vMin;
+  flex-basis: 45vMin;
+  line-height: 90vMin;
+  font-size: 90vMin;
+}
+.sizefs-1 .tilefs:nth-child(n+3) {
+  display: none !important;
+}
+
+.sizefs-2 .tilefs {
+  width: 22.5vMin;
+  min-width: 22.5vMin;
+  max-width: 22.5vMin;
+  height: 45vMin;
+  min-height: 45vMin;
+  max-height: 45vMin;
+  flex-basis: 22.5vMin;
+  line-height: 45vMin;
+  font-size: 45vMin;
+}
+.sizefs-2 .tilefs:nth-child(n+9) {
+  display: none !important;
+}
+
+.sizefs-3 .tilefs {
+  width: 15vMin;
+  min-width: 15vMin;
+  max-width: 15vMin;
+  height: 30vMin;
+  min-height: 30vMin;
+  max-height: 30vMin;
+  flex-basis: 15vMin;
+  line-height: 30vMin;
+  font-size: 30vMin;
+}
+.sizefs-3 .tilefs:nth-child(n+19) {
+  display: none !important;
+}
+
+.sizefs-4 .tilefs {
+  width: 11.25vMin;
+  min-width: 11.25vMin;
+  max-width: 11.25vMin;
+  height: 22.5vMin;
+  min-height: 22.5vMin;
+  max-height: 22.5vMin;
+  flex-basis: 11.25vMin;
+  line-height: 22.5vMin;
+  font-size: 22.5vMin;
+}
+.sizefs-4 .tilefs:nth-child(n+33) {
+  display: none !important;
+}
+
+.sizefs-5 .tilefs {
+  width: 9vMin;
+  min-width: 9vMin;
+  max-width: 9vMin;
+  height: 18vMin;
+  min-height: 18vMin;
+  max-height: 18vMin;
+  flex-basis: 9vMin;
+  line-height: 18vMin;
+  font-size: 18vMin;
+}
+.sizefs-5 .tilefs:nth-child(n+51) {
+  display: none !important;
+}
+
+.sizefs-6 .tilefs {
+  width: 7.5vMin;
+  min-width: 7.5vMin;
+  max-width: 7.5vMin;
+  height: 15vMin;
+  min-height: 15vMin;
+  max-height: 15vMin;
+  flex-basis: 7.5vMin;
+  line-height: 15vMin;
+  font-size: 15vMin;
+}
+.sizefs-6 .tilefs:nth-child(n+73) {
+  display: none !important;
+}
+
+.sizefs-7 .tilefs {
+  width: 6.4285714286vMin;
+  min-width: 6.4285714286vMin;
+  max-width: 6.4285714286vMin;
+  height: 12.8571428571vMin;
+  min-height: 12.8571428571vMin;
+  max-height: 12.8571428571vMin;
+  flex-basis: 6.4285714286vMin;
+  line-height: 12.8571428571vMin;
+  font-size: 12.8571428571vMin;
+}
+.sizefs-7 .tilefs:nth-child(n+99) {
+  display: none !important;
+}
+
+.sizefs-8 .tilefs {
+  width: 5.625vMin;
+  min-width: 5.625vMin;
+  max-width: 5.625vMin;
+  height: 11.25vMin;
+  min-height: 11.25vMin;
+  max-height: 11.25vMin;
+  flex-basis: 5.625vMin;
+  line-height: 11.25vMin;
+  font-size: 11.25vMin;
+}
+.sizefs-8 .tilefs:nth-child(n+129) {
+  display: none !important;
+}
+
+.sizefs-9 .tilefs {
+  width: 5vMin;
+  min-width: 5vMin;
+  max-width: 5vMin;
+  height: 10vMin;
+  min-height: 10vMin;
+  max-height: 10vMin;
+  flex-basis: 5vMin;
+  line-height: 10vMin;
+  font-size: 10vMin;
+}
+.sizefs-9 .tilefs:nth-child(n+163) {
+  display: none !important;
+}
+
+.sizefs-10 .tilefs {
+  width: 4.5vMin;
+  min-width: 4.5vMin;
+  max-width: 4.5vMin;
+  height: 9vMin;
+  min-height: 9vMin;
+  max-height: 9vMin;
+  flex-basis: 4.5vMin;
+  line-height: 9vMin;
+  font-size: 9vMin;
+}
+.sizefs-10 .tilefs:nth-child(n+201) {
+  display: none !important;
+}
+
+.sizefs-11 .tilefs {
+  width: 4.0909090909vMin;
+  min-width: 4.0909090909vMin;
+  max-width: 4.0909090909vMin;
+  height: 8.1818181818vMin;
+  min-height: 8.1818181818vMin;
+  max-height: 8.1818181818vMin;
+  flex-basis: 4.0909090909vMin;
+  line-height: 8.1818181818vMin;
+  font-size: 8.1818181818vMin;
+}
+.sizefs-11 .tilefs:nth-child(n+243) {
+  display: none !important;
+}
+
+.sizefs-12 .tilefs {
+  width: 3.75vMin;
+  min-width: 3.75vMin;
+  max-width: 3.75vMin;
+  height: 7.5vMin;
+  min-height: 7.5vMin;
+  max-height: 7.5vMin;
+  flex-basis: 3.75vMin;
+  line-height: 7.5vMin;
+  font-size: 7.5vMin;
+}
+.sizefs-12 .tilefs:nth-child(n+289) {
+  display: none !important;
+}
+
+.sizefs-13 .tilefs {
+  width: 3.4615384615vMin;
+  min-width: 3.4615384615vMin;
+  max-width: 3.4615384615vMin;
+  height: 6.9230769231vMin;
+  min-height: 6.9230769231vMin;
+  max-height: 6.9230769231vMin;
+  flex-basis: 3.4615384615vMin;
+  line-height: 6.9230769231vMin;
+  font-size: 6.9230769231vMin;
+}
+.sizefs-13 .tilefs:nth-child(n+339) {
+  display: none !important;
+}
+
+.sizefs-14 .tilefs {
+  width: 3.2142857143vMin;
+  min-width: 3.2142857143vMin;
+  max-width: 3.2142857143vMin;
+  height: 6.4285714286vMin;
+  min-height: 6.4285714286vMin;
+  max-height: 6.4285714286vMin;
+  flex-basis: 3.2142857143vMin;
+  line-height: 6.4285714286vMin;
+  font-size: 6.4285714286vMin;
+}
+.sizefs-14 .tilefs:nth-child(n+393) {
+  display: none !important;
+}
+
+.sizefs-15 .tilefs {
+  width: 3vMin;
+  min-width: 3vMin;
+  max-width: 3vMin;
+  height: 6vMin;
+  min-height: 6vMin;
+  max-height: 6vMin;
+  flex-basis: 3vMin;
+  line-height: 6vMin;
+  font-size: 6vMin;
+}
+.sizefs-15 .tilefs:nth-child(n+451) {
+  display: none !important;
+}
+
+.sizefs-16 .tilefs {
+  width: 2.8125vMin;
+  min-width: 2.8125vMin;
+  max-width: 2.8125vMin;
+  height: 5.625vMin;
+  min-height: 5.625vMin;
+  max-height: 5.625vMin;
+  flex-basis: 2.8125vMin;
+  line-height: 5.625vMin;
+  font-size: 5.625vMin;
+}
+.sizefs-16 .tilefs:nth-child(n+513) {
+  display: none !important;
+}
+
+.sizefs-17 .tilefs {
+  width: 2.6470588235vMin;
+  min-width: 2.6470588235vMin;
+  max-width: 2.6470588235vMin;
+  height: 5.2941176471vMin;
+  min-height: 5.2941176471vMin;
+  max-height: 5.2941176471vMin;
+  flex-basis: 2.6470588235vMin;
+  line-height: 5.2941176471vMin;
+  font-size: 5.2941176471vMin;
+}
+.sizefs-17 .tilefs:nth-child(n+579) {
+  display: none !important;
+}
+
+.sizefs-18 .tilefs {
+  width: 2.5vMin;
+  min-width: 2.5vMin;
+  max-width: 2.5vMin;
+  height: 5vMin;
+  min-height: 5vMin;
+  max-height: 5vMin;
+  flex-basis: 2.5vMin;
+  line-height: 5vMin;
+  font-size: 5vMin;
+}
+.sizefs-18 .tilefs:nth-child(n+649) {
+  display: none !important;
+}
+
+.sizefs-19 .tilefs {
+  width: 2.3684210526vMin;
+  min-width: 2.3684210526vMin;
+  max-width: 2.3684210526vMin;
+  height: 4.7368421053vMin;
+  min-height: 4.7368421053vMin;
+  max-height: 4.7368421053vMin;
+  flex-basis: 2.3684210526vMin;
+  line-height: 4.7368421053vMin;
+  font-size: 4.7368421053vMin;
+}
+.sizefs-19 .tilefs:nth-child(n+723) {
+  display: none !important;
+}
+
+.sizefs-20 .tilefs {
+  width: 2.25vMin;
+  min-width: 2.25vMin;
+  max-width: 2.25vMin;
+  height: 4.5vMin;
+  min-height: 4.5vMin;
+  max-height: 4.5vMin;
+  flex-basis: 2.25vMin;
+  line-height: 4.5vMin;
+  font-size: 4.5vMin;
+}
+.sizefs-20 .tilefs:nth-child(n+801) {
+  display: none !important;
+}
+
+.sizefs-21 .tilefs {
+  width: 2.1428571429vMin;
+  min-width: 2.1428571429vMin;
+  max-width: 2.1428571429vMin;
+  height: 4.2857142857vMin;
+  min-height: 4.2857142857vMin;
+  max-height: 4.2857142857vMin;
+  flex-basis: 2.1428571429vMin;
+  line-height: 4.2857142857vMin;
+  font-size: 4.2857142857vMin;
+}
+.sizefs-21 .tilefs:nth-child(n+883) {
+  display: none !important;
+}
+
+.sizefs-22 .tilefs {
+  width: 2.0454545455vMin;
+  min-width: 2.0454545455vMin;
+  max-width: 2.0454545455vMin;
+  height: 4.0909090909vMin;
+  min-height: 4.0909090909vMin;
+  max-height: 4.0909090909vMin;
+  flex-basis: 2.0454545455vMin;
+  line-height: 4.0909090909vMin;
+  font-size: 4.0909090909vMin;
+}
+.sizefs-22 .tilefs:nth-child(n+969) {
+  display: none !important;
+}
+
+.sizefs-23 .tilefs {
+  width: 1.9565217391vMin;
+  min-width: 1.9565217391vMin;
+  max-width: 1.9565217391vMin;
+  height: 3.9130434783vMin;
+  min-height: 3.9130434783vMin;
+  max-height: 3.9130434783vMin;
+  flex-basis: 1.9565217391vMin;
+  line-height: 3.9130434783vMin;
+  font-size: 3.9130434783vMin;
+}
+.sizefs-23 .tilefs:nth-child(n+1059) {
+  display: none !important;
+}
+
+.sizefs-24 .tilefs {
+  width: 1.875vMin;
+  min-width: 1.875vMin;
+  max-width: 1.875vMin;
+  height: 3.75vMin;
+  min-height: 3.75vMin;
+  max-height: 3.75vMin;
+  flex-basis: 1.875vMin;
+  line-height: 3.75vMin;
+  font-size: 3.75vMin;
+}
+.sizefs-24 .tilefs:nth-child(n+1153) {
+  display: none !important;
+}
+
+.sizefs-25 .tilefs {
+  width: 1.8vMin;
+  min-width: 1.8vMin;
+  max-width: 1.8vMin;
+  height: 3.6vMin;
+  min-height: 3.6vMin;
+  max-height: 3.6vMin;
+  flex-basis: 1.8vMin;
+  line-height: 3.6vMin;
+  font-size: 3.6vMin;
+}
+.sizefs-25 .tilefs:nth-child(n+1251) {
+  display: none !important;
+}
+
+.sizefs-26 .tilefs {
+  width: 1.7307692308vMin;
+  min-width: 1.7307692308vMin;
+  max-width: 1.7307692308vMin;
+  height: 3.4615384615vMin;
+  min-height: 3.4615384615vMin;
+  max-height: 3.4615384615vMin;
+  flex-basis: 1.7307692308vMin;
+  line-height: 3.4615384615vMin;
+  font-size: 3.4615384615vMin;
+}
+.sizefs-26 .tilefs:nth-child(n+1353) {
+  display: none !important;
+}
+
+.sizefs-27 .tilefs {
+  width: 1.6666666667vMin;
+  min-width: 1.6666666667vMin;
+  max-width: 1.6666666667vMin;
+  height: 3.3333333333vMin;
+  min-height: 3.3333333333vMin;
+  max-height: 3.3333333333vMin;
+  flex-basis: 1.6666666667vMin;
+  line-height: 3.3333333333vMin;
+  font-size: 3.3333333333vMin;
+}
+.sizefs-27 .tilefs:nth-child(n+1459) {
+  display: none !important;
+}
+
+.sizefs-28 .tilefs {
+  width: 1.6071428571vMin;
+  min-width: 1.6071428571vMin;
+  max-width: 1.6071428571vMin;
+  height: 3.2142857143vMin;
+  min-height: 3.2142857143vMin;
+  max-height: 3.2142857143vMin;
+  flex-basis: 1.6071428571vMin;
+  line-height: 3.2142857143vMin;
+  font-size: 3.2142857143vMin;
+}
+.sizefs-28 .tilefs:nth-child(n+1569) {
+  display: none !important;
+}
+
+.sizefs-29 .tilefs {
+  width: 1.5517241379vMin;
+  min-width: 1.5517241379vMin;
+  max-width: 1.5517241379vMin;
+  height: 3.1034482759vMin;
+  min-height: 3.1034482759vMin;
+  max-height: 3.1034482759vMin;
+  flex-basis: 1.5517241379vMin;
+  line-height: 3.1034482759vMin;
+  font-size: 3.1034482759vMin;
+}
+.sizefs-29 .tilefs:nth-child(n+1683) {
+  display: none !important;
+}
+
+.sizefs-30 .tilefs {
+  width: 1.5vMin;
+  min-width: 1.5vMin;
+  max-width: 1.5vMin;
+  height: 3vMin;
+  min-height: 3vMin;
+  max-height: 3vMin;
+  flex-basis: 1.5vMin;
+  line-height: 3vMin;
+  font-size: 3vMin;
+}
+.sizefs-30 .tilefs:nth-child(n+1801) {
+  display: none !important;
+}
+
+.sizefs-31 .tilefs {
+  width: 1.4516129032vMin;
+  min-width: 1.4516129032vMin;
+  max-width: 1.4516129032vMin;
+  height: 2.9032258065vMin;
+  min-height: 2.9032258065vMin;
+  max-height: 2.9032258065vMin;
+  flex-basis: 1.4516129032vMin;
+  line-height: 2.9032258065vMin;
+  font-size: 2.9032258065vMin;
+}
+.sizefs-31 .tilefs:nth-child(n+1923) {
+  display: none !important;
+}
+
+.sizefs-32 .tilefs {
+  width: 1.40625vMin;
+  min-width: 1.40625vMin;
+  max-width: 1.40625vMin;
+  height: 2.8125vMin;
+  min-height: 2.8125vMin;
+  max-height: 2.8125vMin;
+  flex-basis: 1.40625vMin;
+  line-height: 2.8125vMin;
+  font-size: 2.8125vMin;
+}
+.sizefs-32 .tilefs:nth-child(n+2049) {
+  display: none !important;
+}
+
+.sizefs-33 .tilefs {
+  width: 1.3636363636vMin;
+  min-width: 1.3636363636vMin;
+  max-width: 1.3636363636vMin;
+  height: 2.7272727273vMin;
+  min-height: 2.7272727273vMin;
+  max-height: 2.7272727273vMin;
+  flex-basis: 1.3636363636vMin;
+  line-height: 2.7272727273vMin;
+  font-size: 2.7272727273vMin;
+}
+.sizefs-33 .tilefs:nth-child(n+2179) {
+  display: none !important;
+}
+
+.sizefs-34 .tilefs {
+  width: 1.3235294118vMin;
+  min-width: 1.3235294118vMin;
+  max-width: 1.3235294118vMin;
+  height: 2.6470588235vMin;
+  min-height: 2.6470588235vMin;
+  max-height: 2.6470588235vMin;
+  flex-basis: 1.3235294118vMin;
+  line-height: 2.6470588235vMin;
+  font-size: 2.6470588235vMin;
+}
+.sizefs-34 .tilefs:nth-child(n+2313) {
+  display: none !important;
+}
+
+.sizefs-35 .tilefs {
+  width: 1.2857142857vMin;
+  min-width: 1.2857142857vMin;
+  max-width: 1.2857142857vMin;
+  height: 2.5714285714vMin;
+  min-height: 2.5714285714vMin;
+  max-height: 2.5714285714vMin;
+  flex-basis: 1.2857142857vMin;
+  line-height: 2.5714285714vMin;
+  font-size: 2.5714285714vMin;
+}
+.sizefs-35 .tilefs:nth-child(n+2451) {
+  display: none !important;
+}
+
+.sizefs-36 .tilefs {
+  width: 1.25vMin;
+  min-width: 1.25vMin;
+  max-width: 1.25vMin;
+  height: 2.5vMin;
+  min-height: 2.5vMin;
+  max-height: 2.5vMin;
+  flex-basis: 1.25vMin;
+  line-height: 2.5vMin;
+  font-size: 2.5vMin;
+}
+.sizefs-36 .tilefs:nth-child(n+2593) {
+  display: none !important;
+}
+
+.sizefs-37 .tilefs {
+  width: 1.2162162162vMin;
+  min-width: 1.2162162162vMin;
+  max-width: 1.2162162162vMin;
+  height: 2.4324324324vMin;
+  min-height: 2.4324324324vMin;
+  max-height: 2.4324324324vMin;
+  flex-basis: 1.2162162162vMin;
+  line-height: 2.4324324324vMin;
+  font-size: 2.4324324324vMin;
+}
+.sizefs-37 .tilefs:nth-child(n+2739) {
+  display: none !important;
+}
+
+.sizefs-38 .tilefs {
+  width: 1.1842105263vMin;
+  min-width: 1.1842105263vMin;
+  max-width: 1.1842105263vMin;
+  height: 2.3684210526vMin;
+  min-height: 2.3684210526vMin;
+  max-height: 2.3684210526vMin;
+  flex-basis: 1.1842105263vMin;
+  line-height: 2.3684210526vMin;
+  font-size: 2.3684210526vMin;
+}
+.sizefs-38 .tilefs:nth-child(n+2889) {
+  display: none !important;
+}
+
+.sizefs-39 .tilefs {
+  width: 1.1538461538vMin;
+  min-width: 1.1538461538vMin;
+  max-width: 1.1538461538vMin;
+  height: 2.3076923077vMin;
+  min-height: 2.3076923077vMin;
+  max-height: 2.3076923077vMin;
+  flex-basis: 1.1538461538vMin;
+  line-height: 2.3076923077vMin;
+  font-size: 2.3076923077vMin;
+}
+.sizefs-39 .tilefs:nth-child(n+3043) {
+  display: none !important;
+}
+
+.sizefs-40 .tilefs {
+  width: 1.125vMin;
+  min-width: 1.125vMin;
+  max-width: 1.125vMin;
+  height: 2.25vMin;
+  min-height: 2.25vMin;
+  max-height: 2.25vMin;
+  flex-basis: 1.125vMin;
+  line-height: 2.25vMin;
+  font-size: 2.25vMin;
+}
+.sizefs-40 .tilefs:nth-child(n+3201) {
+  display: none !important;
+}

@@ -1,0 +1,66 @@
+// 100 would have no space around it
+// $gridSize: 90vw; // Works in portrait.
+// $gridSize: 90vh; // Works in Landscape.
+$gridSize: 90vMin; // Works in both.
+
+.containerfs {
+    // Full size of page
+    height: 100vh;
+    width: 100vw;
+    // Center the grid x and y
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: fairfaxhd, monospace;
+}
+
+.gridfs {
+    // Grid will center in container if you want a bit of space around it.
+    height: $gridSize;
+    width: $gridSize;
+    // This is how we make the grid
+    display: flex;
+    flex: 0 0 auto;
+    flex-wrap: wrap;
+}
+
+// Styles for all tiles
+.tilefs {
+    display: block;
+    border: none;
+    text-align: center;
+    box-sizing: content-box;
+    cursor: default;
+}
+
+// Number of rows and columns.
+// $size: 8;
+@for $size from 1 through 40 {
+
+    // eg 100/8
+    $tileSize: $gridSize / $size;
+    // Half th esize of the tile, or whatever you want.
+    $fontSize: $tileSize * 1.0;
+
+    .sizefs-#{$size} {
+        .tilefs {
+            // Constrain the tiles to exact size we want.
+            width: $tileSize / 2.0;
+            min-width: $tileSize / 2.0;
+            max-width: $tileSize / 2.0;
+            height: $tileSize;
+            min-height: $tileSize;
+            max-height: $tileSize;
+            flex-basis: $tileSize / 2.0;
+            // Set fonts to same line height as tile, center them and set font size.
+            line-height: $tileSize;
+            font-size: $fontSize;
+        }
+        // Just hide extra divs so it renders properly.
+        $maxTiles: ($size * 2) * $size + 1;
+
+        .tilefs:nth-child(n + #{$maxTiles}) {
+            display: none !important;
+        }
+    }
+}

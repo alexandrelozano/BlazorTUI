@@ -1,0 +1,119 @@
+﻿@page "/"
+@using SampleApp.Data
+@using BlazorTUI
+@using BlazorTUI.TUI
+
+<PageTitle>Index</PageTitle>
+
+<BlazorTUI.BlazorTUI screen=@screen></BlazorTUI.BlazorTUI>
+
+@code {
+
+    private Screen screen;
+
+    private Frame frm1;
+    private Frame frm2;
+
+    private Dialog dlgConfirm;
+
+    protected override async Task OnInitializedAsync()
+    {
+        screen = new Screen(80, 40);
+
+        frm1 = new Frame("frm1", "FRAME", 13, 4, 56, 29, Frame.BorderStyle.solid, System.Drawing.Color.Cornsilk, System.Drawing.Color.RebeccaPurple);
+        screen.topContainer.AddContainer(frm1);
+
+        frm2 = new Frame("frm2", "CHILD FRAME", 3, 3, 43, 12, Frame.BorderStyle.line, System.Drawing.Color.Yellow, System.Drawing.Color.Green);
+        frm1.AddContainer(frm2);
+
+        Label lblName = new Label("lblName", "Name:", 2, 2, 15, System.Drawing.Color.Yellow, System.Drawing.Color.Green);
+        frm2.AddControl(lblName);
+
+        TextBox txtName = new TextBox("txtName", "", 2, 3, 15, System.Drawing.Color.Yellow, System.Drawing.Color.Black);
+        frm2.AddControl(txtName);
+
+        Label lblSurname = new Label("lblSurname", "Surname:", 2, 4, 15, System.Drawing.Color.Yellow, System.Drawing.Color.Green);
+        frm2.AddControl(lblSurname);
+
+        TextBox txtSurname = new TextBox("txtSurname", "", 2, 5, 15, System.Drawing.Color.Yellow, System.Drawing.Color.Black);
+        frm2.AddControl(txtSurname);
+
+        CheckBox chkEmployee = new CheckBox("chkEmployee", "Employee", 2, 6, 15, System.Drawing.Color.Yellow, System.Drawing.Color.Green, (() => { }), false);
+        frm2.AddControl(chkEmployee);
+
+        Label lblGender = new Label("lblGender", "Gender:", 2, 7, 15, System.Drawing.Color.Yellow, System.Drawing.Color.Green);
+        frm2.AddControl(lblGender);
+
+        RadioButton rbMale = new RadioButton("rbMale", "Male", 2, 8, 8, System.Drawing.Color.Yellow, System.Drawing.Color.Green, (() => { }), false);
+        frm2.AddControl(rbMale);
+
+        RadioButton rbFemale = new RadioButton("rbFemale", "Female", 11, 8, 10, System.Drawing.Color.Yellow, System.Drawing.Color.Green, (() => { }), false);
+        frm2.AddControl(rbFemale);
+
+        Label lblIngredients = new Label("lblIngredients", "Ingredients:", 22, 2, 15, System.Drawing.Color.Yellow, System.Drawing.Color.Green);
+        frm2.AddControl(lblIngredients);
+
+        List<string> lstIngredients = new List<string> { "Ham", "Tomato", "Salami", "Onions", "Mozzarella", "Gorgonzola", "Pinneaple", "Mushrooms", "Fish", "Sweetcorn", "Jalapenos" };
+        ListBox lsbIngredients = new ListBox("lsbIngredients", lstIngredients, true, 22, 3, 15, 6, System.Drawing.Color.Yellow, System.Drawing.Color.Black);
+        frm2.AddControl(lsbIngredients);
+
+        Button bttSubmit = new Button("bttSubmit", "Ok", 8, 10, 8, System.Drawing.Color.Yellow, System.Drawing.Color.Black, bttSubmit_OnClick);
+        frm2.AddControl(bttSubmit);
+
+        dlgConfirm = new Dialog("dlgConfirm", "DIALOG", 20, 10, Dialog.BorderStyle.line, System.Drawing.Color.Yellow, System.Drawing.Color.Green, screen);
+
+        Button bttSubmitDlg = new Button("bttSubmitDlg", "Ok", 8, 8, 4, System.Drawing.Color.Yellow, System.Drawing.Color.Black, bttSubmitDlg_OnClick);
+        dlgConfirm.AddControl(bttSubmitDlg);
+
+        Label lblHello = new Label("lblHello", "Hello!", 7, 4, 7, System.Drawing.Color.Yellow, System.Drawing.Color.Green);
+        dlgConfirm.AddControl(lblHello);
+
+        GridView.GridColumn col1 = new GridView.GridColumn() { title = "Order #", width = 8 };
+        GridView.GridColumn col2 = new GridView.GridColumn() { title = "Pizza", width = 15 };
+        GridView.GridColumn col3 = new GridView.GridColumn() { title = "Delivery man", width = 13 };
+        GridView.GridColumn col4 = new GridView.GridColumn() { title = "Status", width = 11 };
+
+        GridView.GridColumn[] columns = new GridView.GridColumn[] { col1, col2, col3, col4 };
+
+        GridView.GridRow r1 = new GridView.GridRow();
+        r1.cells = new string[] { "1", "Pepperoni", "John River", "Delivering" };
+        GridView.GridRow r2 = new GridView.GridRow();
+        r2.cells = new string[] { "2", "Tomato,Gorgonzola", "", "Cooking" };
+        GridView.GridRow r3 = new GridView.GridRow();
+        r3.cells = new string[] { "3", "Pineapple", "", "Cooking" };
+        GridView.GridRow r4 = new GridView.GridRow();
+        r4.cells = new string[] { "4", "Pepperoni", "John River", "Delivering" };
+        GridView.GridRow r5 = new GridView.GridRow();
+        r5.cells = new string[] { "5", "Tomato,Gorgonzola", "", "Cooking" };
+        GridView.GridRow r6 = new GridView.GridRow();
+        r6.cells = new string[] { "6", "Pineapple", "", "Cooking" };
+        GridView.GridRow r7 = new GridView.GridRow();
+        r7.cells = new string[] { "7", "Pepperoni", "John River", "Delivering" };
+        GridView.GridRow r8 = new GridView.GridRow();
+        r8.cells = new string[] { "8", "Tomato,Gorgonzola", "", "Cooking" };
+        GridView.GridRow r9 = new GridView.GridRow();
+        r9.cells = new string[] { "9", "Pineapple", "", "Cooking" };
+        GridView.GridRow r10 = new GridView.GridRow();
+        r10.cells = new string[] { "10", "Pepperoni", "John River", "Delivering" };
+        GridView.GridRow r11 = new GridView.GridRow();
+        r11.cells = new string[] { "11", "Tomato,Gorgonzola", "", "Cooking" };
+        GridView.GridRow r12 = new GridView.GridRow();
+        r12.cells = new string[] { "12", "Pineapple", "", "Cooking" };
+
+        GridView.GridRow[] arrOrders = { r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12 };
+        GridView grdOrders = new GridView("grdOrders", columns, arrOrders, 4, 16, 47, 10, System.Drawing.Color.Yellow, System.Drawing.Color.Black);
+        frm1.AddControl(grdOrders);
+
+        screen.SetFocus("txtName");
+    }
+
+    public void bttSubmit_OnClick()
+    {
+        dlgConfirm.Show();
+    }
+
+    public void bttSubmitDlg_OnClick()
+    {
+        dlgConfirm.Close();
+    }
+}

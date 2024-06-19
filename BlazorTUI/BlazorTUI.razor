@@ -1,0 +1,62 @@
+﻿@using global::BlazorTUI.TUI
+
+<div class="containerfs">
+    <div tabindex="0" class="gridfs sizefs-@screen.height" @onkeydown="HandleKeyDown" @onkeydown:preventDefault>
+        @{
+            if (screen.rows != null)
+            {
+                for (short y = 0; y < screen.rows.Count; y++)
+                {
+                    for (short x = 0; x < screen.rows[y].Cells.Count; x++)
+                    {
+                        Cell cell = @screen.rows[y].Cells[x];
+                        <div class="tilefs" @onclick="() => OnClickCell(cell)" style="color:@ToHex(cell.foreColor); background-color:@ToHex(cell.backgroundColor);">@cell.character</div>
+                    }
+                }
+            }
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public Screen screen { get; set; }
+
+    private System.Timers.Timer timer = new System.Timers.Timer(250);
+
+    private static String ToHex(System.Drawing.Color c)
+    => $"#{c.R:X2}{c.G:X2}{c.B:X2}";
+
+    protected override async Task OnInitializedAsync()
+    {
+        screen.Render();
+
+        timer.Elapsed += TimeElapsed;
+        timer.AutoReset = true;
+        timer.Enabled = true;
+    }
+
+    private async void TimeElapsed(object? sender, System.Timers.ElapsedEventArgs e)
+    {
+        screen.Render();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleKeyDown(KeyboardEventArgs e)
+    {
+        screen.KeyDown(e.Key, e.ShiftKey);
+        screen.Render();
+        StateHasChanged();
+    }
+
+    private async Task OnClickCell(Cell cell)
+    {
+        if (screen.dialogs.Count==0)
+            screen.topContainer.Click(cell.x, cell.y);
+        else
+        {
+            Dialog dialog = screen.dialogs.ElementAt(screen.dialogs.Count - 1);
+            dialog.Click((short)(cell.x - dialog.X), (short)(cell.y - dialog.Y));
+        }
+    }
+}
