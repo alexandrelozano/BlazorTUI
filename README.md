@@ -1,11 +1,11 @@
 # BlazorTUI
-Blazor Server Text User Interface
+## Blazor Server Text User Interface
 
 ![Sample](https://raw.githubusercontent.com/alexandrelozano/BlazorTUI/master/Resources/sampleapp.gif)
 
 [Nuget](https://www.nuget.org/packages/BlazorTUI)
 
-Avaliable controls:
+### Avaliable controls:
 - Label
 - TextBox
 - Button
@@ -16,7 +16,7 @@ Avaliable controls:
 - Frame
 - Dialog
 
-##Basic instructions
+### Basic instructions
 
 First create a screen, this must have double width than height
 ```
