@@ -16,6 +16,8 @@
 - Frame
 - Dialog
 
+You can use Tab key to go to next control, Tab+Shift keys to go to previous control, Space to select and cursors keys.
+
 ### Basic instructions
 
 First create a screen, this must have double width than height
