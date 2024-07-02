@@ -60,6 +60,18 @@
         Button bttSubmit = new Button("bttSubmit", "Ok", 8, 10, 8, System.Drawing.Color.Yellow, System.Drawing.Color.Black, bttSubmit_OnClick);
         frm2.AddControl(bttSubmit);
 
+        Label lblSpinners = new Label("lblSpinners", "Spinners:", 22, 10, 9, System.Drawing.Color.Yellow, System.Drawing.Color.Green);
+        frm2.AddControl(lblSpinners);
+
+        Spinner spnStar = new Spinner("spnStar", Spinner.SpinnerType.Star, 32, 10, System.Drawing.Color.Yellow, System.Drawing.Color.Green);
+        frm2.AddControl(spnStar);
+
+        Spinner spnGrowVerticalSpinner = new Spinner("spnGrowVerticalSpinner", Spinner.SpinnerType.GrowVerticalSpinner, 34, 10, System.Drawing.Color.Yellow, System.Drawing.Color.Green);
+        frm2.AddControl(spnGrowVerticalSpinner);
+
+        Spinner spnArrowSpinner = new Spinner("spnArrowSpinner", Spinner.SpinnerType.ArrowSpinner, 36, 10, System.Drawing.Color.Yellow, System.Drawing.Color.Green);
+        frm2.AddControl(spnArrowSpinner);
+
         dlgConfirm = new Dialog("dlgConfirm", "DIALOG", 20, 10, Dialog.BorderStyle.line, System.Drawing.Color.Yellow, System.Drawing.Color.Green, screen);
 
         Button bttSubmitDlg = new Button("bttSubmitDlg", "Ok", 8, 8, 4, System.Drawing.Color.Yellow, System.Drawing.Color.Black, bttSubmitDlg_OnClick);
