@@ -15,10 +15,10 @@
     private Frame frm1;
     private Frame frm2;
 
-    private Dialog dlgConfirm;
-
     private System.Timers.Timer tt;
     private ProgressBar pgbProgressBar;
+
+    private ListBox lsbMessageBoxType;
 
     protected override async Task OnInitializedAsync()
     {
@@ -27,7 +27,7 @@
         frm1 = new Frame("frm1", "FRAME", 13, 4, 56, 29, Frame.BorderStyle.solid, System.Drawing.Color.Cornsilk, System.Drawing.Color.RebeccaPurple);
         screen.topContainer.AddContainer(frm1);
 
-        frm2 = new Frame("frm2", "CHILD FRAME", 3, 3, 43, 13, Frame.BorderStyle.line, System.Drawing.Color.Yellow, System.Drawing.Color.Green);
+        frm2 = new Frame("frm2", "CHILD FRAME", 3, 2, 43, 13, Frame.BorderStyle.line, System.Drawing.Color.Yellow, System.Drawing.Color.Green);
         frm1.AddContainer(frm2);
 
         Label lblName = new Label("lblName", "Name:", 2, 2, 15, System.Drawing.Color.Yellow, System.Drawing.Color.Green);
@@ -54,41 +54,33 @@
         RadioButton rbFemale = new RadioButton("rbFemale", "Female", 11, 8, 10, System.Drawing.Color.Yellow, System.Drawing.Color.Green, (() => { }), false);
         frm2.AddControl(rbFemale);
 
-        Label lblIngredients = new Label("lblIngredients", "Ingredients:", 22, 2, 15, System.Drawing.Color.Yellow, System.Drawing.Color.Green);
-        frm2.AddControl(lblIngredients);
+        Label lblMessageBoxType = new Label("lblMessageBoxType", "MessageBox type:", 22, 2, 18, System.Drawing.Color.Yellow, System.Drawing.Color.Green);
+        frm2.AddControl(lblMessageBoxType);
 
-        List<string> lstIngredients = new List<string> { "Ham", "Tomato", "Salami", "Onions", "Mozzarella", "Gorgonzola", "Pinneaple", "Mushrooms", "Fish", "Sweetcorn", "Jalapenos" };
-        ListBox lsbIngredients = new ListBox("lsbIngredients", lstIngredients, true, 22, 3, 15, 6, System.Drawing.Color.Yellow, System.Drawing.Color.Black);
-        frm2.AddControl(lsbIngredients);
+        List<string> lstMessageBoxType = new List<string> { "OKOnly", "OKCancel", "YesNoCancel", "YesNo", "RetryCancel", "AbortRetryIgnore" };
+        lsbMessageBoxType = new ListBox("lsbMessageBoxType", lstMessageBoxType, false, 22, 3, 16, 4, System.Drawing.Color.Yellow, System.Drawing.Color.Black);
+        frm2.AddControl(lsbMessageBoxType);
 
-        Button bttSubmit = new Button("bttSubmit", "Ok", 8, 10, 8, System.Drawing.Color.Yellow, System.Drawing.Color.Black, bttSubmit_OnClick);
+        Button bttSubmit = new Button("bttSubmit", "Submit", 26, 7, 8, System.Drawing.Color.Yellow, System.Drawing.Color.Black, bttSubmit_OnClick);
         frm2.AddControl(bttSubmit);
 
-        Label lblSpinners = new Label("lblSpinners", "Spinners:", 22, 9, 9, System.Drawing.Color.Yellow, System.Drawing.Color.Green);
+        Label lblSpinners = new Label("lblSpinners", "Spinners:", 22, 8, 9, System.Drawing.Color.Yellow, System.Drawing.Color.Green);
         frm2.AddControl(lblSpinners);
 
-        Spinner spnStar = new Spinner("spnStar", Spinner.SpinnerType.Star, 32, 9, System.Drawing.Color.Yellow, System.Drawing.Color.Green);
+        Spinner spnStar = new Spinner("spnStar", Spinner.SpinnerType.Star, 32, 8, System.Drawing.Color.Yellow, System.Drawing.Color.Green);
         frm2.AddControl(spnStar);
 
-        Spinner spnGrowVerticalSpinner = new Spinner("spnGrowVerticalSpinner", Spinner.SpinnerType.GrowVerticalSpinner, 34, 9, System.Drawing.Color.Yellow, System.Drawing.Color.Green);
+        Spinner spnGrowVerticalSpinner = new Spinner("spnGrowVerticalSpinner", Spinner.SpinnerType.GrowVerticalSpinner, 34, 8, System.Drawing.Color.Yellow, System.Drawing.Color.Green);
         frm2.AddControl(spnGrowVerticalSpinner);
 
-        Spinner spnArrowSpinner = new Spinner("spnArrowSpinner", Spinner.SpinnerType.ArrowSpinner, 36, 9, System.Drawing.Color.Yellow, System.Drawing.Color.Green);
+        Spinner spnArrowSpinner = new Spinner("spnArrowSpinner", Spinner.SpinnerType.ArrowSpinner, 36, 8, System.Drawing.Color.Yellow, System.Drawing.Color.Green);
         frm2.AddControl(spnArrowSpinner);
 
-        Label lblProgressBar = new Label("lblProgressBar", "ProgressBar:", 22, 10, 12, System.Drawing.Color.Yellow, System.Drawing.Color.Green);
+        Label lblProgressBar = new Label("lblProgressBar", "ProgressBar:", 22, 9, 12, System.Drawing.Color.Yellow, System.Drawing.Color.Green);
         frm2.AddControl(lblProgressBar);
 
-        pgbProgressBar = new ProgressBar("pgbProgressBar", ProgressBar.ProgressBarType.Solid, 22, 11, 20, 20, 100, true, System.Drawing.Color.Yellow, System.Drawing.Color.Black);
+        pgbProgressBar = new ProgressBar("pgbProgressBar", ProgressBar.ProgressBarType.Solid, 22, 10, 20, 20, 100, true, System.Drawing.Color.Yellow, System.Drawing.Color.Black);
         frm2.AddControl(pgbProgressBar);
-
-        dlgConfirm = new Dialog("dlgConfirm", "DIALOG", 20, 10, Dialog.BorderStyle.line, System.Drawing.Color.Yellow, System.Drawing.Color.Green, screen);
-
-        Button bttSubmitDlg = new Button("bttSubmitDlg", "Ok", 8, 8, 4, System.Drawing.Color.Yellow, System.Drawing.Color.Black, bttSubmitDlg_OnClick);
-        dlgConfirm.AddControl(bttSubmitDlg);
-
-        Label lblHello = new Label("lblHello", "Hello!", 7, 4, 7, System.Drawing.Color.Yellow, System.Drawing.Color.Green);
-        dlgConfirm.AddControl(lblHello);
 
         GridView.GridColumn col1 = new GridView.GridColumn() { title = "Order #", width = 8 };
         GridView.GridColumn col2 = new GridView.GridColumn() { title = "Pizza", width = 15 };
@@ -142,11 +134,32 @@
 
     public void bttSubmit_OnClick()
     {
-        dlgConfirm.Show();
-    }
+        MessageBox.Buttons messageBoxType = MessageBox.Buttons.OKOnly;
 
-    public void bttSubmitDlg_OnClick()
-    {
-        dlgConfirm.Close();
+        if (lsbMessageBoxType.itemsSelected != null && lsbMessageBoxType.itemsSelected.Count > 0){
+            switch (lsbMessageBoxType.itemsSelected[0]){
+                case "OKOnly":
+                    messageBoxType = MessageBox.Buttons.OKOnly;
+                    break;
+                case "OKCancel":
+                    messageBoxType = MessageBox.Buttons.OKCancel;
+                    break;
+                case "YesNo":
+                    messageBoxType = MessageBox.Buttons.YesNo;
+                    break;
+                case "YesNoCancel":
+                    messageBoxType = MessageBox.Buttons.YesNoCancel;
+                    break;
+                case "RetryCancel":
+                    messageBoxType = MessageBox.Buttons.RetryCancel;
+                    break;
+                case "AbortRetryIgnore":
+                    messageBoxType = MessageBox.Buttons.AbortRetryIgnore;
+                    break;
+            }
+        }
+
+        MessageBox messageBox = new MessageBox("Do you wan't cookies?", "Another extra", messageBoxType, BorderStyle.line, System.Drawing.Color.Yellow, System.Drawing.Color.Green, screen);
+        messageBox.Show();
     }
 }

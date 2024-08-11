@@ -47,7 +47,10 @@ namespace BlazorTUI.TUI
 
         public void SetFocus(string name)
         {
-            topContainer.SetFocus(name);
+            if (dialogs.Count == 0)
+                topContainer.SetFocus(name);
+            else
+                dialogs.ElementAt(dialogs.Count - 1).SetFocus(name);
         }
 
         public void KeyDown(string key, bool shiftKey)

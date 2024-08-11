@@ -17,6 +17,7 @@
 - Dialog
 - Spinner
 - ProgressBar
+- MessageBox
 
 You can use Tab key to go to next control, Shift+Tab keys to go to previous control, Space to select and cursors keys.
 

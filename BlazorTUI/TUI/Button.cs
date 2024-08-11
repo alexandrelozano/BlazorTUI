@@ -14,6 +14,7 @@ namespace BlazorTUI.TUI
             this.X = X;
             this.Y = Y;
             this.width = width;
+            this.height = 1;
             this.text = text.CenterString(width);
             this.foreColor = forecolor;
             this.backgroundColor = backgroundcolor;

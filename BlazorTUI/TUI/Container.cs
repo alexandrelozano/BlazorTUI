@@ -66,7 +66,7 @@ namespace BlazorTUI.TUI
         {
             foreach (Control control in controls)
             {
-                if (control.Visible && control.X <= X && control.X + control.width >= X && control.Y <= Y && control.Y + control.height >= Y)
+                if (control.Visible && control.X <= X && control.X + control.width > X && control.Y <= Y && control.Y + control.height > Y)
                 {
                     control.Click((short)(X - control.X), (short)(Y - control.Y));
                 }

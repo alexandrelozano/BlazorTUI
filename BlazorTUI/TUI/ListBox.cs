@@ -10,8 +10,8 @@ namespace BlazorTUI.TUI
 {
     public class ListBox : Control
     {
-        List<string> items = new List<string>();
-        List<string> itemsSelected = new List<string>();
+        public List<string> items = new List<string>();
+        public List<string> itemsSelected = new List<string>();
 
         private bool multipleSelection;
 
