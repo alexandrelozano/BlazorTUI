@@ -54,6 +54,12 @@
         RadioButton rbFemale = new RadioButton("rbFemale", "Female", 11, 8, 10, System.Drawing.Color.Yellow, System.Drawing.Color.Green, (() => { }), false);
         frm2.AddControl(rbFemale);
 
+        Label lblTime = new Label("lblTime", "Time:", 2, 9, 5, System.Drawing.Color.Yellow, System.Drawing.Color.Green);
+        frm2.AddControl(lblTime);
+
+        TimeBox tbTime = new TimeBox("tbTime", null, 11, 9, System.Drawing.Color.Yellow, System.Drawing.Color.Black);
+        frm2.AddControl(tbTime);
+
         Label lblMessageBoxType = new Label("lblMessageBoxType", "MessageBox type:", 22, 2, 18, System.Drawing.Color.Yellow, System.Drawing.Color.Green);
         frm2.AddControl(lblMessageBoxType);
 

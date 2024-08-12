@@ -1,39 +1,21 @@
-﻿using System.Drawing;
+﻿using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace BlazorTUI.TUI
 {
-    public class TextBox : Control
+    public class TimeBox : TextBox
     {
-        internal string text;
+        TimeOnly? time;
 
-        internal bool blinkCursor;
-
-        public TextBox(string name, string text, short X, short Y, short width, Color forecolor, Color backgroundcolor)
+        public TimeBox(string name, TimeOnly? time, short X, short Y, Color forecolor, Color backgroundcolor) : base(name, "", X, Y, 6, forecolor, backgroundcolor)
         {
-            this.name = name;
-            this.X = X;
-            this.Y = Y;
-            this.width = width;
-            this.height = 1;
-            this.text = text;
-            this.foreColor = forecolor;
-            this.backgroundColor = backgroundcolor;
-
-            this.Focus = false;
-            this.TabStop = true;
-        }
-
-        public override bool Click(short X, short Y)
-        {
-            bool handled = false;
-
-            if (Visible)
-            {
-                container.TopContainer().SetFocus(name);
-                handled = true; 
-            }
-
-            return handled;
+            time = time;
         }
 
         public override bool KeyDown(string key, bool shiftKey)
@@ -51,6 +33,10 @@ namespace BlazorTUI.TUI
                     case "Backspace":
                         if (!string.IsNullOrEmpty(text) && text.Length > 0)
                             text = text.Remove(text.Length - 1, 1);
+
+                        if (text.Length == 2)
+                            text = text.Remove(text.Length - 1, 1);
+
                         handled = true;
                         break;
                     case "ArrowRight":
@@ -58,11 +44,35 @@ namespace BlazorTUI.TUI
                     case "ArrowLeft":
                         break;
                     default:
-                        if (key.Length == 1 && text.Length < width - 1)
-                            text += key;
-                        handled = true;
+                        int n;
+                        if (int.TryParse(key, out n))
+                        {
+                            switch (text.Length)
+                            {
+                                case 0:
+                                    if (n < 2)
+                                        text += key;
+                                    break;
+                                case 1:
+                                    if (n < 10)
+                                        text += key;
+                                    break;
+                                case 3:
+                                    if (n < 6)
+                                        text += key;
+                                    break;
+                                case 4:
+                                    if (n < 10)
+                                        text += key;
+                                    break;
+                            }
+                            handled = true;
+                        }
                         break;
                 }
+
+                if (text.Length == 2)
+                    text += ":";
             }
 
             return handled;
@@ -82,6 +92,9 @@ namespace BlazorTUI.TUI
                             rows[container.YOffset() + Y].Cells[container.XOffset() + X + n].backgroundColor = backgroundColor;
 
                             string ch = (n < text.Length) ? text.Substring(n, 1) : " ";
+
+                            if (n == 2)
+                                ch = ":";
 
                             if (Focus)
                             {
