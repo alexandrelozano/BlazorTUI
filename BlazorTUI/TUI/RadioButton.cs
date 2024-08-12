@@ -14,6 +14,7 @@ namespace BlazorTUI.TUI
             this.name = name;
             this.X = X;
             this.Y = Y;
+            this.height = 1;
 
             if (width < 3)
             {
