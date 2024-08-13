@@ -80,54 +80,54 @@ namespace BlazorTUI.TUI
             switch (buttons)
             {
                 case Buttons.OKOnly:
-                    bttOk = new Button($"bttOk{internalId}", "Ok", (short)((width/2) - 2), (short)(heigth - 2), 4, foreColor, Color.Black , bttOk_OnClick);
+                    bttOk = new Button($"bttOk{internalId}", "Ok", (short)((width/2) - 2), (short)(heigth - 2), 4, foreColor, backgroundColor, bttOk_OnClick);
                     dialog.AddControl(bttOk);
                     defaultButton = bttOk;
                     break;
                 case Buttons.OKCancel:
-                    bttOk = new Button($"bttOk{internalId}", "Ok", (short)((width / 4) - 2), (short)(heigth - 2), 4, foreColor, Color.Black, bttOk_OnClick);
+                    bttOk = new Button($"bttOk{internalId}", "Ok", (short)((width / 4) - 2), (short)(heigth - 2), 4, foreColor, backgroundColor, bttOk_OnClick);
                     dialog.AddControl(bttOk);
                     defaultButton = bttOk;
 
-                    bttCancel = new Button($"bttCancel{internalId}", "Cancel", (short)(((width / 4) * 3) - 4), (short)(heigth - 2), 8, foreColor, Color.Black, bttOk_OnClick);
+                    bttCancel = new Button($"bttCancel{internalId}", "Cancel", (short)(((width / 4) * 3) - 4), (short)(heigth - 2), 8, foreColor, backgroundColor, bttOk_OnClick);
                     dialog.AddControl(bttCancel);
                     break;
                 case Buttons.YesNo:
-                    bttYes = new Button($"bttYes{internalId}", "Yes", (short)((width / 4) - 3), (short)(heigth - 2), 5, foreColor, Color.Black, bttOk_OnClick);
+                    bttYes = new Button($"bttYes{internalId}", "Yes", (short)((width / 4) - 3), (short)(heigth - 2), 5, foreColor, backgroundColor, bttOk_OnClick);
                     dialog.AddControl(bttYes);
                     defaultButton = bttYes;
 
-                    bttNo = new Button($"bttNo{internalId}", "No", (short)(((width / 4) * 3) - 2), (short)(heigth - 2), 4, foreColor, Color.Black, bttOk_OnClick);
+                    bttNo = new Button($"bttNo{internalId}", "No", (short)(((width / 4) * 3) - 2), (short)(heigth - 2), 4, foreColor, backgroundColor, bttOk_OnClick);
                     dialog.AddControl(bttNo);
                     break;
                 case Buttons.YesNoCancel:
-                    bttYes = new Button($"bttYes{internalId}", "Yes", 2, (short)(heigth - 2), 5, foreColor, Color.Black, bttOk_OnClick);
+                    bttYes = new Button($"bttYes{internalId}", "Yes", 2, (short)(heigth - 2), 5, foreColor, backgroundColor, bttOk_OnClick);
                     dialog.AddControl(bttYes);
                     defaultButton = bttYes;
 
-                    bttNo = new Button($"bttNo{internalId}", "No", (short)((width / 2) - 2), (short)(heigth - 2), 4, foreColor, Color.Black, bttOk_OnClick);
+                    bttNo = new Button($"bttNo{internalId}", "No", (short)((width / 2) - 2), (short)(heigth - 2), 4, foreColor, backgroundColor, bttOk_OnClick);
                     dialog.AddControl(bttNo);
                     
-                    bttCancel = new Button($"bttCancel{internalId}", "Cancel", (short)(width - 10), (short)(heigth - 2), 8, foreColor, Color.Black, bttOk_OnClick);
+                    bttCancel = new Button($"bttCancel{internalId}", "Cancel", (short)(width - 10), (short)(heigth - 2), 8, foreColor, backgroundColor, bttOk_OnClick);
                     dialog.AddControl(bttCancel);
                     break;
                 case Buttons.RetryCancel:
-                    bttRetry = new Button($"bttRetry{internalId}", "Retry", (short)((width / 4) - 5), (short)(heigth - 2), 7, foreColor, Color.Black, bttOk_OnClick);
+                    bttRetry = new Button($"bttRetry{internalId}", "Retry", (short)((width / 4) - 5), (short)(heigth - 2), 7, foreColor, backgroundColor, bttOk_OnClick);
                     dialog.AddControl(bttRetry);
                     defaultButton = bttRetry;
 
-                    bttCancel = new Button($"bttCancel{internalId}", "Cancel", (short)(((width / 4) * 3) - 4), (short)(heigth - 2), 8, foreColor, Color.Black, bttOk_OnClick);
+                    bttCancel = new Button($"bttCancel{internalId}", "Cancel", (short)(((width / 4) * 3) - 4), (short)(heigth - 2), 8, foreColor, backgroundColor, bttOk_OnClick);
                     dialog.AddControl(bttCancel);
                     break;
                 case Buttons.AbortRetryIgnore:
-                    bttAbort = new Button($"bttAbort{internalId}", "Abort", 2, (short)(heigth - 2), 7, foreColor, Color.Black, bttOk_OnClick);
+                    bttAbort = new Button($"bttAbort{internalId}", "Abort", 2, (short)(heigth - 2), 7, foreColor, backgroundColor, bttOk_OnClick);
                     dialog.AddControl(bttAbort);
                     defaultButton = bttAbort;
 
-                    bttRetry = new Button($"bttRetry{internalId}", "Retry", (short)((width / 2) - 4), (short)(heigth - 2), 7, foreColor, Color.Black, bttOk_OnClick);
+                    bttRetry = new Button($"bttRetry{internalId}", "Retry", (short)((width / 2) - 4), (short)(heigth - 2), 7, foreColor, backgroundColor, bttOk_OnClick);
                     dialog.AddControl(bttRetry);
 
-                    bttIgnore = new Button($"bttIgnore{internalId}", "Ignore", (short)(width - 10), (short)(heigth - 2), 8, foreColor, Color.Black, bttOk_OnClick);
+                    bttIgnore = new Button($"bttIgnore{internalId}", "Ignore", (short)(width - 10), (short)(heigth - 2), 8, foreColor, backgroundColor, bttOk_OnClick);
                     dialog.AddControl(bttIgnore);
                     break;
             }

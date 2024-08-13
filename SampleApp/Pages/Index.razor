@@ -57,8 +57,14 @@
         Label lblTime = new Label("lblTime", "Time:", 2, 9, 5, System.Drawing.Color.Yellow, System.Drawing.Color.Green);
         frm2.AddControl(lblTime);
 
-        TimeBox tbTime = new TimeBox("tbTime", null, 11, 9, System.Drawing.Color.Yellow, System.Drawing.Color.Black);
+        TimeBox tbTime = new TimeBox("tbTime", null, 10, 9, System.Drawing.Color.Yellow, System.Drawing.Color.Black);
         frm2.AddControl(tbTime);
+
+        Label lblDate = new Label("lblDate", "Date:", 2, 10, 5, System.Drawing.Color.Yellow, System.Drawing.Color.Green);
+        frm2.AddControl(lblDate);
+
+        DateBox tbDate = new DateBox("tbDate", null, DateBox.DateFormat.DDMMYYYY, 10, 10, System.Drawing.Color.Yellow, System.Drawing.Color.Black);
+        frm2.AddControl(tbDate);
 
         Label lblMessageBoxType = new Label("lblMessageBoxType", "MessageBox type:", 22, 2, 18, System.Drawing.Color.Yellow, System.Drawing.Color.Green);
         frm2.AddControl(lblMessageBoxType);
@@ -67,7 +73,7 @@
         lsbMessageBoxType = new ListBox("lsbMessageBoxType", lstMessageBoxType, false, 22, 3, 16, 4, System.Drawing.Color.Yellow, System.Drawing.Color.Black);
         frm2.AddControl(lsbMessageBoxType);
 
-        Button bttSubmit = new Button("bttSubmit", "Submit", 26, 7, 8, System.Drawing.Color.Yellow, System.Drawing.Color.Black, bttSubmit_OnClick);
+        Button bttSubmit = new Button("bttSubmit", "Submit", 26, 7, 8, System.Drawing.Color.Yellow, System.Drawing.Color.Green, bttSubmit_OnClick);
         frm2.AddControl(bttSubmit);
 
         Label lblSpinners = new Label("lblSpinners", "Spinners:", 22, 8, 9, System.Drawing.Color.Yellow, System.Drawing.Color.Green);

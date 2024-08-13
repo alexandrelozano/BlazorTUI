@@ -6,18 +6,19 @@
 [Nuget](https://www.nuget.org/packages/BlazorTUI)
 
 ### Avaliable controls:
-- Label
-- TextBox
 - Button
 - CheckBox
-- RadioButton
-- ListBox
-- GridView
-- Frame
+- DateBox
 - Dialog
-- Spinner
-- ProgressBar
+- Frame
+- GridView
+- Label
+- ListBox
 - MessageBox
+- ProgressBar
+- RadioButton
+- Spinner
+- TextBox
 - TimeBox
 
 You can use Tab key to go to next control, Shift+Tab keys to go to previous control, Space to select and cursors keys.
