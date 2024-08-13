@@ -6,9 +6,8 @@ namespace BlazorTUI.TUI
     public class Button : Control
     {
         string text;
-        Action OnClick;
 
-        public Button(string name, string text, short X, short Y, short width, Color forecolor, Color backgroundcolor, Action OnClick)
+        public Button(string name, string text, short X, short Y, short width, Color forecolor, Color backgroundcolor)
         {
             this.name = name;
             this.X = X;
@@ -18,7 +17,6 @@ namespace BlazorTUI.TUI
             this.text = text.CenterString(width);
             this.foreColor = forecolor;
             this.backgroundColor = backgroundcolor;
-            this.OnClick = OnClick; 
 
             this.Focus = false;
             this.TabStop = true;

@@ -73,7 +73,8 @@
         lsbMessageBoxType = new ListBox("lsbMessageBoxType", lstMessageBoxType, false, 22, 3, 16, 4, System.Drawing.Color.Yellow, System.Drawing.Color.Black);
         frm2.AddControl(lsbMessageBoxType);
 
-        Button bttSubmit = new Button("bttSubmit", "Submit", 26, 7, 8, System.Drawing.Color.Yellow, System.Drawing.Color.Green, bttSubmit_OnClick);
+        Button bttSubmit = new Button("bttSubmit", "Submit", 26, 7, 8, System.Drawing.Color.Yellow, System.Drawing.Color.Green);
+        bttSubmit.OnClick = bttSubmit_OnClick;
         frm2.AddControl(bttSubmit);
 
         Label lblSpinners = new Label("lblSpinners", "Spinners:", 22, 8, 9, System.Drawing.Color.Yellow, System.Drawing.Color.Green);
