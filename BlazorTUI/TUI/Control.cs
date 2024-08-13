@@ -27,7 +27,32 @@ namespace BlazorTUI.TUI
 
         public Color backgroundColor { get; set; }
 
-        public bool Focus { get; set; }
+        private bool focus;
+
+        public bool Focus {
+            get
+            {
+                return this.focus;
+            }
+            set
+            {
+                if (value != this.focus)
+                {
+                    if (value == true)
+                    {
+                        this.focus = value;
+                        if (OnFocus != null)
+                            OnFocus.Invoke();
+                    }
+                    else
+                    {
+                        this.focus = value;
+                        if (OnLostFocus != null)
+                            OnLostFocus.Invoke();
+                    }
+                }
+            }
+        }
         
         public bool TabStop { get; set; }
 
@@ -44,6 +69,10 @@ namespace BlazorTUI.TUI
         public virtual bool Click(short X, short Y) { return false; }
 
         public Action OnClick;
+
+        public Action OnFocus;
+
+        public Action OnLostFocus;
 
     }
 }
