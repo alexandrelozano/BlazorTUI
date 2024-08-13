@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,11 +12,14 @@ namespace BlazorTUI.TUI
 {
     public class TimeBox : TextBox
     {
-        TimeOnly? time;
+        public TimeOnly? time;
 
         public TimeBox(string name, TimeOnly? time, short X, short Y, Color forecolor, Color backgroundcolor) : base(name, "", X, Y, 6, forecolor, backgroundcolor)
         {
-            time = time;
+            this.time = time;
+
+            if (this.time != null)
+                text = this.time.Value.ToString("HH:mm");
         }
 
         public override bool KeyDown(string key, bool shiftKey)
@@ -73,6 +77,11 @@ namespace BlazorTUI.TUI
 
                 if (text.Length == 2)
                     text += ":";
+
+                if (text.Length == 5)
+                {
+                    this.time = TimeOnly.ParseExact(text, "HH:mm", CultureInfo.InvariantCulture);
+                }
             }
 
             return handled;
