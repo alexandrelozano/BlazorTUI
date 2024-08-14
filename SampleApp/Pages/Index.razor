@@ -66,6 +66,12 @@
         DateBox tbDate = new DateBox("tbDate", null, DateBox.DateFormat.DDMMYYYY, 10, 10, System.Drawing.Color.Yellow, System.Drawing.Color.Black);
         frm2.AddControl(tbDate);
 
+        Label lblNumeric = new Label("lblNumeric", "Numeric:", 2, 11, 8, System.Drawing.Color.Yellow, System.Drawing.Color.Green);
+        frm2.AddControl(lblNumeric);
+
+        NumericBox nbNumericBox = new NumericBox("nbNumericBox", null, 3, 2, '.', 10, 11, System.Drawing.Color.Yellow, System.Drawing.Color.Black);
+        frm2.AddControl(nbNumericBox);
+
         Label lblMessageBoxType = new Label("lblMessageBoxType", "MessageBox type:", 22, 2, 18, System.Drawing.Color.Yellow, System.Drawing.Color.Green);
         frm2.AddControl(lblMessageBoxType);
 

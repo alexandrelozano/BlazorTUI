@@ -15,6 +15,7 @@
 - Label
 - ListBox
 - MessageBox
+- NumericBox
 - ProgressBar
 - RadioButton
 - Spinner
