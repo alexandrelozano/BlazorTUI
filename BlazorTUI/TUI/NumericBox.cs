@@ -51,35 +51,67 @@ namespace BlazorTUI.TUI
                     case "Enter":
                         break;
                     case "Backspace":
-                        if (!string.IsNullOrEmpty(text) && text.Length > 0)
-                            text = text.Remove(text.Length - 1, 1);
+                        if (cursor > 0)
+                        {
+                            text = text.Remove(cursor - 1, 1);
+                            cursor--;
+                        }
 
-                        if (text.Length == integerPlaces && decimalPlaces > 0)
+                        if (cursor == integerPlaces && decimalPlaces > 0)
+                        {
                             text = text.Remove(text.Length - 1, 1);
+                            cursor--;
+                        }
 
                         handled = true;
                         break;
                     case "ArrowRight":
+                        if (cursor < (short)text.Length)
+                            cursor++;
+                        if (cursor == integerPlaces && decimalPlaces > 0)
+                            cursor++;
                         break;
                     case "ArrowLeft":
+                        if (cursor > 0)
+                            cursor--;
+                        if (cursor == integerPlaces && decimalPlaces > 0)
+                            cursor--;
                         break;
                     default:
                         int n;
                         if (int.TryParse(key, out n))
                         {
-                            if (text.Length < (short)(integerPlaces + decimalPlaces + 1) && text.Length != integerPlaces)
-                                text += key;
+                            if (cursor < (short)(integerPlaces + decimalPlaces + 1) && cursor != integerPlaces)
+                            {
+                                if (cursor != text.Length)
+                                {
+                                    text = text.Insert(cursor, key);
+                                    text = text.Remove(cursor + 1, 1);
+                                }
+                                else
+                                    text += key;
+
+                                cursor++;
+                            }
                             handled = true;
                         }
                         break;
                 }
 
                 if (text.Length == integerPlaces && decimalPlaces > 0)
+                {
                     text += separator;
+                    cursor++;
+                }
 
                 if (text.Length == integerPlaces + decimalPlaces + 1)
                 {
                     this.number = double.Parse(text.Replace(separator, '.'), CultureInfo.InvariantCulture);
+                }
+
+                if (cursor == integerPlaces && decimalPlaces > 0)
+                {
+                    cursor++;
                 }
             }
 
@@ -98,6 +130,7 @@ namespace BlazorTUI.TUI
                         {
                             rows[container.YOffset() + Y].Cells[container.XOffset() + X + n].foreColor = foreColor;
                             rows[container.YOffset() + Y].Cells[container.XOffset() + X + n].backgroundColor = backgroundColor;
+                            rows[container.YOffset() + Y].Cells[container.XOffset() + X + n].textDecoration = Cell.TextDecoration.None;
 
                             string ch = (n < text.Length) ? text.Substring(n, 1) : " ";
 
@@ -106,10 +139,10 @@ namespace BlazorTUI.TUI
 
                             if (Focus)
                             {
-                                if (n == text.Length)
+                                if (n == cursor)
                                 {
                                     if (blinkCursor)
-                                        ch = "_";
+                                        rows[container.YOffset() + Y].Cells[container.XOffset() + X + n].textDecoration = Cell.TextDecoration.UnderLine;
 
                                     blinkCursor = !blinkCursor;
                                 }
