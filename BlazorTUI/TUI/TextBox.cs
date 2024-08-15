@@ -7,6 +7,7 @@ namespace BlazorTUI.TUI
         internal string text;
 
         internal bool blinkCursor;
+        internal short cursor;
 
         public TextBox(string name, string text, short X, short Y, short width, Color forecolor, Color backgroundcolor)
         {
@@ -21,6 +22,7 @@ namespace BlazorTUI.TUI
 
             this.Focus = false;
             this.TabStop = true;
+            this.cursor = 0;
         }
 
         public override bool Click(short X, short Y)
@@ -29,6 +31,11 @@ namespace BlazorTUI.TUI
 
             if (Visible)
             {
+                if (X < text.Length)
+                    cursor = X;
+                else
+                    cursor = (short)text.Length;
+
                 container.TopContainer().SetFocus(name);
                 handled = true; 
             }
@@ -49,17 +56,31 @@ namespace BlazorTUI.TUI
                     case "Enter":
                         break;
                     case "Backspace":
-                        if (!string.IsNullOrEmpty(text) && text.Length > 0)
-                            text = text.Remove(text.Length - 1, 1);
+                        if (cursor > 0)
+                        {
+                            text = text.Remove(cursor - 1, 1);
+                            cursor--;
+                        }
                         handled = true;
                         break;
                     case "ArrowRight":
+                        if (cursor < (short)text.Length)
+                            cursor++;
                         break;
                     case "ArrowLeft":
+                        if (cursor > 0)
+                            cursor--;
                         break;
                     default:
                         if (key.Length == 1 && text.Length < width - 1)
-                            text += key;
+                        {
+                            if (cursor != text.Length)
+                                text = text.Insert(cursor, key);
+                            else
+                                text += key;
+
+                            cursor++;
+                        }
                         handled = true;
                         break;
                 }
@@ -86,7 +107,7 @@ namespace BlazorTUI.TUI
 
                             if (Focus)
                             {
-                                if (n == text.Length)
+                                if (n == cursor)
                                 {
                                     if (blinkCursor)
                                         rows[container.YOffset() + Y].Cells[container.XOffset() + X + n].textDecoration = Cell.TextDecoration.UnderLine;
