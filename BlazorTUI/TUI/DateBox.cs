@@ -56,39 +56,85 @@ namespace BlazorTUI.TUI
                     case "Enter":
                         break;
                     case "Backspace":
-                        if (!string.IsNullOrEmpty(text) && text.Length > 0)
-                            text = text.Remove(text.Length - 1, 1);
+
+                        if (cursor > 0)
+                        {
+                            text = text.Remove(cursor - 1, 1);
+                            cursor--;
+                        }
 
                         switch (this.dateFormat)
                         {
                             case DateFormat.DDMMYYYY:
                             case DateFormat.MMDDYYYY:
-                                if (text.Length == 2)
-                                    text = text.Remove(text.Length - 1, 1);
-
-                                if (text.Length == 5)
-                                    text = text.Remove(text.Length - 1, 1);
+                                if (cursor == 2 || cursor == 5)
+                                {
+                                    text = text.Remove(cursor - 1, 1);
+                                    cursor--;
+                                }
                                 break;
                             case DateFormat.YYYYMMDD:
-                                if (text.Length == 4)
-                                    text = text.Remove(text.Length - 1, 1);
-
-                                if (text.Length == 7)
-                                    text = text.Remove(text.Length - 1, 1);
+                                if (cursor == 4 || cursor == 7)
+                                {
+                                    text = text.Remove(cursor - 1, 1);
+                                    cursor--;
+                                }
                                 break;
                         }
 
                         handled = true;
                         break;
                     case "ArrowRight":
+                        if (cursor < (short)text.Length)
+                            cursor++;
+
+                        switch (this.dateFormat)
+                        {
+                            case DateFormat.DDMMYYYY:
+                            case DateFormat.MMDDYYYY:
+                                if (cursor == 2 || cursor == 5)
+                                    cursor++;
+                                break;
+                            case DateFormat.YYYYMMDD:
+                                if (cursor == 4 || cursor == 7)
+                                    cursor++;
+                                break;
+                        }
                         break;
                     case "ArrowLeft":
+                        if (cursor > 0)
+                            cursor--;
+
+                        switch (this.dateFormat)
+                        {
+                            case DateFormat.DDMMYYYY:
+                            case DateFormat.MMDDYYYY:
+                                if (cursor == 2 || cursor == 5)
+                                    cursor--;
+                                break;
+                            case DateFormat.YYYYMMDD:
+                                if (cursor == 4 || cursor == 7)
+                                    cursor--;
+                                break;
+                        }
+
                         break;
                     default:
                         int n;
                         if (int.TryParse(key, out n))
                         {
-                            text += key;
+                            if (cursor != text.Length)
+                            {
+                                text = text.Insert(cursor, key);
+                                text = text.Remove(cursor + 1, 1);
+                                cursor++;
+                            }
+                            else if (text.Length < width - 1)
+                            {
+                                text += key;
+                                cursor++;
+                            }
+
                             handled = true;
                         }
                         break;
@@ -110,6 +156,23 @@ namespace BlazorTUI.TUI
 
                         if (text.Length == 7)
                             text += "/";
+                        break;
+                }
+
+                switch (this.dateFormat)
+                {
+                    case DateFormat.DDMMYYYY:
+                    case DateFormat.MMDDYYYY:
+                        if (cursor == 2 || cursor == 5)
+                        {
+                            cursor++;
+                        }
+                        break;
+                    case DateFormat.YYYYMMDD:
+                        if (cursor == 4 || cursor == 7)
+                        {
+                            cursor++;
+                        }
                         break;
                 }
 
@@ -151,6 +214,7 @@ namespace BlazorTUI.TUI
                         {
                             rows[container.YOffset() + Y].Cells[container.XOffset() + X + n].foreColor = foreColor;
                             rows[container.YOffset() + Y].Cells[container.XOffset() + X + n].backgroundColor = backgroundColor;
+                            rows[container.YOffset() + Y].Cells[container.XOffset() + X + n].textDecoration = Cell.TextDecoration.None;
 
                             string ch = (n < text.Length) ? text.Substring(n, 1) : " ";
 
@@ -175,10 +239,10 @@ namespace BlazorTUI.TUI
 
                             if (Focus)
                             {
-                                if (n == text.Length)
+                                if (n == cursor)
                                 {
                                     if (blinkCursor)
-                                        ch = "_";
+                                        rows[container.YOffset() + Y].Cells[container.XOffset() + X + n].textDecoration = Cell.TextDecoration.UnderLine;
 
                                     blinkCursor = !blinkCursor;
                                 }
