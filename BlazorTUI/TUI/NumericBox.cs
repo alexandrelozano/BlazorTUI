@@ -67,7 +67,7 @@ namespace BlazorTUI.TUI
                         int n;
                         if (int.TryParse(key, out n))
                         {
-                            if (text.Length != integerPlaces)
+                            if (text.Length < (short)(integerPlaces + decimalPlaces + 1) && text.Length != integerPlaces)
                                 text += key;
                             handled = true;
                         }
