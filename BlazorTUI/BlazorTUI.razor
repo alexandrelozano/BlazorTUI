@@ -10,7 +10,7 @@
                     for (short x = 0; x < screen.rows[y].Cells.Count; x++)
                     {
                         Cell cell = @screen.rows[y].Cells[x];
-                        <div class="tilefs" @onclick="() => OnClickCell(cell)" style="color:@ToHex(cell.foreColor); background-color:@ToHex(cell.backgroundColor);">@cell.character</div>
+                        <div class="tilefs" @onclick="() => OnClickCell(cell)" style="color:@ToHex(cell.foreColor); background-color:@ToHex(cell.backgroundColor); text-decoration:@TextDecoration(cell); white-space: pre;">@cell.character</div>
                     }
                 }
             }
@@ -34,6 +34,46 @@
         timer.Elapsed += TimeElapsed;
         timer.AutoReset = true;
         timer.Enabled = true;
+    }
+
+    private string Character(Cell cell)
+    {
+        string result = "";
+
+        switch (cell.character)
+        {
+            case " ":
+                result = "&nbsp;";
+                break;
+            default:
+                result = cell.character;
+                break;
+        }
+
+        return result;
+    }
+
+    private string TextDecoration(Cell cell){
+
+        string result = "";
+
+        switch (cell.textDecoration)
+        {
+            case Cell.TextDecoration.UnderLine:
+                result = "Underline";
+                break;
+            case Cell.TextDecoration.OverLine:
+                result = "Overline";
+                break;
+            case Cell.TextDecoration.LineThrough:
+                result = "Line-through";
+                break;
+            default:
+                result = "";
+                break;
+        }
+
+        return result;
     }
 
     private async void TimeElapsed(object? sender, System.Timers.ElapsedEventArgs e)

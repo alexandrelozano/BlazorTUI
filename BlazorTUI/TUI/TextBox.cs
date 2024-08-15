@@ -80,6 +80,7 @@ namespace BlazorTUI.TUI
                         {
                             rows[container.YOffset() + Y].Cells[container.XOffset() + X + n].foreColor = foreColor;
                             rows[container.YOffset() + Y].Cells[container.XOffset() + X + n].backgroundColor = backgroundColor;
+                            rows[container.YOffset() + Y].Cells[container.XOffset() + X + n].textDecoration = Cell.TextDecoration.None;
 
                             string ch = (n < text.Length) ? text.Substring(n, 1) : " ";
 
@@ -88,7 +89,7 @@ namespace BlazorTUI.TUI
                                 if (n == text.Length)
                                 {
                                     if (blinkCursor)
-                                        ch = "_";
+                                        rows[container.YOffset() + Y].Cells[container.XOffset() + X + n].textDecoration = Cell.TextDecoration.UnderLine;
 
                                     blinkCursor = !blinkCursor;
                                 }
