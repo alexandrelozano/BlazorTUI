@@ -35,48 +35,84 @@ namespace BlazorTUI.TUI
                     case "Enter":
                         break;
                     case "Backspace":
-                        if (!string.IsNullOrEmpty(text) && text.Length > 0)
+                        if (cursor > 0)
+                        {
+                            text = text.Remove(cursor - 1, 1);
+                            cursor--;
+                        }
+                        
+                        if (cursor == 2)
+                        {
                             text = text.Remove(text.Length - 1, 1);
-
-                        if (text.Length == 2)
-                            text = text.Remove(text.Length - 1, 1);
-
+                            cursor--;
+                        }
                         handled = true;
                         break;
                     case "ArrowRight":
+                        if (cursor < (short)text.Length)
+                            cursor++;
+                        if (cursor == 2)
+                            cursor++;
                         break;
                     case "ArrowLeft":
+                        if (cursor > 0)
+                            cursor--;
+                        if (cursor == 2)
+                            cursor--;
                         break;
                     default:
                         int n;
+                        string tmp = "";
                         if (int.TryParse(key, out n))
                         {
-                            switch (text.Length)
+                            switch (cursor)
                             {
                                 case 0:
                                     if (n < 2)
-                                        text += key;
+                                        tmp = key;
                                     break;
                                 case 1:
                                     if (n < 10)
-                                        text += key;
+                                        tmp = key;
                                     break;
                                 case 3:
                                     if (n < 6)
-                                        text += key;
+                                        tmp = key;
                                     break;
                                 case 4:
                                     if (n < 10)
-                                        text += key;
+                                        tmp = key;
                                     break;
                             }
+
+                            if (!string.IsNullOrEmpty(tmp))
+                            {
+                                if (cursor != text.Length)
+                                {
+                                    text = text.Insert(cursor, key);
+                                    text = text.Remove(cursor + 1, 1);
+                                }
+                                else
+                                    text += key;
+
+                                cursor++;
+                            }
+
                             handled = true;
                         }
                         break;
                 }
 
                 if (text.Length == 2)
+                {
                     text += ":";
+                    cursor++;
+                }
+
+                if (cursor == 2)
+                {
+                    cursor++;
+                }
 
                 if (text.Length == 5)
                 {
@@ -99,6 +135,7 @@ namespace BlazorTUI.TUI
                         {
                             rows[container.YOffset() + Y].Cells[container.XOffset() + X + n].foreColor = foreColor;
                             rows[container.YOffset() + Y].Cells[container.XOffset() + X + n].backgroundColor = backgroundColor;
+                            rows[container.YOffset() + Y].Cells[container.XOffset() + X + n].textDecoration = Cell.TextDecoration.None;
 
                             string ch = (n < text.Length) ? text.Substring(n, 1) : " ";
 
@@ -107,10 +144,10 @@ namespace BlazorTUI.TUI
 
                             if (Focus)
                             {
-                                if (n == text.Length)
+                                if (n == cursor)
                                 {
                                     if (blinkCursor)
-                                        ch = "_";
+                                        rows[container.YOffset() + Y].Cells[container.XOffset() + X + n].textDecoration = Cell.TextDecoration.UnderLine;
 
                                     blinkCursor = !blinkCursor;
                                 }
