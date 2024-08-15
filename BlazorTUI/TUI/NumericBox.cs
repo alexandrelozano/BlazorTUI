@@ -53,13 +53,10 @@ namespace BlazorTUI.TUI
                     case "Backspace":
                         if (cursor > 0)
                         {
-                            text = text.Remove(cursor - 1, 1);
-                            cursor--;
-                        }
+                            if (cursor == (short)(integerPlaces + 1) && decimalPlaces > 0)
+                                cursor--;
 
-                        if (cursor == integerPlaces && decimalPlaces > 0)
-                        {
-                            text = text.Remove(text.Length - 1, 1);
+                            text = text.Remove(cursor - 1);
                             cursor--;
                         }
 
