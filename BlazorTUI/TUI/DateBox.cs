@@ -10,7 +10,7 @@ namespace BlazorTUI.TUI
 {
     public class DateBox : TextBox
     {
-        public DateOnly? date;
+        public DateOnly? value;
 
         public enum DateFormat
         {
@@ -21,23 +21,23 @@ namespace BlazorTUI.TUI
 
         public DateFormat dateFormat { get; set; }
 
-        public DateBox(string name, DateOnly? date, DateFormat dateFormat, short X, short Y, Color forecolor, Color backgroundcolor) : base(name, "", X, Y, 11, forecolor, backgroundcolor)
+        public DateBox(string name, DateOnly? value, DateFormat dateFormat, short X, short Y, Color forecolor, Color backgroundcolor) : base(name, "", X, Y, 11, forecolor, backgroundcolor)
         {
-            this.date = date;
+            this.value = value;
             this.dateFormat = dateFormat;
 
-            if (this.date != null)
+            if (this.value != null)
             {
                 switch (this.dateFormat)
                 {
                     case DateFormat.DDMMYYYY:
-                        text = this.date.Value.ToString("DD/MM/YYYY");
+                        text = this.value.Value.ToString("DD/MM/YYYY");
                         break;
                     case DateFormat.MMDDYYYY:
-                        text = this.date.Value.ToString("MM/DD/YYYY");
+                        text = this.value.Value.ToString("MM/DD/YYYY");
                         break;
                     case DateFormat.YYYYMMDD:
-                        text = this.date.Value.ToString("YYYY/MM/DD");
+                        text = this.value.Value.ToString("YYYY/MM/DD");
                         break;
                 }
             }
@@ -179,21 +179,21 @@ namespace BlazorTUI.TUI
                 if (text.Length == 10)
                 {
                     DateOnly dt;
-                    this.date = null;
+                    this.value = null;
 
                     switch (this.dateFormat)
                     {
                         case DateFormat.DDMMYYYY:
                             if (DateOnly.TryParseExact(text, "dd/MM/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out dt))
-                                this.date = dt;
+                                this.value = dt;
                             break;
                         case DateFormat.MMDDYYYY:
                             if (DateOnly.TryParseExact(text, "MM/dd/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out dt))
-                                this.date = dt;
+                                this.value = dt;
                             break;
                         case DateFormat.YYYYMMDD:
                             if (DateOnly.TryParseExact(text, "yyyy/MM/dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out dt))
-                                this.date = dt;
+                                this.value = dt;
                             break;
                     }
                 }

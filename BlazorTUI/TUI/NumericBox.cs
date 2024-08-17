@@ -12,16 +12,16 @@ namespace BlazorTUI.TUI
 {
     public class NumericBox : TextBox
     {
-        public Double? number;
+        public Double? value;
 
         short integerPlaces;
         short decimalPlaces;
         char separator;
 
-        public NumericBox(string name, Double? number, short integerPlaces, short decimalPlaces, char separator, short X, short Y, Color forecolor, Color backgroundcolor) 
+        public NumericBox(string name, Double? value, short integerPlaces, short decimalPlaces, char separator, short X, short Y, Color forecolor, Color backgroundcolor) 
             : base(name, "", X, Y, 1, forecolor, backgroundcolor)
         {
-            this.number = number;
+            this.value = value;
             this.integerPlaces = integerPlaces;
             this.decimalPlaces = decimalPlaces;
             this.separator = separator;
@@ -31,10 +31,10 @@ namespace BlazorTUI.TUI
             else
                 this.width = (short)(integerPlaces + 1);
 
-            if (this.number != null)
+            if (this.value != null)
             {
                 string format = $"{new string('0', integerPlaces)}.{new string('0', decimalPlaces)}";
-                text = this.number.Value.ToString(format, System.Globalization.CultureInfo.InvariantCulture).Replace('.', separator);
+                text = this.value.Value.ToString(format, System.Globalization.CultureInfo.InvariantCulture).Replace('.', separator);
             }
         }
 
@@ -103,7 +103,7 @@ namespace BlazorTUI.TUI
 
                 if (text.Length == integerPlaces + decimalPlaces + 1)
                 {
-                    this.number = double.Parse(text.Replace(separator, '.'), CultureInfo.InvariantCulture);
+                    this.value = double.Parse(text.Replace(separator, '.'), CultureInfo.InvariantCulture);
                 }
 
                 if (cursor == integerPlaces && decimalPlaces > 0)

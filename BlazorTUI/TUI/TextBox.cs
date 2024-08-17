@@ -9,6 +9,19 @@ namespace BlazorTUI.TUI
         internal bool blinkCursor;
         internal short cursor;
 
+        public string value
+        {
+            get
+            {
+                return text;
+            }
+            set
+            {
+                text = value;
+                cursor = (short)value.Length;
+            }
+        }
+
         public TextBox(string name, string text, short X, short Y, short width, Color forecolor, Color backgroundcolor)
         {
             this.name = name;
@@ -66,10 +79,12 @@ namespace BlazorTUI.TUI
                     case "ArrowRight":
                         if (cursor < (short)text.Length)
                             cursor++;
+                        handled = true;
                         break;
                     case "ArrowLeft":
                         if (cursor > 0)
                             cursor--;
+                        handled = true;
                         break;
                     default:
                         if (key.Length == 1 && text.Length < width - 1)

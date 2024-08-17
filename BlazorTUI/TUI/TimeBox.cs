@@ -12,14 +12,14 @@ namespace BlazorTUI.TUI
 {
     public class TimeBox : TextBox
     {
-        public TimeOnly? time;
+        public TimeOnly? value;
 
-        public TimeBox(string name, TimeOnly? time, short X, short Y, Color forecolor, Color backgroundcolor) : base(name, "", X, Y, 6, forecolor, backgroundcolor)
+        public TimeBox(string name, TimeOnly? value, short X, short Y, Color forecolor, Color backgroundcolor) : base(name, "", X, Y, 6, forecolor, backgroundcolor)
         {
-            this.time = time;
+            this.value = value;
 
-            if (this.time != null)
-                text = this.time.Value.ToString("HH:mm");
+            if (this.value != null)
+                text = this.value.Value.ToString("HH:mm");
         }
 
         public override bool KeyDown(string key, bool shiftKey)
@@ -113,7 +113,7 @@ namespace BlazorTUI.TUI
 
                 if (text.Length == 5)
                 {
-                    this.time = TimeOnly.ParseExact(text, "HH:mm", CultureInfo.InvariantCulture);
+                    this.value = TimeOnly.ParseExact(text, "HH:mm", CultureInfo.InvariantCulture);
                 }
             }
 
