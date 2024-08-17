@@ -19,6 +19,7 @@
 - ProgressBar
 - RadioButton
 - Spinner
+- TextArea
 - TextBox
 - TimeBox
 
