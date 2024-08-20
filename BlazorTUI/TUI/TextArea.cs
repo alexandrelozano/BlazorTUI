@@ -12,11 +12,13 @@ namespace BlazorTUI.TUI
         private List<string> text;
 
         public short maxLines;
+        public short maxTextWidth;
 
         private bool blinkCursor;
         private short cursorX;
         private short cursorY;
         private short scrollY;
+        private short scrollX;
 
         public string value
         {
@@ -30,7 +32,7 @@ namespace BlazorTUI.TUI
             }
         }
 
-        public TextArea(string name, string text, short X, short Y, short width, short height, short maxLines, Color forecolor, Color backgroundcolor)
+        public TextArea(string name, string text, short X, short Y, short width, short height, short maxTextWidth, short maxLines, Color forecolor, Color backgroundcolor)
         {
             this.name = name;
             this.X = X;
@@ -38,6 +40,7 @@ namespace BlazorTUI.TUI
             this.width = width;
             this.height = height;
             this.maxLines = maxLines;
+            this.maxTextWidth = maxTextWidth;
 
             if (text != null)
                 this.text = new List<string>(text.Split(Environment.NewLine));
@@ -51,6 +54,7 @@ namespace BlazorTUI.TUI
             TabStop = true;
             cursorX = 0;
             cursorY = 0;
+            scrollX = 0;
             scrollY = 0;
         }
 
@@ -91,18 +95,33 @@ namespace BlazorTUI.TUI
                 }
                 else
                 {
-                    if (Y + scrollY < text.Count)
+                    if (Y == height - 1)
                     {
-                        cursorY = (short)(Y + scrollY);
-                        if (X < text[Y + scrollY].Length)
-                            cursorX = X;
-                        else
-                            cursorX = (short)text[Y + scrollY].Length;
+                        if (X == 0)
+                        {
+                            if (scrollX > 0)
+                                scrollX--;
+                        }else if (X == width - 2)
+                        {
+                            if (scrollX < maxTextWidth)
+                                scrollX++;
+                        }
                     }
                     else
                     {
-                        cursorX = 0;
-                        cursorY = 0;
+                        if (Y + scrollY < text.Count)
+                        {
+                            cursorY = (short)(Y + scrollY);
+                            if (X < text[Y + scrollY].Length)
+                                cursorX = X;
+                            else
+                                cursorX = (short)text[Y + scrollY].Length;
+                        }
+                        else
+                        {
+                            cursorX = 0;
+                            cursorY = 0;
+                        }
                     }
                 }
 
@@ -121,6 +140,16 @@ namespace BlazorTUI.TUI
             {
                 switch (key)
                 {
+                    case "Home":
+                        cursorX = 0;
+                        scrollX = 0;
+                        break;
+                    case "End":
+                        cursorX = (short)(text[cursorY].Length);
+                        scrollX = (short)(cursorX - width + 2);
+                        if (scrollX < 0)
+                            scrollX = 0;
+                        break;
                     case "Tab":
                         break;
                     case "Enter":
@@ -132,7 +161,8 @@ namespace BlazorTUI.TUI
                                 cursorY++;
                                 cursorX = 0;
 
-                                if (cursorY - scrollY > height - 1)
+                                scrollX = 0;
+                                if (cursorY - scrollY > height - 2)
                                     scrollY++;
                             }
                             else
@@ -140,6 +170,7 @@ namespace BlazorTUI.TUI
                                 text.Insert(cursorY + 1, "");
                                 cursorY++;
                                 cursorX = 0;
+                                scrollX = 0;
                             }
                         }
                         handled = true;
@@ -149,6 +180,8 @@ namespace BlazorTUI.TUI
                         {
                             text[cursorY] = text[cursorY].Remove(cursorX - 1, 1);
                             cursorX--;
+                            if (scrollX > cursorX)
+                                scrollX--;
                         }
                         else
                         {
@@ -160,6 +193,10 @@ namespace BlazorTUI.TUI
                                 {
                                     text.RemoveAt(cursorY + 1);
                                 }
+
+                                if (scrollX + width - 3 < cursorX)
+                                    scrollX = (short)(cursorX - width + 2);
+
                                 if (cursorY < scrollY)
                                     scrollY = cursorY;
                             }
@@ -169,11 +206,17 @@ namespace BlazorTUI.TUI
                     case "ArrowRight":
                         if (cursorX < (short)text[cursorY].Length)
                             cursorX++;
+
+                        if (scrollX + width - 3 < cursorX)
+                            scrollX = (short)(cursorX - width + 2);
                         handled = true;
                         break;
                     case "ArrowLeft":
                         if (cursorX > 0)
                             cursorX--;
+
+                        if (cursorX < scrollX)
+                            scrollX = cursorX;
                         handled = true;
                         break;
                     case "ArrowUp":
@@ -182,6 +225,13 @@ namespace BlazorTUI.TUI
                             cursorY--;
                             if (text[cursorY].Length < cursorX)
                                 cursorX = (short)text[cursorY].Length;
+
+                            if (cursorX < scrollX)
+                                scrollX = (short)(cursorX - width - 2);
+
+                            if (scrollX < 0)
+                                scrollX = 0;
+
                             if (cursorY < scrollY)
                                 scrollY = cursorY;
                         }
@@ -193,13 +243,20 @@ namespace BlazorTUI.TUI
                             cursorY++;
                             if (text[cursorY].Length < cursorX)
                                 cursorX = (short)text[cursorY].Length;
-                            if (cursorY - scrollY > height - 1)
+
+                            if (cursorX < scrollX)
+                                scrollX = (short)(cursorX - width - 2);
+
+                            if (scrollX < 0)
+                                scrollX = 0;
+
+                            if (cursorY - scrollY > height - 2)
                                 scrollY++;
                         }
                         handled = true;
                         break;
                     default:
-                        if (key.Length == 1 && text[cursorY].Length < width - 2)
+                        if (key.Length == 1 && text[cursorY].Length < maxTextWidth)
                         {
                             if (cursorX != text[cursorY].Length)
                                 text[cursorY] = text[cursorY].Insert(cursorX, key);
@@ -207,6 +264,9 @@ namespace BlazorTUI.TUI
                                 text[cursorY] += key;
 
                             cursorX++;
+
+                            if (scrollX + width - 3 < cursorX)
+                                scrollX = (short)(cursorX - width + 2);
                         }
                         handled = true;
                         break;
@@ -239,21 +299,33 @@ namespace BlazorTUI.TUI
 
                                 string ch = " ";
 
-                                if (n == width - 1)
+                                if (h == height - 1)
                                 {
-                                    if (h == 0)
-                                        ch = "↑";
-                                    else if (h == height - 1)
+                                    if (n == 0)
+                                        ch = "←";
+                                    else if (n == width - 2)
+                                        ch = "→";
+                                    else if (n == width - 1)
                                         ch = "↓";
                                     else
-                                        ch = "│";
+                                        ch = "─";
                                 }
-                                else if (n < line.Length)
-                                    ch = line.Substring(n, 1);
-
+                                else
+                                {
+                                    if (n == width - 1)
+                                    {
+                                        if (h == 0)
+                                            ch = "↑";
+                                        else
+                                            ch = "│";
+                                    }
+                                    else if (n + scrollX < line.Length)
+                                        ch = line.Substring(n + scrollX, 1);
+                                }
+                                
                                 if (Focus)
                                 {
-                                    if (h == cursorY - scrollY && n == cursorX)
+                                    if (h == cursorY - scrollY && n == cursorX - scrollX)
                                     {
                                         if (blinkCursor)
                                             rows[container.YOffset() + Y + h].Cells[container.XOffset() + X + n].textDecoration = Cell.TextDecoration.UnderLine;
