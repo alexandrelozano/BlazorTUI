@@ -91,8 +91,17 @@
 
     private async Task OnClickCell(Cell cell)
     {
-        if (screen.dialogs.Count==0)
-            screen.topContainer.Click(cell.x, cell.y);
+        if (screen.dialogs.Count == 0)
+        {
+            bool handled = false;
+            if (screen.menuBar != null && screen.menuBar.visible == true)
+            {
+                handled = screen.menuBar.Click(cell.x, cell.y);
+            }
+
+            if (handled == false)
+                screen.topContainer.Click(cell.x, cell.y);
+        }
         else
         {
             Dialog dialog = screen.dialogs.ElementAt(screen.dialogs.Count - 1);

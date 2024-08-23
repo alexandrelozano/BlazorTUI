@@ -14,6 +14,8 @@ namespace BlazorTUI.TUI
 
         public IList<Dialog> dialogs;
 
+        public MenuBar menuBar;
+
         public Screen(short width, short height)
         {
             this.width = width;
@@ -70,6 +72,9 @@ namespace BlazorTUI.TUI
             {
                 dialog.Render(rows);
             }
+
+            if (menuBar != null)
+                menuBar.Render(rows);
         }
     }
 }

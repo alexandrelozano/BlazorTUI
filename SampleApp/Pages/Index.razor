@@ -24,6 +24,44 @@
     {
         screen = new Screen(80, 40);
 
+        MenuBar menuBar = new MenuBar(System.Drawing.Color.AntiqueWhite, System.Drawing.Color.SteelBlue, screen);
+
+        Menu mnuFile = new Menu("File");
+        MenuItem mniOpen = new MenuItem("Open");
+        mnuFile.menuItems.Add(mniOpen);
+        MenuItem mniClose = new MenuItem("Close");
+        mnuFile.menuItems.Add(mniClose);
+        MenuItem mniPrint = new MenuItem("Print");
+        mnuFile.menuItems.Add(mniPrint);
+        MenuItem mniExit = new MenuItem("Exit");
+        mnuFile.menuItems.Add(mniExit);
+        menuBar.menus.Add(mnuFile);
+
+        Menu mnuEdit = new Menu("Edit");
+        MenuItem mniUndo = new MenuItem("Undo");
+        mnuEdit.menuItems.Add(mniUndo);
+        MenuItem mniRedo = new MenuItem("Redo");
+        mnuEdit.menuItems.Add(mniRedo);
+        MenuItem mniCopy = new MenuItem("Copy");
+        mnuEdit.menuItems.Add(mniCopy);
+        MenuItem mniCut = new MenuItem("Cut");
+        mnuEdit.menuItems.Add(mniCut);
+        MenuItem mniPaste = new MenuItem("Paste");
+        mnuEdit.menuItems.Add(mniPaste);
+        MenuItem mniDelete = new MenuItem("Delete");
+        mnuEdit.menuItems.Add(mniDelete);
+        MenuItem mniPreferences = new MenuItem("Preferences");
+        mniPreferences.OnClick = mniPreferences_OnClick;
+        mnuEdit.menuItems.Add(mniPreferences);
+        menuBar.menus.Add(mnuEdit);
+
+        Menu mnuHelp = new Menu("Help");
+        MenuItem mniAbout = new MenuItem("About");
+        mnuHelp.menuItems.Add(mniAbout);
+        menuBar.menus.Add(mnuHelp);
+
+        screen.menuBar = menuBar;
+
         frm1 = new Frame("frm1", "FRAME", 11, 4, 60, 29, Frame.BorderStyle.solid, System.Drawing.Color.Cornsilk, System.Drawing.Color.RebeccaPurple);
         screen.topContainer.AddContainer(frm1);
 
@@ -158,6 +196,13 @@
         pgbProgressBar.value++;
         if (pgbProgressBar.value > pgbProgressBar.MaxValue)
             pgbProgressBar.value = 0;
+    }
+
+    public void mniPreferences_OnClick()
+    {
+        MessageBox.Buttons messageBoxType = MessageBox.Buttons.OKOnly;
+        MessageBox messageBox = new MessageBox("Hello world!!", "Preferences", messageBoxType, BorderStyle.line, System.Drawing.Color.Yellow, System.Drawing.Color.Green, screen);
+        messageBox.Show();
     }
 
     public void bttSubmit_OnClick()

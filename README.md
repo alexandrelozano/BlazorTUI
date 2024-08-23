@@ -14,6 +14,7 @@
 - GridView
 - Label
 - ListBox
+- MenuBar
 - MessageBox
 - NumericBox
 - ProgressBar
