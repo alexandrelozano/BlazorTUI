@@ -64,6 +64,7 @@ namespace BlazorTUI.TUI
                             {
                                 if (menus[m].opended == true)
                                 {
+                                    menus[m].opended = false;
                                     if (c == 0)
                                     {
                                         int maxLenght = (from p in menus[m].menuItems select p.text.Length).Max();
@@ -135,7 +136,10 @@ namespace BlazorTUI.TUI
                                         {
                                             rows[y].Cells[x2 + x].foreColor = fore;
                                             rows[y].Cells[x2 + x].backgroundColor = background;
-                                            if (x2 < menus[m].menuItems[y - 1].text.Length)
+                                            rows[y].Cells[x2 + x].textDecoration = Cell.TextDecoration.None;
+                                            if (menus[m].menuItems[y - 1].menuItemType == MenuItem.MenuItemType.Separator)
+                                                rows[y].Cells[x2 + x].character = "─";
+                                            else if (x2 < menus[m].menuItems[y - 1].text.Length)
                                                 rows[y].Cells[x2 + x].character = menus[m].menuItems[y - 1].text.Substring(x2, 1);
                                             else
                                                 rows[y].Cells[x2 + x].character = " ";

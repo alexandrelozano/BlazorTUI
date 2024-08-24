@@ -10,11 +10,20 @@ namespace BlazorTUI.TUI
     {
         public string text;
 
+        public enum MenuItemType
+        {
+            Item,
+            Separator
+        }
+
+        public MenuItemType menuItemType;
+
         public Action OnClick;
 
-        public MenuItem(string text)
+        public MenuItem(string text, MenuItemType menuItemType)
         {
             this.text = text;
+            this.menuItemType = menuItemType;
         }
     }
 }
