@@ -10,7 +10,7 @@
                     for (short x = 0; x < screen.rows[y].Cells.Count; x++)
                     {
                         Cell cell = @screen.rows[y].Cells[x];
-                        <div class="tilefs" @onclick="() => OnClickCell(cell)" style="color:@ToHex(cell.foreColor); background-color:@ToHex(cell.backgroundColor); text-decoration:@TextDecoration(cell); white-space: pre;">@cell.character</div>
+                        <div class="tilefs" @onclick="() => OnClickCell(cell)" style="color:@ToHex(cell.foreColor); background-color:@ToHex(cell.backgroundColor); @TextDecoration(cell) white-space: pre;">@cell.character</div>
                     }
                 }
             }
@@ -53,20 +53,21 @@
         return result;
     }
 
-    private string TextDecoration(Cell cell){
+    private string TextDecoration(Cell cell)
+    {
 
         string result = "";
 
         switch (cell.textDecoration)
         {
             case Cell.TextDecoration.UnderLine:
-                result = "Underline";
+                result = $"text-decoration:Underline;";
                 break;
             case Cell.TextDecoration.OverLine:
-                result = "Overline";
+                result = $"text-decoration:Overline;";
                 break;
             case Cell.TextDecoration.LineThrough:
-                result = "Line-through";
+                result = $"text-decoration:Line-through;";
                 break;
             default:
                 result = "";
