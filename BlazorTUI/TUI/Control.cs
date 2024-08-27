@@ -68,7 +68,7 @@ namespace BlazorTUI.TUI
 
         public virtual bool Click(short X, short Y) { return false; }
 
-        public Action OnClick;
+        public Action<Control> OnClick;
 
         public Action OnFocus;
 

@@ -152,49 +152,49 @@ namespace BlazorTUI.TUI
             screen.SetFocus(defaultButton.name);
         }
 
-        private void bttOk_OnClick()
+        private void bttOk_OnClick(Control sender)
         {
             dialog.Close();
 
             result = Result.OK;
         }
 
-        private void bttCancel_OnClick()
+        private void bttCancel_OnClick(Control sender)
         {
             dialog.Close();
 
             result = Result.Cancel;
         }
 
-        private void bttYes_OnClick()
+        private void bttYes_OnClick(Control sender)
         {
             dialog.Close();
 
             result = Result.Yes;
         }
 
-        private void bttNo_OnClick()
+        private void bttNo_OnClick(Control sender)
         {
             dialog.Close();
 
             result = Result.No;
         }
 
-        private void bttRetry_OnClick()
+        private void bttRetry_OnClick(Control sender)
         {
             dialog.Close();
 
             result = Result.Retry;
         }
 
-        private void bttIgnore_OnClick()
+        private void bttIgnore_OnClick(Control sender)
         {
             dialog.Close();
 
             result = Result.Ignore;
         }
 
-        private void bttAbort_OnClick()
+        private void bttAbort_OnClick(Control sender)
         {
             dialog.Close();
 

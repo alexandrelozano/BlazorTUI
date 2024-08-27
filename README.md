@@ -8,6 +8,7 @@
 ### Avaliable controls:
 - Button
 - CheckBox
+- ColorPicker
 - DateBox
 - Dialog
 - Frame
