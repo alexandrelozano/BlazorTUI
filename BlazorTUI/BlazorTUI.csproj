@@ -19,6 +19,7 @@
 	<RepositoryUrl>https://github.com/alexandrelozano/BlazorTUI</RepositoryUrl>
 	<RepositoryType>git</RepositoryType>
 	<PackageTags>Blazor;BlazorServer;UI</PackageTags>
+	<PackageIcon>icon.png</PackageIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -44,6 +45,10 @@
 
   <ItemGroup>
     <None Include="..\README.md" />
+    <None Include="..\Resources\icon.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
     <None Include="compilerconfig.json" />
     <None Include="C:\Users\alozano\source\repos\BlazorTUI\README.md">
       <Pack>True</Pack>
