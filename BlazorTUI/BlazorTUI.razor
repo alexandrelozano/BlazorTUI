@@ -11,7 +11,9 @@
                     {
                         Cell cell = @screen.rows[y].Cells[x];
                         if (cell.visible == true)
-                            <div class="tilefs" @onclick="() => OnClickCell(cell)" style="color:@ToHex(cell.foreColor); background-color:@ToHex(cell.backgroundColor); @TextDecoration(cell) white-space: pre;">@cell.character</div>
+                        {
+                            <div class="tilefs" @onclick="() => OnClickCell(cell)" style="color:@ToHex(cell.foreColor); background-color:@ToHex(cell.backgroundColor); @TextDecoration(cell) @BackgroundImage(cell) @Scale(cell) white-space: pre;">@cell.character</div>
+                        }
                     }
                 }
             }
@@ -50,6 +52,36 @@
                 result = cell.character;
                 break;
         }
+
+        return result;
+    }
+
+    private string Scale(Cell cell)
+    {
+        string result = "";
+
+        if (cell.scaleX != 1 || cell.scaleY != 1)
+        {
+            result = "transform: ";
+
+            if (cell.scaleX != 1)
+                result = $"{result} scaleX({cell.scaleX})";
+
+            if (cell.scaleY != 1)
+                result = $"{result} scaleY({cell.scaleY})";
+
+            result = $"{result}; transform-origin: left top;";
+        }
+
+        return result;
+    }
+
+    private string BackgroundImage(Cell cell)
+    {
+        string result = "";
+
+        if (!String.IsNullOrEmpty(cell.backgroundImage))
+            result = $"background-image: url('data:image/png;base64,{cell.backgroundImage}'); background-repeat: no-repeat; background-size: 100% 100%; background-position: center top; background-attachment: fixed; ";
 
         return result;
     }

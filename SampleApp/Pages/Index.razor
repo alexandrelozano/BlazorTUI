@@ -159,11 +159,11 @@
         ColorPicker clrColor = new ColorPicker("clrColor", System.Drawing.Color.DarkMagenta, true, 39, 9, 15, System.Drawing.Color.Yellow, System.Drawing.Color.Green, screen);
         frm2.AddControl(clrColor);
 
-        Label lblGridView = new Label("lblGridView", "GridView:", 4, 16, 9, System.Drawing.Color.Yellow, System.Drawing.Color.RebeccaPurple);
+        Label lblGridView = new Label("lblGridView", "GridView:", 2, 16, 9, System.Drawing.Color.Yellow, System.Drawing.Color.RebeccaPurple);
         frm1.AddControl(lblGridView);
 
         GridView.GridColumn col1 = new GridView.GridColumn() { title = "Order #", width = 8 };
-        GridView.GridColumn col2 = new GridView.GridColumn() { title = "Pizza", width = 15 };
+        GridView.GridColumn col2 = new GridView.GridColumn() { title = "Pizza", width = 12 };
         GridView.GridColumn col3 = new GridView.GridColumn() { title = "Delivery man", width = 13 };
         GridView.GridColumn col4 = new GridView.GridColumn() { title = "Status", width = 11 };
 
@@ -195,8 +195,15 @@
         r12.cells = new string[] { "12", "Pineapple", "", "Cooking" };
 
         GridView.GridRow[] arrOrders = { r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12 };
-        GridView grdOrders = new GridView("grdOrders", columns, arrOrders, 4, 17, 47, 10, System.Drawing.Color.Yellow, System.Drawing.Color.Black);
+        GridView grdOrders = new GridView("grdOrders", columns, arrOrders, 2, 17, 44, 10, System.Drawing.Color.Yellow, System.Drawing.Color.Black);
         frm1.AddControl(grdOrders);
+
+        Label lblPictureBox = new Label("lblPictureBox", "PictureBox:", 47, 16, 11, System.Drawing.Color.Yellow, System.Drawing.Color.RebeccaPurple);
+        frm1.AddControl(lblPictureBox);
+
+        System.Drawing.Bitmap bm = new System.Drawing.Bitmap(@".\wwwroot\img\github-mark.png");
+        PictureBox picTest = new PictureBox("picTest", bm, 47, 17, 10, 5, System.Drawing.Color.Yellow, System.Drawing.Color.White);
+        frm1.AddControl(picTest);
 
         screen.SetFocus("txtName");
 

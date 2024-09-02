@@ -39,6 +39,8 @@ namespace BlazorTUI.TUI
                     cell.backgroundColor = System.Drawing.Color.Blue;
                     cell.textDecoration = Cell.TextDecoration.None;
                     cell.visible = true;
+                    cell.scaleX = 1;
+                    cell.scaleY = 1;    
                     row.Cells.Add(cell);
                 }
                 rows.Add(row);

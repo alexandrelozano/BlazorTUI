@@ -23,7 +23,13 @@ namespace BlazorTUI.TUI
 
         public string character { get; set; }
 
-        public bool visible {  get; set; }
+        public bool visible { get; set; }
+
+        public string backgroundImage {get; set;}
+
+        public double scaleX { get; set;}
+
+        public double scaleY { get; set;}
 
     }
 }
