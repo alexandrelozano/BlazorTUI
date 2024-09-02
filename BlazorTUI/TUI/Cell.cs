@@ -23,5 +23,7 @@ namespace BlazorTUI.TUI
 
         public string character { get; set; }
 
+        public bool visible {  get; set; }
+
     }
 }

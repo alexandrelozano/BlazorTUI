@@ -38,6 +38,7 @@ namespace BlazorTUI.TUI
                     cell.foreColor = System.Drawing.Color.Yellow;
                     cell.backgroundColor = System.Drawing.Color.Blue;
                     cell.textDecoration = Cell.TextDecoration.None;
+                    cell.visible = true;
                     row.Cells.Add(cell);
                 }
                 rows.Add(row);

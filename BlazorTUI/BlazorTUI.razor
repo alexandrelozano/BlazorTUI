@@ -10,7 +10,8 @@
                     for (short x = 0; x < screen.rows[y].Cells.Count; x++)
                     {
                         Cell cell = @screen.rows[y].Cells[x];
-                        <div class="tilefs" @onclick="() => OnClickCell(cell)" style="color:@ToHex(cell.foreColor); background-color:@ToHex(cell.backgroundColor); @TextDecoration(cell) white-space: pre;">@cell.character</div>
+                        if (cell.visible == true)
+                            <div class="tilefs" @onclick="() => OnClickCell(cell)" style="color:@ToHex(cell.foreColor); background-color:@ToHex(cell.backgroundColor); @TextDecoration(cell) white-space: pre;">@cell.character</div>
                     }
                 }
             }
