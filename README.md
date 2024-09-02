@@ -18,6 +18,7 @@
 - MenuBar
 - MessageBox
 - NumericBox
+- PictureBox
 - ProgressBar
 - RadioButton
 - Spinner
