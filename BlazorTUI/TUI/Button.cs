@@ -77,12 +77,6 @@ namespace BlazorTUI.TUI
         {
             if (Visible)
             {
-                if (name == "bttSubmitDlg")
-                {
-                    string a = "a";
-                }
-
-
                 for (short n = 0; n < width; n++)
                 {
                     if (container.YOffset() + Y < container.YOffset() + container.height && container.YOffset() + Y < rows.Count)

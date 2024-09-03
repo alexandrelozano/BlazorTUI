@@ -58,6 +58,9 @@ namespace BlazorTUI.TUI
 
                     cell.foreColor = foreColor;
                     cell.backgroundColor = backgroundColor;
+                    cell.backgroundImage = "";
+                    cell.scaleX = 1;
+                    cell.scaleY = 1;
 
                     if (c == XI || c == XI + width - 1)
                     {

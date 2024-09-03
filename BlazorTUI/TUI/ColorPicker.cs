@@ -147,6 +147,11 @@ namespace BlazorTUI.TUI
                     {
                         if (container.XOffset() + X + x < container.XOffset() + container.width && container.XOffset() + X + x < rows[Y].Cells.Count)
                         {
+                            rows[container.YOffset() + Y].Cells[container.XOffset() + X + x].visible = true;
+                            rows[container.YOffset() + Y].Cells[container.XOffset() + X + x].backgroundImage = "";
+                            rows[container.YOffset() + Y].Cells[container.XOffset() + X + x].scaleX = 1;
+                            rows[container.YOffset() + Y].Cells[container.XOffset() + X + x].scaleY = 1;
+
                             if (x == 0)
                             {
                                 rows[container.YOffset() + Y].Cells[container.XOffset() + X + x].foreColor = foreColor;
