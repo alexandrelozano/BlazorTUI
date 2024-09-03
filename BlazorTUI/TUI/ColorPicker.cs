@@ -32,7 +32,8 @@ namespace BlazorTUI.TUI
             this.height = 1;
             this.foreColor = foreColor;
             this.backgroundColor = backgroundColor;
-            this.screen = screen;   
+            this.screen = screen;
+            this.TabStop = true;
         }
 
         private void PickColor()
@@ -44,6 +45,7 @@ namespace BlazorTUI.TUI
 
             Button bttCancel = new Button("bttCancel", "Cancel", 2, (short)(dlgColors.height - 2), 10, foreColor, backgroundColor);
             bttCancel.OnClick = bttCancel_OnClick;
+            bttCancel.Focus = true;
             dlgColors.AddControl(bttCancel);
 
             var colorProperties = color.GetType().GetProperties(BindingFlags.Static | BindingFlags.Public);
@@ -154,8 +156,16 @@ namespace BlazorTUI.TUI
 
                             if (x == 0)
                             {
-                                rows[container.YOffset() + Y].Cells[container.XOffset() + X + x].foreColor = foreColor;
-                                rows[container.YOffset() + Y].Cells[container.XOffset() + X + x].backgroundColor = backgroundColor;
+                                if (this.Focus == true)
+                                {
+                                    rows[container.YOffset() + Y].Cells[container.XOffset() + X + x].foreColor = backgroundColor;
+                                    rows[container.YOffset() + Y].Cells[container.XOffset() + X + x].backgroundColor = foreColor;
+                                }
+                                else
+                                {
+                                    rows[container.YOffset() + Y].Cells[container.XOffset() + X + x].foreColor = foreColor;
+                                    rows[container.YOffset() + Y].Cells[container.XOffset() + X + x].backgroundColor = backgroundColor;
+                                }
                                 rows[container.YOffset() + Y].Cells[container.XOffset() + X + x].character = "[";
                             }
                             else if (x < width - 1)
@@ -166,8 +176,16 @@ namespace BlazorTUI.TUI
                             }
                             else
                             {
-                                rows[container.YOffset() + Y].Cells[container.XOffset() + X + x].foreColor = foreColor;
-                                rows[container.YOffset() + Y].Cells[container.XOffset() + X + x].backgroundColor = backgroundColor;
+                                if (this.Focus == true)
+                                {
+                                    rows[container.YOffset() + Y].Cells[container.XOffset() + X + x].foreColor = backgroundColor;
+                                    rows[container.YOffset() + Y].Cells[container.XOffset() + X + x].backgroundColor = foreColor;
+                                }
+                                else
+                                {
+                                    rows[container.YOffset() + Y].Cells[container.XOffset() + X + x].foreColor = foreColor;
+                                    rows[container.YOffset() + Y].Cells[container.XOffset() + X + x].backgroundColor = backgroundColor;
+                                }
                                 rows[container.YOffset() + Y].Cells[container.XOffset() + X + x].character = "]";
                             }
                         }
