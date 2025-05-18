@@ -51,6 +51,7 @@ namespace BlazorTUI.TUI
                             cell.foreColor = foreColor;
                             cell.backgroundColor = backgroundColor;
                             cell.character = " ";
+                            cell.textDecoration = Cell.TextDecoration.None;
 
                             if (c == XI || c == XI + width - 1)
                             {

@@ -61,10 +61,14 @@ namespace BlazorTUI.TUI
 
         public void KeyDown(string key, bool shiftKey)
         {
-            if (dialogs.Count == 0)
+            if (key=="Alt" && this.menuBar != null)
+                this.menuBar.showShortCutkeys = !this.menuBar.showShortCutkeys;
+            if (this.menuBar != null && (this.menuBar.showShortCutkeys || this.menuBar.OpenedMenu()!=null))
+                this.menuBar.KeyDown(key, shiftKey);
+            else if (dialogs.Count == 0)
                 topContainer.KeyDown(key, shiftKey);
             else
-                dialogs.ElementAt(dialogs.Count-1).KeyDown(key, shiftKey);    
+                dialogs.ElementAt(dialogs.Count - 1).KeyDown(key, shiftKey);    
         }
 
         public void Render()

@@ -9,6 +9,7 @@ namespace BlazorTUI.TUI
     public class MenuItem
     {
         public string text;
+        public char? shortCutKey = null;
 
         public enum MenuItemType
         {
@@ -20,10 +21,11 @@ namespace BlazorTUI.TUI
 
         public Action OnClick;
 
-        public MenuItem(string text, MenuItemType menuItemType)
+        public MenuItem(string text, MenuItemType menuItemType, char? shortCutKey = null)
         {
             this.text = text;
             this.menuItemType = menuItemType;
+            this.shortCutKey = shortCutKey;
         }
     }
 }

@@ -14,12 +14,19 @@ namespace BlazorTUI.TUI
 
         public bool opended;
 
-        public Menu(string text)
+        public char? shortCutKey = null;
+
+        public int selectedItem;
+
+        public Menu(string text, char? shortCutKey = null)
         {
             this.text = $"{text}│";
+            this.shortCutKey = shortCutKey;
 
             opended = false;
             menuItems = new List<MenuItem>();
+
+            selectedItem = 0;
         }
     }
 }

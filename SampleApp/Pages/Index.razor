@@ -26,45 +26,45 @@
 
         MenuBar menuBar = new MenuBar(System.Drawing.Color.AntiqueWhite, System.Drawing.Color.SteelBlue, screen);
 
-        Menu mnuFile = new Menu("File");
-        MenuItem mniOpen = new MenuItem("Open", MenuItem.MenuItemType.Item);
+        Menu mnuFile = new Menu("File",'F');
+        MenuItem mniOpen = new MenuItem("Open", MenuItem.MenuItemType.Item, 'O');
         mnuFile.menuItems.Add(mniOpen);
-        MenuItem mniClose = new MenuItem("Close", MenuItem.MenuItemType.Item);
+        MenuItem mniClose = new MenuItem("Close", MenuItem.MenuItemType.Item, 'C');
         mnuFile.menuItems.Add(mniClose);
         MenuItem mniFileSep1 = new MenuItem("mniFileSep1", MenuItem.MenuItemType.Separator);
         mnuFile.menuItems.Add(mniFileSep1);
-        MenuItem mniPrint = new MenuItem("Print", MenuItem.MenuItemType.Item);
+        MenuItem mniPrint = new MenuItem("Print", MenuItem.MenuItemType.Item, 'P');
         mnuFile.menuItems.Add(mniPrint);
         MenuItem mniFileSep2 = new MenuItem("mniFileSep2", MenuItem.MenuItemType.Separator);
         mnuFile.menuItems.Add(mniFileSep2);
-        MenuItem mniExit = new MenuItem("Exit", MenuItem.MenuItemType.Item);
+        MenuItem mniExit = new MenuItem("Exit", MenuItem.MenuItemType.Item, 'E');
         mnuFile.menuItems.Add(mniExit);
         menuBar.menus.Add(mnuFile);
 
-        Menu mnuEdit = new Menu("Edit");
-        MenuItem mniUndo = new MenuItem("Undo", MenuItem.MenuItemType.Item);
+        Menu mnuEdit = new Menu("Edit",'E');
+        MenuItem mniUndo = new MenuItem("Undo", MenuItem.MenuItemType.Item, 'U');
         mnuEdit.menuItems.Add(mniUndo);
-        MenuItem mniRedo = new MenuItem("Redo", MenuItem.MenuItemType.Item);
+        MenuItem mniRedo = new MenuItem("Redo", MenuItem.MenuItemType.Item, 'R');
         mnuEdit.menuItems.Add(mniRedo);
         MenuItem mnuEditSep1 = new MenuItem("mnuEditSep1", MenuItem.MenuItemType.Separator);
         mnuEdit.menuItems.Add(mnuEditSep1);
-        MenuItem mniCopy = new MenuItem("Copy", MenuItem.MenuItemType.Item);
+        MenuItem mniCopy = new MenuItem("Copy", MenuItem.MenuItemType.Item, 'C');
         mnuEdit.menuItems.Add(mniCopy);
-        MenuItem mniCut = new MenuItem("Cut", MenuItem.MenuItemType.Item);
+        MenuItem mniCut = new MenuItem("Cut", MenuItem.MenuItemType.Item, 'U');
         mnuEdit.menuItems.Add(mniCut);
-        MenuItem mniPaste = new MenuItem("Paste", MenuItem.MenuItemType.Item);
+        MenuItem mniPaste = new MenuItem("Paste", MenuItem.MenuItemType.Item, 'P');
         mnuEdit.menuItems.Add(mniPaste);
-        MenuItem mniDelete = new MenuItem("Delete", MenuItem.MenuItemType.Item);
+        MenuItem mniDelete = new MenuItem("Delete", MenuItem.MenuItemType.Item, 'D');
         mnuEdit.menuItems.Add(mniDelete);
         MenuItem mnuEditSep2 = new MenuItem("mnuEditSep2", MenuItem.MenuItemType.Separator);
         mnuEdit.menuItems.Add(mnuEditSep2);
-        MenuItem mniPreferences = new MenuItem("Preferences", MenuItem.MenuItemType.Item);
+        MenuItem mniPreferences = new MenuItem("Preferences", MenuItem.MenuItemType.Item, 'E');
         mniPreferences.OnClick = mniPreferences_OnClick;
         mnuEdit.menuItems.Add(mniPreferences);
         menuBar.menus.Add(mnuEdit);
 
-        Menu mnuHelp = new Menu("Help");
-        MenuItem mniAbout = new MenuItem("About", MenuItem.MenuItemType.Item);
+        Menu mnuHelp = new Menu("Help",'H');
+        MenuItem mniAbout = new MenuItem("About", MenuItem.MenuItemType.Item, 'A');
         mnuHelp.menuItems.Add(mniAbout);
         menuBar.menus.Add(mnuHelp);
 
