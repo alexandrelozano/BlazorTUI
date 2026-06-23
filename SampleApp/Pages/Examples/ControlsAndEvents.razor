@@ -1,0 +1,67 @@
+@page "/examples/controls-events"
+@using global::BlazorTUI.TUI
+@using Color = System.Drawing.Color
+
+<PageTitle>Controls and events example</PageTitle>
+
+<BlazorTUI.BlazorTUI screen="@screen" />
+
+@code {
+    private Screen screen = null!;
+    private TextBox nameInput = null!;
+    private CheckBox includeDetails = null!;
+    private TextBox eventStatus = null!;
+
+    protected override void OnInitialized()
+    {
+        screen = new Screen(60, 30);
+
+        var frame = new Frame(
+            "formFrame", "CONTROLS AND EVENTS", 8, 6, 44, 16,
+            Frame.BorderStyle.line, Color.Yellow, Color.DarkBlue);
+        screen.topContainer.AddContainer(frame);
+
+        frame.AddControl(new Label(
+            "nameLabel", "Name:", 3, 3, 10, Color.White, Color.DarkBlue));
+
+        nameInput = new TextBox(
+            "nameInput", "", 14, 3, 22, Color.Yellow, Color.Black);
+        nameInput.OnFocus = () => eventStatus.value = "Name focused";
+        nameInput.OnLostFocus = () => eventStatus.value = "Name lost focus";
+        frame.AddControl(nameInput);
+
+        includeDetails = new CheckBox(
+            "includeDetails", "Include details", 14, 6, 22,
+            Color.Yellow, Color.DarkBlue,
+            () => eventStatus.value = "Checkbox changed", false);
+        frame.AddControl(includeDetails);
+
+        var greetButton = new Button(
+            "greetButton", "Greet", 14, 9, 12, Color.White, Color.DarkGreen);
+        greetButton.OnClick = _ => ShowGreeting();
+        frame.AddControl(greetButton);
+
+        frame.AddControl(new Label(
+            "eventLabel", "Event:", 3, 12, 10, Color.White, Color.DarkBlue));
+
+        eventStatus = new TextBox(
+            "eventStatus", "Ready", 14, 12, 22, Color.Cyan, Color.Black)
+        {
+            TabStop = false
+        };
+        frame.AddControl(eventStatus);
+
+        screen.SetFocus("nameInput");
+    }
+
+    private void ShowGreeting()
+    {
+        string name = string.IsNullOrWhiteSpace(nameInput.value) ? "guest" : nameInput.value;
+        string suffix = includeDetails.value ? " Details enabled." : "";
+
+        var message = new MessageBox(
+            $"Hello, {name}!{suffix}", "EVENT RESULT", MessageBox.Buttons.OKOnly,
+            BorderStyle.line, Color.White, Color.DarkGreen, screen);
+        message.Show();
+    }
+}

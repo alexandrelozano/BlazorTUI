@@ -31,4 +31,42 @@ public class SampleAppSmokeTests : IClassFixture<WebApplicationFactory<Program>>
         Assert.Contains("--tui-columns:80; --tui-rows:40", html);
         Assert.Contains("data:image/png;base64,", html);
     }
+
+    [Fact]
+    public async Task ExampleCatalogListsFocusedExamples()
+    {
+        using HttpClient client = factory.CreateClient();
+
+        string html = await client.GetStringAsync("/examples");
+
+        Assert.Contains("BlazorTUI examples", html);
+        Assert.Contains("examples/controls-events", html);
+        Assert.Contains("examples/dialogs-menus", html);
+        Assert.Contains("examples/images", html);
+    }
+
+    [Theory]
+    [InlineData("/examples/controls-events", "Controls and events example")]
+    [InlineData("/examples/dialogs-menus", "Dialogs and menus example")]
+    [InlineData("/examples/images", "Images example")]
+    public async Task FocusedExampleStartsAndRendersTerminal(string route, string title)
+    {
+        using HttpClient client = factory.CreateClient();
+
+        string html = await client.GetStringAsync(route);
+
+        Assert.Contains($"<title>{title}</title>", html);
+        Assert.Contains("class=\"gridfs\"", html);
+        Assert.Contains("--tui-columns:60; --tui-rows:30", html);
+    }
+
+    [Fact]
+    public async Task ImageExampleEmbedsEncodedImage()
+    {
+        using HttpClient client = factory.CreateClient();
+
+        string html = await client.GetStringAsync("/examples/images");
+
+        Assert.Contains("data:image/png;base64,", html);
+    }
 }

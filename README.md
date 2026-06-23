@@ -169,9 +169,18 @@ var picture = new PictureBox(
 
 BlazorTUI displays the encoded image without resizing or converting the source data. If you are upgrading from an earlier version, replace the previous `System.Drawing.Image` constructor with one of the byte-array constructors above.
 
-## Complete example
+## Executable examples
 
-The [sample page](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Index.razor) demonstrates all controls, nested frames, menu shortcuts, message-box variants, callbacks, and an animated progress bar.
+The repository contains focused pages that can be run directly:
+
+| Example | Demonstrates |
+| --- | --- |
+| [Controls and events](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/ControlsAndEvents.razor) | Text input, checkbox state, focus callbacks, click callbacks, and focus order |
+| [Dialogs and menus](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/DialogsAndMenus.razor) | Menu shortcuts, custom modal dialogs, and message boxes |
+| [Images](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/Images.razor) | Loading encoded image bytes into a `PictureBox` |
+| [Complete showcase](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Index.razor) | All controls, nested frames, z-order, callbacks, and animation |
+
+Run `dotnet run --project SampleApp` from the repository root and open `/examples` to browse them. The example routes are exercised by the automated test suite so API changes cannot silently leave the documentation out of date.
 
 ## License
 

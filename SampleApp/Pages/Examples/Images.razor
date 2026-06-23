@@ -1,0 +1,34 @@
+@page "/examples/images"
+@using global::BlazorTUI.TUI
+@using Color = System.Drawing.Color
+@inject IWebHostEnvironment HostEnvironment
+
+<PageTitle>Images example</PageTitle>
+
+<BlazorTUI.BlazorTUI screen="@screen" />
+
+@code {
+    private Screen screen = null!;
+
+    protected override void OnInitialized()
+    {
+        screen = new Screen(60, 30);
+
+        var frame = new Frame(
+            "imageFrame", "PICTUREBOX", 8, 4, 44, 22,
+            Frame.BorderStyle.line, Color.Yellow, Color.DarkBlue);
+        screen.topContainer.AddContainer(frame);
+
+        frame.AddControl(new Label(
+            "imageLabel", "PNG bytes rendered by the browser", 6, 3, 32,
+            Color.White, Color.DarkBlue));
+
+        string imagePath = Path.Combine(
+            HostEnvironment.WebRootPath, "img", "github-mark.png");
+        byte[] imageData = File.ReadAllBytes(imagePath);
+
+        var picture = new PictureBox(
+            "logo", imageData, 14, 6, 16, 10, Color.White, Color.White);
+        frame.AddControl(picture);
+    }
+}
