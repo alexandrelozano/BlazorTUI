@@ -6,6 +6,20 @@ namespace BlazorTUI.Tests;
 public class ScreenAndLayoutTests
 {
     [Fact]
+    public void FrameTitleWritesExactlyOneCharacterPerCell()
+    {
+        var screen = new Screen(12, 6);
+        var frame = new Frame("frame", "FRAME", 1, 1, 9, 4, Frame.BorderStyle.line, Color.White, Color.Black);
+        screen.topContainer.AddContainer(frame);
+
+        screen.Render();
+
+        string title = string.Concat(screen.rows[1].Cells.Skip(3).Take(5).Select(cell => cell.character));
+        Assert.Equal("FRAME", title);
+        Assert.All(screen.rows.SelectMany(row => row.Cells), cell => Assert.True(cell.character.Length <= 1));
+    }
+
+    [Fact]
     public void RevisionChangesOnlyWhenRenderedCellsChange()
     {
         var screen = new Screen(8, 4);

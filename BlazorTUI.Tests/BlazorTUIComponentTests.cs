@@ -8,6 +8,22 @@ namespace BlazorTUI.Tests;
 public class BlazorTUIComponentTests : BunitContext
 {
     [Fact]
+    public void CursorRemainsVisibleOnBlankCell()
+    {
+        var screen = new Screen(8, 4);
+        var textBox = new TextBox("text", "", 0, 0, 4, Color.White, Color.Black);
+        screen.topContainer.AddControl(textBox);
+        screen.SetFocus("text");
+        screen.Render();
+
+        var component = Render<global::BlazorTUI.BlazorTUI>(parameters =>
+            parameters.Add(instance => instance.screen, screen));
+
+        string style = component.FindAll(".tilefs")[0].GetAttribute("style") ?? "";
+        Assert.Contains("box-shadow:inset 0 -0.08em currentColor", style);
+    }
+
+    [Fact]
     public async Task StaticScreenSkipsPeriodicComponentRenders()
     {
         var screen = new Screen(8, 4);
@@ -54,6 +70,25 @@ public class BlazorTUIComponentTests : BunitContext
         Assert.All(component.FindAll(".tilefs"), tile => Assert.True(tile.HasAttribute("b-blazortui")));
         Assert.Contains(">O</div>", component.Markup);
         Assert.Contains(">K</div>", component.Markup);
+    }
+
+    [Fact]
+    public void ComponentSupportsArbitraryScreenDimensions()
+    {
+        var screen = new Screen(10, 50);
+
+        var component = Render<global::BlazorTUI.BlazorTUI>(parameters =>
+            parameters.Add(instance => instance.screen, screen));
+
+        var grid = component.Find(".gridfs");
+        string style = grid.GetAttribute("style") ?? "";
+        Assert.DoesNotContain("sizefs-", grid.ClassName);
+        Assert.Contains("--tui-columns:10", style);
+        Assert.Contains("--tui-rows:50", style);
+        Assert.Contains("--tui-width-from-height:10cqh", style);
+        Assert.Contains("--tui-height-from-width:1000cqw", style);
+        Assert.Equal(500, component.FindAll(".tilefs").Count);
+        Assert.Contains("grid-column:10; grid-row:50", component.FindAll(".tilefs")[^1].GetAttribute("style"));
     }
 
     [Fact]

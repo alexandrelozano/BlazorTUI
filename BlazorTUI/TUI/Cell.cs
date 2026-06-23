@@ -19,8 +19,8 @@ namespace BlazorTUI.TUI
         private bool _styleDirty = true;
         private string _cssStyle = "";
 
-        public short x { get => _x; set => SetField(ref _x, value); }
-        public short y { get => _y; set => SetField(ref _y, value); }
+        public short x { get => _x; set => SetField(ref _x, value, true); }
+        public short y { get => _y; set => SetField(ref _y, value, true); }
         public Color foreColor { get => _foreColor; set => SetField(ref _foreColor, value, true); }
         public Color backgroundColor { get => _backgroundColor; set => SetField(ref _backgroundColor, value, true); }
 
@@ -65,12 +65,16 @@ namespace BlazorTUI.TUI
         private string BuildCssStyle()
         {
             var style = new StringBuilder(128);
-            style.Append("color:").Append(ToHex(_foreColor));
+            style.Append("grid-column:").Append(_x + 1).Append(';');
+            style.Append(" grid-row:").Append(_y + 1).Append(';');
+            style.Append(" color:").Append(ToHex(_foreColor));
             style.Append("; background-color:").Append(ToHex(_backgroundColor)).Append(';');
 
             switch (_textDecoration)
             {
-                case TextDecoration.UnderLine: style.Append(" text-decoration:underline;"); break;
+                case TextDecoration.UnderLine:
+                    style.Append(" text-decoration:underline; box-shadow:inset 0 -0.08em currentColor;");
+                    break;
                 case TextDecoration.OverLine: style.Append(" text-decoration:overline;"); break;
                 case TextDecoration.LineThrough: style.Append(" text-decoration:line-through;"); break;
             }

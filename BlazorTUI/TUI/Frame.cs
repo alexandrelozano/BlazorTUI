@@ -133,7 +133,7 @@ namespace BlazorTUI.TUI
                 for (int c = 0; c < title.Length; c++)
                 {
                     Cell cell = rows[YI].Cells[XI + c + ((width / 2) - (title.Length / 2))];
-                    cell.character = title.Substring(c);
+                    cell.character = title.Substring(c, 1);
 
                     if (borderStyle == BorderStyle.solid)
                     {

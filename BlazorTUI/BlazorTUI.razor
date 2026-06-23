@@ -3,7 +3,7 @@
 @implements IDisposable
 
 <div class="containerfs">
-    <div tabindex="0" class="gridfs sizefs-@screen.height" @onkeydown="HandleKeyDown" @onkeydown:preventDefault>
+    <div tabindex="0" class="gridfs" style="@GridCssVariables" @onkeydown="HandleKeyDown" @onkeydown:preventDefault>
         @foreach (Row row in screen.rows)
         {
             <TuiRow @key="row" Row="row" CellClicked="OnClickCell" />
@@ -19,6 +19,20 @@
     private Screen? _renderedScreen;
     private long _renderedRevision = -1;
     private bool _disposed;
+
+    private string GridCssVariables
+    {
+        get
+        {
+            double width = Math.Max(1d, screen.width);
+            double height = Math.Max(1d, screen.height);
+            double aspectRatio = width / (height * 2);
+            double inverseAspectRatio = 1 / aspectRatio;
+            double fontSize = 100 / height;
+
+            return FormattableString.Invariant($"--tui-columns:{screen.width}; --tui-rows:{screen.height}; --tui-width-from-height:{aspectRatio * 100}cqh; --tui-height-from-width:{inverseAspectRatio * 100}cqw; --tui-font-size:{fontSize}cqh;");
+        }
+    }
 
     protected override void OnInitialized()
     {

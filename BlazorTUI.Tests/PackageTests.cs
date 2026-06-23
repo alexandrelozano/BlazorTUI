@@ -25,6 +25,13 @@ public class PackageTests
         Assert.Contains(package.Entries, entry => entry.FullName == "icon.png");
         Assert.Contains(package.Entries, entry => entry.FullName == "lib/net10.0/BlazorTUI.dll");
 
+        ZipArchiveEntry scopedCssEntry = package.Entries.Single(entry =>
+            entry.FullName.StartsWith("staticwebassets/BlazorTUI.", StringComparison.Ordinal) &&
+            entry.FullName.EndsWith(".bundle.scp.css", StringComparison.Ordinal));
+        string scopedCss = ReadEntry(scopedCssEntry);
+        Assert.Contains("grid-template-columns: repeat(var(--tui-columns)", scopedCss);
+        Assert.DoesNotContain("sizefs-", scopedCss);
+
         string nuspec = ReadEntry(package, "BlazorTUI.nuspec");
         XDocument manifest = XDocument.Parse(nuspec);
         XElement metadata = manifest.Descendants().Single(element => element.Name.LocalName == "metadata");
@@ -38,6 +45,12 @@ public class PackageTests
     private static string ReadEntry(ZipArchive package, string name)
     {
         ZipArchiveEntry entry = package.GetEntry(name) ?? throw new InvalidOperationException($"Missing package entry {name}.");
+        using var reader = new StreamReader(entry.Open());
+        return reader.ReadToEnd();
+    }
+
+    private static string ReadEntry(ZipArchiveEntry entry)
+    {
         using var reader = new StreamReader(entry.Open());
         return reader.ReadToEnd();
     }

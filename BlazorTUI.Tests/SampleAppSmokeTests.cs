@@ -27,7 +27,8 @@ public class SampleAppSmokeTests : IClassFixture<WebApplicationFactory<Program>>
 
         response.EnsureSuccessStatusCode();
         Assert.Contains("_framework/blazor.server.js", html);
-        Assert.Contains("class=\"gridfs sizefs-40\"", html);
+        Assert.Contains("class=\"gridfs\"", html);
+        Assert.Contains("--tui-columns:80; --tui-rows:40", html);
         Assert.Contains("data:image/png;base64,", html);
     }
 }

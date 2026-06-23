@@ -95,7 +95,9 @@ Click inside the terminal before using the keyboard so the screen element receiv
 
 ## Screen and layout
 
-A `Screen` defines the terminal dimensions. Character cells use a 1:2 width-to-height ratio, so the screen width should be twice its height—for example, `80 × 40`. The built-in responsive styles support screen heights from 1 to 40 rows.
+A `Screen` defines the terminal dimensions. Character cells keep a 1:2 width-to-height ratio at any supported screen size; there is no predefined row limit. A screen twice as wide as it is high—for example, `80 × 40`—forms a square terminal, while other dimensions preserve their natural aspect ratio.
+
+The terminal grows to the available host size without overflowing the viewport. To embed it in a smaller area, give its parent an explicit width and height; the grid will fit inside that area automatically.
 
 Coordinates are zero-based. Controls use coordinates relative to their parent container, which makes it possible to move a complete group by repositioning its `Frame`.
 
