@@ -4,6 +4,9 @@ namespace BlazorTUI.TUI
 {
     public class Screen
     {
+        private Row[] _renderedRows = Array.Empty<Row>();
+        private long[] _renderedRowRevisions = Array.Empty<long>();
+
         public short width { get; set; }
 
         public short height { get; set; }
@@ -15,6 +18,8 @@ namespace BlazorTUI.TUI
         public IList<Dialog> dialogs;
 
         public MenuBar? menuBar;
+
+        public long Revision { get; private set; }
 
         public Screen(short width, short height)
         {
@@ -28,7 +33,7 @@ namespace BlazorTUI.TUI
             for (short y = 0; y < height; y++)
             {
                 Row row = new Row();
-                row.Cells = new List<Cell>();
+                var cells = new List<Cell>(width);
                 for (short x = 0; x < width; x++)
                 {
                     Cell cell = new Cell();
@@ -41,14 +46,17 @@ namespace BlazorTUI.TUI
                     cell.visible = true;
                     cell.scaleX = 1;
                     cell.scaleY = 1;    
-                    row.Cells.Add(cell);
+                    cells.Add(cell);
                 }
+                row.Cells = cells;
                 rows.Add(row);
             }
 
             topContainer = new Frame("TopContainer", "", 0, 0, width, height, Frame.BorderStyle.none, System.Drawing.Color.Yellow, System.Drawing.Color.Blue);
 
             this.topContainer = topContainer;
+
+            CaptureRenderedRows(incrementRevision: false);
         }
 
         public void SetFocus(string name)
@@ -83,6 +91,35 @@ namespace BlazorTUI.TUI
             }
 
             menuBar?.Render(rows);
+
+            CaptureRenderedRows(incrementRevision: true);
+        }
+
+        private void CaptureRenderedRows(bool incrementRevision)
+        {
+            bool changed = _renderedRows.Length != rows.Count;
+
+            if (changed)
+            {
+                _renderedRows = new Row[rows.Count];
+                _renderedRowRevisions = new long[rows.Count];
+            }
+
+            for (int index = 0; index < rows.Count; index++)
+            {
+                Row row = rows[index];
+                row.CaptureChanges();
+                long rowRevision = row.Revision;
+
+                if (!ReferenceEquals(_renderedRows[index], row) || _renderedRowRevisions[index] != rowRevision)
+                    changed = true;
+
+                _renderedRows[index] = row;
+                _renderedRowRevisions[index] = rowRevision;
+            }
+
+            if (changed && incrementRevision)
+                Revision++;
         }
     }
 }

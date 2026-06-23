@@ -1,155 +1,91 @@
-﻿@using global::BlazorTUI.TUI
+@using global::BlazorTUI.TUI
 
 @implements IDisposable
 
 <div class="containerfs">
     <div tabindex="0" class="gridfs sizefs-@screen.height" @onkeydown="HandleKeyDown" @onkeydown:preventDefault>
-        @{
-            if (screen.rows != null)
-            {
-                for (short y = 0; y < screen.rows.Count; y++)
-                {
-                    for (short x = 0; x < screen.rows[y].Cells.Count; x++)
-                    {
-                        Cell cell = @screen.rows[y].Cells[x];
-                        if (cell.visible == true)
-                        {
-                            <div class="tilefs" @onclick="() => OnClickCell(cell)" style="color:@ToHex(cell.foreColor); background-color:@ToHex(cell.backgroundColor); @TextDecoration(cell) @BackgroundImage(cell) @Scale(cell) white-space: pre;">@cell.character</div>
-                        }
-                    }
-                }
-            }
+        @foreach (Row row in screen.rows)
+        {
+            <TuiRow @key="row" Row="row" CellClicked="OnClickCell" />
         }
     </div>
 </div>
 
 @code {
-    [Parameter]
+    [Parameter, EditorRequired]
     public Screen screen { get; set; } = null!;
 
-    private System.Timers.Timer timer = new System.Timers.Timer(250);
+    private readonly System.Timers.Timer _timer = new(250);
+    private Screen? _renderedScreen;
+    private long _renderedRevision = -1;
+    private bool _disposed;
 
-    private static String ToHex(System.Drawing.Color c)
-    => $"#{c.R:X2}{c.G:X2}{c.B:X2}";
-
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
+        _timer.Elapsed += TimeElapsed;
+        _timer.AutoReset = true;
+        _timer.Enabled = true;
+    }
+
+    protected override void OnParametersSet()
+        => screen.Render();
+
+    protected override bool ShouldRender()
+        => !ReferenceEquals(_renderedScreen, screen) || _renderedRevision != screen.Revision;
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        _renderedScreen = screen;
+        _renderedRevision = screen.Revision;
+    }
+
+    private void TimeElapsed(object? sender, System.Timers.ElapsedEventArgs e)
+        => _ = InvokeAsync(RefreshFromTimer);
+
+    private void RefreshFromTimer()
+    {
+        if (_disposed)
+            return;
+
+        long previousRevision = screen.Revision;
         screen.Render();
 
-        timer.Elapsed += TimeElapsed;
-        timer.AutoReset = true;
-        timer.Enabled = true;
-    }
-
-    private string Character(Cell cell)
-    {
-        string result = "";
-
-        switch (cell.character)
-        {
-            case " ":
-                result = "&nbsp;";
-                break;
-            default:
-                result = cell.character;
-                break;
-        }
-
-        return result;
-    }
-
-    private string Scale(Cell cell)
-    {
-        string result = "";
-
-        if (cell.scaleX != 1 || cell.scaleY != 1)
-        {
-            result = "transform: ";
-
-            if (cell.scaleX != 1)
-                result = $"{result} scaleX({cell.scaleX})";
-
-            if (cell.scaleY != 1)
-                result = $"{result} scaleY({cell.scaleY})";
-
-            result = $"{result}; transform-origin: left top;";
-        }
-
-        return result;
-    }
-
-    private string BackgroundImage(Cell cell)
-    {
-        string result = "";
-
-        if (!String.IsNullOrEmpty(cell.backgroundImage))
-            result = $"background-image: url('{cell.backgroundImage}'); background-repeat: no-repeat; background-size: 100% 100%; background-position: center top; background-attachment: fixed; ";
-
-        return result;
-    }
-
-    private string TextDecoration(Cell cell)
-    {
-
-        string result = "";
-
-        switch (cell.textDecoration)
-        {
-            case Cell.TextDecoration.UnderLine:
-                result = $"text-decoration:Underline;";
-                break;
-            case Cell.TextDecoration.OverLine:
-                result = $"text-decoration:Overline;";
-                break;
-            case Cell.TextDecoration.LineThrough:
-                result = $"text-decoration:Line-through;";
-                break;
-            default:
-                result = "";
-                break;
-        }
-
-        return result;
-    }
-
-    private async void TimeElapsed(object? sender, System.Timers.ElapsedEventArgs e)
-    {
-        screen.Render();
-        await InvokeAsync(StateHasChanged);
+        if (screen.Revision != previousRevision)
+            StateHasChanged();
     }
 
     private void HandleKeyDown(KeyboardEventArgs e)
     {
         screen.KeyDown(e.Key, e.ShiftKey);
         screen.Render();
-        StateHasChanged();
     }
 
-    private async Task OnClickCell(Cell cell)
+    private void OnClickCell(Cell cell)
     {
         if (screen.dialogs.Count == 0)
         {
             bool handled = false;
             MenuBar? menuBar = screen.menuBar;
-            if (menuBar != null && menuBar.visible == true)
-            {
+            if (menuBar != null && menuBar.visible)
                 handled = menuBar.Click(cell.x, cell.y);
-            }
 
-            if (handled == false)
+            if (!handled)
                 screen.topContainer.Click(cell.x, cell.y);
         }
         else
         {
-            Dialog dialog = screen.dialogs.ElementAt(screen.dialogs.Count - 1);
+            Dialog dialog = screen.dialogs[^1];
             dialog.Click((short)(cell.x - dialog.X), (short)(cell.y - dialog.Y));
         }
+
+        screen.Render();
     }
 
     public void Dispose()
     {
-        timer.Enabled = false;
-        timer.Elapsed -= TimeElapsed;
-        timer.Dispose();
+        _disposed = true;
+        _timer.Enabled = false;
+        _timer.Elapsed -= TimeElapsed;
+        _timer.Dispose();
     }
 }

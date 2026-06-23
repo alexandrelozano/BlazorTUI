@@ -1,15 +1,28 @@
-﻿using System.Drawing;
-
+using System.Drawing;
+using System.Globalization;
+using System.Text;
 
 namespace BlazorTUI.TUI
 {
     public class Cell
     {
-        public short x { get; set; }
-        public short y { get; set; }
+        private short _x;
+        private short _y;
+        private Color _foreColor;
+        private Color _backgroundColor;
+        private TextDecoration _textDecoration;
+        private string _character = "";
+        private bool _visible;
+        private string _backgroundImage = "";
+        private double _scaleX;
+        private double _scaleY;
+        private bool _styleDirty = true;
+        private string _cssStyle = "";
 
-        public Color foreColor { get; set; }
-        public Color backgroundColor { get; set; }
+        public short x { get => _x; set => SetField(ref _x, value); }
+        public short y { get => _y; set => SetField(ref _y, value); }
+        public Color foreColor { get => _foreColor; set => SetField(ref _foreColor, value, true); }
+        public Color backgroundColor { get => _backgroundColor; set => SetField(ref _backgroundColor, value, true); }
 
         public enum TextDecoration
         {
@@ -19,17 +32,68 @@ namespace BlazorTUI.TUI
             None
         }
 
-        public TextDecoration textDecoration { get; set; }
+        public TextDecoration textDecoration { get => _textDecoration; set => SetField(ref _textDecoration, value, true); }
+        public string character { get => _character; set => SetField(ref _character, value ?? ""); }
+        public bool visible { get => _visible; set => SetField(ref _visible, value); }
+        public string backgroundImage { get => _backgroundImage; set => SetField(ref _backgroundImage, value ?? "", true); }
+        public double scaleX { get => _scaleX; set => SetField(ref _scaleX, value, true); }
+        public double scaleY { get => _scaleY; set => SetField(ref _scaleY, value, true); }
 
-        public string character { get; set; } = "";
+        internal string CssStyle
+        {
+            get
+            {
+                if (_styleDirty)
+                {
+                    _cssStyle = BuildCssStyle();
+                    _styleDirty = false;
+                }
 
-        public bool visible { get; set; }
+                return _cssStyle;
+            }
+        }
 
-        public string backgroundImage { get; set; } = "";
+        private void SetField<T>(ref T field, T value, bool affectsStyle = false)
+        {
+            if (EqualityComparer<T>.Default.Equals(field, value))
+                return;
 
-        public double scaleX { get; set;}
+            field = value;
+            _styleDirty |= affectsStyle;
+        }
 
-        public double scaleY { get; set;}
+        private string BuildCssStyle()
+        {
+            var style = new StringBuilder(128);
+            style.Append("color:").Append(ToHex(_foreColor));
+            style.Append("; background-color:").Append(ToHex(_backgroundColor)).Append(';');
 
+            switch (_textDecoration)
+            {
+                case TextDecoration.UnderLine: style.Append(" text-decoration:underline;"); break;
+                case TextDecoration.OverLine: style.Append(" text-decoration:overline;"); break;
+                case TextDecoration.LineThrough: style.Append(" text-decoration:line-through;"); break;
+            }
+
+            if (!string.IsNullOrEmpty(_backgroundImage))
+            {
+                style.Append(" background-image:url('").Append(_backgroundImage);
+                style.Append("'); background-repeat:no-repeat; background-size:100% 100%;");
+                style.Append(" background-position:center top; background-attachment:fixed;");
+            }
+
+            if (_scaleX != 1 || _scaleY != 1)
+            {
+                style.Append(" transform:");
+                if (_scaleX != 1) style.Append(" scaleX(").Append(_scaleX.ToString(CultureInfo.InvariantCulture)).Append(')');
+                if (_scaleY != 1) style.Append(" scaleY(").Append(_scaleY.ToString(CultureInfo.InvariantCulture)).Append(')');
+                style.Append("; transform-origin:left top;");
+            }
+
+            style.Append(" white-space:pre;");
+            return style.ToString();
+        }
+
+        private static string ToHex(Color color) => $"#{color.R:X2}{color.G:X2}{color.B:X2}";
     }
 }

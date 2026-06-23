@@ -30,6 +30,11 @@
     <Content Include="BlazorTUI.razor.scss" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="BlazorTUI.razor.css" CssScope="b-blazortui" />
+    <None Update="TuiRow.razor.css" CssScope="b-blazortui" />
+  </ItemGroup>
+
 
   <ItemGroup>
     <SupportedPlatform Include="browser" />

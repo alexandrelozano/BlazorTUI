@@ -6,6 +6,24 @@ namespace BlazorTUI.Tests;
 public class ScreenAndLayoutTests
 {
     [Fact]
+    public void RevisionChangesOnlyWhenRenderedCellsChange()
+    {
+        var screen = new Screen(8, 4);
+        var label = new Label("label", "OK", 0, 0, 2, Color.White, Color.Black);
+        screen.topContainer.AddControl(label);
+
+        screen.Render();
+        long renderedRevision = screen.Revision;
+
+        screen.Render();
+        Assert.Equal(renderedRevision, screen.Revision);
+
+        label.foreColor = Color.Yellow;
+        screen.Render();
+        Assert.True(screen.Revision > renderedRevision);
+    }
+
+    [Fact]
     public void ConstructorCreatesAddressableCellGrid()
     {
         var screen = new Screen(8, 4);

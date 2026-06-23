@@ -1,0 +1,32 @@
+@using System.ComponentModel
+@using global::BlazorTUI.TUI
+
+@attribute [EditorBrowsable(EditorBrowsableState.Never)]
+
+@foreach (Cell cell in Row.Cells)
+{
+    if (cell.visible)
+    {
+        <div @key="cell" class="tilefs" @onclick="() => CellClicked.InvokeAsync(cell)" style="@cell.CssStyle">@cell.character</div>
+    }
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public Row Row { get; set; } = null!;
+
+    [Parameter]
+    public EventCallback<Cell> CellClicked { get; set; }
+
+    private Row? _renderedRow;
+    private long _renderedRevision = -1;
+
+    protected override bool ShouldRender()
+        => !ReferenceEquals(_renderedRow, Row) || _renderedRevision != Row.Revision;
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        _renderedRow = Row;
+        _renderedRevision = Row.Revision;
+    }
+}
