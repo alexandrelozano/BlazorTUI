@@ -12,7 +12,7 @@ namespace BlazorTUI.TUI
 {
     public class TimeBox : TextBox
     {
-        public TimeOnly? value;
+        public new TimeOnly? value;
 
         public TimeBox(string name, TimeOnly? value, short X, short Y, Color forecolor, Color backgroundcolor) : base(name, "", X, Y, 6, forecolor, backgroundcolor)
         {

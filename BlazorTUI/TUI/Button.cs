@@ -30,8 +30,7 @@ namespace BlazorTUI.TUI
             {
                 container.TopContainer().SetFocus(name);
 
-                if (OnClick != null) 
-                    OnClick.Invoke(this);
+                OnClick?.Invoke(this);
 
                 handled = true;
             }
@@ -50,13 +49,11 @@ namespace BlazorTUI.TUI
                     case "Tab":
                         break;
                     case " ":
-                        if (OnClick != null)
-                            OnClick.Invoke(this);
+                        OnClick?.Invoke(this);
                         handled = true;
                         break;
                     case "Enter":
-                        if (OnClick != null)
-                            OnClick.Invoke(this);
+                        OnClick?.Invoke(this);
                         handled = true; 
                         break;
                     case "Backspace":

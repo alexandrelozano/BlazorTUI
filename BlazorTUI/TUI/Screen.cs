@@ -14,7 +14,7 @@ namespace BlazorTUI.TUI
 
         public IList<Dialog> dialogs;
 
-        public MenuBar menuBar;
+        public MenuBar? menuBar;
 
         public Screen(short width, short height)
         {
@@ -61,10 +61,12 @@ namespace BlazorTUI.TUI
 
         public void KeyDown(string key, bool shiftKey)
         {
-            if (key=="Alt" && this.menuBar != null)
-                this.menuBar.showShortCutkeys = !this.menuBar.showShortCutkeys;
-            if (this.menuBar != null && (this.menuBar.showShortCutkeys || this.menuBar.OpenedMenu()!=null))
-                this.menuBar.KeyDown(key, shiftKey);
+            MenuBar? activeMenuBar = menuBar;
+
+            if (key == "Alt" && activeMenuBar != null)
+                activeMenuBar.showShortCutkeys = !activeMenuBar.showShortCutkeys;
+            if (activeMenuBar != null && (activeMenuBar.showShortCutkeys || activeMenuBar.OpenedMenu() != null))
+                activeMenuBar.KeyDown(key, shiftKey);
             else if (dialogs.Count == 0)
                 topContainer.KeyDown(key, shiftKey);
             else
@@ -80,8 +82,7 @@ namespace BlazorTUI.TUI
                 dialog.Render(rows);
             }
 
-            if (menuBar != null)
-                menuBar.Render(rows);
+            menuBar?.Render(rows);
         }
     }
 }

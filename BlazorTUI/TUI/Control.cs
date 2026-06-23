@@ -11,9 +11,9 @@ namespace BlazorTUI.TUI
 {
     public abstract class Control
     {
-        public string name { get; set; }
+        public string name { get; set; } = "";
 
-        public Container container { get; set; }
+        public Container container { get; set; } = null!;
 
         public short X {  get; set; }
 
@@ -41,14 +41,12 @@ namespace BlazorTUI.TUI
                     if (value == true)
                     {
                         this.focus = value;
-                        if (OnFocus != null)
-                            OnFocus.Invoke();
+                        OnFocus?.Invoke();
                     }
                     else
                     {
                         this.focus = value;
-                        if (OnLostFocus != null)
-                            OnLostFocus.Invoke();
+                        OnLostFocus?.Invoke();
                     }
                 }
             }
@@ -68,11 +66,11 @@ namespace BlazorTUI.TUI
 
         public virtual bool Click(short X, short Y) { return false; }
 
-        public Action<Control> OnClick;
+        public Action<Control>? OnClick;
 
-        public Action OnFocus;
+        public Action? OnFocus;
 
-        public Action OnLostFocus;
+        public Action? OnLostFocus;
 
     }
 }

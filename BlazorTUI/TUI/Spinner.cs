@@ -15,7 +15,7 @@ namespace BlazorTUI.TUI
         SpinnerType spinnerType;
 
         private System.Timers.Timer tt;
-        private string elements;
+        private readonly string elements;
         private short n;
 
         public Spinner(string name, SpinnerType spinnerType, short X, short Y, Color forecolor, Color backgroundcolor)
@@ -29,18 +29,13 @@ namespace BlazorTUI.TUI
 
             n = 0;
 
-            switch (spinnerType)
+            elements = spinnerType switch
             {
-                case SpinnerType.ArrowSpinner:
-                    elements = "←↖↑↗→↘↓↙";
-                    break;
-                case SpinnerType.GrowVerticalSpinner:
-                    elements = "▁▃▄▅▆▇▆▅▄▃";
-                    break;
-                case SpinnerType.Star:
-                    elements = "|/-\\";
-                    break;
-            }
+                SpinnerType.ArrowSpinner => "←↖↑↗→↘↓↙",
+                SpinnerType.GrowVerticalSpinner => "▁▃▄▅▆▇▆▅▄▃",
+                SpinnerType.Star => "|/-\\",
+                _ => throw new ArgumentOutOfRangeException(nameof(spinnerType), spinnerType, "Unsupported spinner type.")
+            };
 
             tt = new System.Timers.Timer(250);
             tt.Elapsed += new System.Timers.ElapsedEventHandler(TimerElapsed);

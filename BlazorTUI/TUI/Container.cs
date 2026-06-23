@@ -305,11 +305,6 @@ namespace BlazorTUI.TUI
 
         public short YOffset()
         {
-            if (name == "dlgConfirm")
-            {
-                string a = "a";
-            }
-
             if (this.parent != null)
                 return (short)(this.Y + this.parent.YOffset());
             else

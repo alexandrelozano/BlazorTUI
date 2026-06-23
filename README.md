@@ -1,61 +1,176 @@
 # BlazorTUI
-## Blazor Server Text User Interface
 
-![Sample](https://raw.githubusercontent.com/alexandrelozano/BlazorTUI/master/Resources/sampleapp.gif)
+BlazorTUI is a Razor Class Library for building retro text user interfaces in Blazor Server applications. It provides a fixed-size character grid with keyboard and mouse interaction, nested layouts, menus, dialogs, colors, and animated controls.
 
-[Nuget](https://www.nuget.org/packages/BlazorTUI)
+[![NuGet](https://img.shields.io/nuget/v/BlazorTUI.svg)](https://www.nuget.org/packages/BlazorTUI)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/alexandrelozano/BlazorTUI/blob/master/LICENSE.txt)
 
-### Avaliable controls:
-- Button
-- CheckBox
-- ColorPicker
-- DateBox
-- Dialog
-- Frame
-- GridView
-- Label
-- ListBox
-- MenuBar
-- MessageBox
-- NumericBox
-- PictureBox
-- ProgressBar
-- RadioButton
-- Spinner
-- TextArea
-- TextBox
-- TimeBox
+![BlazorTUI sample application](https://raw.githubusercontent.com/alexandrelozano/BlazorTUI/master/Resources/sampleapp.gif)
 
-You can use Tab key to go to next control, Shift+Tab keys to go to previous control, Space to select and cursors keys.
+## Features
 
-### Basic instructions
+- Character-cell rendering with foreground and background colors.
+- Nested frames with relative coordinates and z-order.
+- Keyboard focus, `Tab`/`Shift+Tab` navigation, and mouse interaction.
+- Menu bars with shortcuts and keyboard navigation.
+- Modal dialogs and configurable message boxes.
+- Responsive terminal scaling.
 
-First create a screen, this must have double width than height
-```
-Screen screen = new Screen(80, 40);
+## Requirements
+
+- A Blazor Server application.
+- The .NET 10 SDK.
+
+## Installation
+
+Install BlazorTUI from NuGet:
+
+```powershell
+dotnet add package BlazorTUI
 ```
 
-On the razor page declare screen tag
-```
-<BlazorTUI.BlazorTUI screen=@screen></BlazorTUI.BlazorTUI>
+## Quick start
+
+Add the BlazorTUI namespace to a Razor page, create a `Screen`, and render it with the component:
+
+```razor
+@page "/terminal"
+@using BlazorTUI.TUI
+@using Color = System.Drawing.Color
+
+<BlazorTUI.BlazorTUI screen="@screen" />
+
+@code {
+    private readonly Screen screen = CreateScreen();
+
+    private static Screen CreateScreen()
+    {
+        var screen = new Screen(80, 40);
+
+        var frame = new Frame(
+            "mainFrame",
+            "CUSTOMER",
+            12,
+            5,
+            56,
+            12,
+            Frame.BorderStyle.line,
+            Color.Yellow,
+            Color.DarkBlue);
+
+        screen.topContainer.AddContainer(frame);
+
+        frame.AddControl(new Label(
+            "nameLabel", "Name:", 2, 2, 12, Color.White, Color.DarkBlue));
+
+        frame.AddControl(new TextBox(
+            "nameInput", "", 14, 2, 24, Color.Yellow, Color.Black));
+
+        var saveButton = new Button(
+            "saveButton", "Save", 14, 5, 10, Color.White, Color.DarkGreen);
+
+        saveButton.OnClick = _ =>
+        {
+            var message = new MessageBox(
+                "Saved",
+                "Result",
+                MessageBox.Buttons.OKOnly,
+                BorderStyle.line,
+                Color.White,
+                Color.DarkGreen,
+                screen);
+
+            message.Show();
+        };
+
+        frame.AddControl(saveButton);
+        screen.SetFocus("nameInput");
+
+        return screen;
+    }
+}
 ```
 
-Then create a top container and assign to the screen
-```
-Frame frm1 = new Frame("frm1", "FRAME", 13, 4, 56, 29, Frame.BorderStyle.solid, System.Drawing.Color.Cornsilk, System.Drawing.Color.RebeccaPurple);
-screen.topContainer.AddContainer(frm1);
+Click inside the terminal before using the keyboard so the screen element receives browser focus.
+
+## Screen and layout
+
+A `Screen` defines the terminal dimensions. Character cells use a 1:2 width-to-height ratio, so the screen width should be twice its height—for example, `80 × 40`. The built-in responsive styles support screen heights from 1 to 40 rows.
+
+Coordinates are zero-based. Controls use coordinates relative to their parent container, which makes it possible to move a complete group by repositioning its `Frame`.
+
+Every control must have a non-empty, unique name. Add elements through:
+
+- `AddContainer` for nested frames and containers.
+- `AddControl` for controls inside a container.
+
+These methods initialize parent references, tab order, and z-order. Use `screen.SetFocus("controlName")` to select the initial control.
+
+## Available controls
+
+| Category | Controls |
+| --- | --- |
+| Layout | `Frame` |
+| Text and input | `Label`, `TextBox`, `TextArea`, `NumericBox`, `DateBox`, `TimeBox` |
+| Selection | `CheckBox`, `RadioButton`, `ListBox`, `ColorPicker` |
+| Actions and navigation | `Button`, `MenuBar`, `Menu`, `MenuItem` |
+| Data and feedback | `GridView`, `ProgressBar`, `Spinner`, `PictureBox` |
+| Modal UI | `Dialog`, `MessageBox` |
+
+Control constructors accept `System.Drawing.Color` values for foreground and background colors. Interactive controls expose callbacks such as `OnClick`, `OnFocus`, and `OnLostFocus`.
+
+## Keyboard and mouse interaction
+
+- `Tab`: move to the next focusable control.
+- `Shift+Tab`: move to the previous focusable control.
+- `Enter` or `Space`: activate buttons and selection controls.
+- Arrow keys: navigate text, lists, grids, color pickers, and menus where applicable.
+- `Alt`: show menu shortcut keys.
+- Mouse click: focus or activate the control under the selected cell.
+
+When a dialog is open, it receives input until it is closed.
+
+## Images
+
+`PictureBox` accepts encoded image bytes. The default constructor treats the data as PNG:
+
+```csharp
+byte[] imageData = File.ReadAllBytes("logo.png");
+
+var picture = new PictureBox(
+    "logo",
+    imageData,
+    47,
+    17,
+    10,
+    5,
+    Color.White,
+    Color.Black);
+
+frame.AddControl(picture);
 ```
 
-Now we can add some containers
-```
-Frame frm2 = new Frame("frm2", "CHILD FRAME", 3, 3, 43, 12, Frame.BorderStyle.line, System.Drawing.Color.Yellow, System.Drawing.Color.Green);
-frm1.AddContainer(frm2);
+For another browser-supported format, provide its MIME type after the byte array:
+
+```csharp
+var picture = new PictureBox(
+    "photo",
+    jpegData,
+    "image/jpeg",
+    47,
+    17,
+    10,
+    5,
+    Color.White,
+    Color.Black);
 ```
 
-And inside every container we can add controls
-```
-Label lblName = new Label("lblName", "Name:", 2, 2, 15, System.Drawing.Color.Yellow, System.Drawing.Color.Green);
-frm2.AddControl(lblName);
-TextBox txtName = new TextBox("txtName", "", 2, 3, 15, System.Drawing.Color.Yellow, System.Drawing.Color.Black);
-frm2.AddControl(txtName);
-```
+BlazorTUI displays the encoded image without resizing or converting the source data. If you are upgrading from an earlier version, replace the previous `System.Drawing.Image` constructor with one of the byte-array constructors above.
+
+## Complete example
+
+The [sample page](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Index.razor) demonstrates all controls, nested frames, menu shortcuts, message-box variants, callbacks, and an animated progress bar.
+
+## License
+
+BlazorTUI is available under the [MIT License](https://github.com/alexandrelozano/BlazorTUI/blob/master/LICENSE.txt).

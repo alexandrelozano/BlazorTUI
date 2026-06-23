@@ -13,12 +13,12 @@ namespace BlazorTUI.TUI
     {
         public class GridRow
         {
-            public string[] cells;
+            public string[] cells = Array.Empty<string>();
         }
 
         public class GridColumn
         {
-            public string title;
+            public string title = "";
             public short width;
         }
 

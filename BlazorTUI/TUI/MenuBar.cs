@@ -34,7 +34,7 @@ namespace BlazorTUI.TUI
         {
             bool handled = true;
 
-            Menu mnuOpen = OpenedMenu();
+            Menu? mnuOpen = OpenedMenu();
 
             if (mnuOpen == null)
             {
@@ -100,8 +100,7 @@ namespace BlazorTUI.TUI
                     case "Enter":
                         if (mnuOpen.selectedItem > 0)
                         {
-                            if (mnuOpen.menuItems[mnuOpen.selectedItem - 1].OnClick != null)
-                                mnuOpen.menuItems[mnuOpen.selectedItem - 1].OnClick.Invoke();
+                            mnuOpen.menuItems[mnuOpen.selectedItem - 1].OnClick?.Invoke();
 
                             mnuOpen.selectedItem = 0;
                             mnuOpen.opended = false;
@@ -112,8 +111,7 @@ namespace BlazorTUI.TUI
                         foreach (MenuItem menuItem in mnuOpen.menuItems)
                             if (menuItem.shortCutKey != null && char.ToUpperInvariant(key[0]) == char.ToUpperInvariant(menuItem.shortCutKey.Value))
                             {
-                                if (menuItem.OnClick != null)
-                                    menuItem.OnClick.Invoke();
+                                menuItem.OnClick?.Invoke();
 
                                 mnuOpen.opended = false;
                                 showShortCutkeys = false;
@@ -169,8 +167,7 @@ namespace BlazorTUI.TUI
                                         {
                                             if (Y == (y + 1))
                                             {
-                                                if (menus[m].menuItems[y].OnClick != null)
-                                                    menus[m].menuItems[y].OnClick.Invoke();
+                                                menus[m].menuItems[y].OnClick?.Invoke();
 
                                                 handled = true;
                                                 break;
@@ -203,7 +200,7 @@ namespace BlazorTUI.TUI
         {
             if (visible == true && rows != null && rows.Count > 0)
             {
-                Menu mnuOpened = OpenedMenu();
+                Menu? mnuOpened = OpenedMenu();
 
                 int c = 0;
                 int m = 0;
@@ -285,9 +282,9 @@ namespace BlazorTUI.TUI
             }
         }
 
-        public Menu OpenedMenu()
+        public Menu? OpenedMenu()
         {
-            Menu mnuOpen = null;
+            Menu? mnuOpen = null;
             foreach (Menu menu in menus)
                 if (menu.opended)
                     mnuOpen = menu;

@@ -19,7 +19,7 @@ namespace BlazorTUI.TUI
 
         public MenuItemType menuItemType;
 
-        public Action OnClick;
+        public Action? OnClick;
 
         public MenuItem(string text, MenuItemType menuItemType, char? shortCutKey = null)
         {

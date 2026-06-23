@@ -5,6 +5,6 @@ namespace BlazorTUI.TUI
     public class Row
     {
         public short y { get; set; }
-        public IList<Cell> Cells { get; set; }
+        public IList<Cell> Cells { get; set; } = new List<Cell>();
     }
 }

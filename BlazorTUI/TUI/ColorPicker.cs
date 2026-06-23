@@ -14,12 +14,12 @@ namespace BlazorTUI.TUI
         public Color color;
         public bool showColorName;
 
-        public Color foreColor;
-        public Color backgroundColor;
+        public new Color foreColor;
+        public new Color backgroundColor;
 
         private Screen screen;
 
-        private Dialog dlgColors;
+        private Dialog? dlgColors;
 
         public ColorPicker(string name, Color color, bool showColorName, short X, short Y, short width, Color foreColor, Color backgroundColor, Screen screen)
         {
@@ -41,22 +41,23 @@ namespace BlazorTUI.TUI
             short widthDlg = (short)(container.TopContainer().width / 2);
             short heigthDlg = (short)(container.TopContainer().height / 2);
 
-            dlgColors = new Dialog("dlgColors", "Pick a color", widthDlg, heigthDlg, BorderStyle.line, foreColor, backgroundColor, screen);
+            Dialog dialog = new Dialog("dlgColors", "Pick a color", widthDlg, heigthDlg, BorderStyle.line, foreColor, backgroundColor, screen);
+            dlgColors = dialog;
 
-            Button bttCancel = new Button("bttCancel", "Cancel", 2, (short)(dlgColors.height - 2), 10, foreColor, backgroundColor);
+            Button bttCancel = new Button("bttCancel", "Cancel", 2, (short)(dialog.height - 2), 10, foreColor, backgroundColor);
             bttCancel.OnClick = bttCancel_OnClick;
             bttCancel.Focus = true;
-            dlgColors.AddControl(bttCancel);
+            dialog.AddControl(bttCancel);
 
             var colorProperties = color.GetType().GetProperties(BindingFlags.Static | BindingFlags.Public);
-            var colors = colorProperties.Select(prop => (Color)prop.GetValue(null, null));
+            var colors = colorProperties.Select(prop => prop.GetValue(null, null)).OfType<Color>();
             short xc = 2;
             short yc = 2;
             foreach (Color myColor in colors)
             {
                 Button bttColor = new Button($"{myColor.Name}", " ", xc, yc, 3, foreColor, myColor);
                 bttColor.OnClick = bttDlgColor_OnClick;
-                dlgColors.AddControl(bttColor);
+                dialog.AddControl(bttColor);
 
                 xc += 3;
 
@@ -66,18 +67,18 @@ namespace BlazorTUI.TUI
                 }
             }
 
-            dlgColors.Show();
+            dialog.Show();
         }
 
         public void bttDlgColor_OnClick(Control sender)
         {
             color = Color.FromName(sender.name);
-            dlgColors.Close();
+            dlgColors?.Close();
         }
 
         public void bttCancel_OnClick(Control sender)
         {
-            dlgColors.Close();
+            dlgColors?.Close();
         }
 
         public override bool Click(short X, short Y)
@@ -90,8 +91,7 @@ namespace BlazorTUI.TUI
 
                 PickColor();
 
-                if (OnClick != null)
-                    OnClick.Invoke(this);
+                OnClick?.Invoke(this);
 
                 handled = true;
             }
@@ -112,15 +112,13 @@ namespace BlazorTUI.TUI
                     case " ":
                         PickColor();
 
-                        if (OnClick != null)
-                            OnClick.Invoke(this);
+                        OnClick?.Invoke(this);
                         handled = true;
                         break;
                     case "Enter":
                         PickColor();
 
-                        if (OnClick != null)
-                            OnClick.Invoke(this);
+                        OnClick?.Invoke(this);
                         handled = true;
                         break;
                     case "Backspace":

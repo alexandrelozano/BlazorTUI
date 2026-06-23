@@ -143,6 +143,8 @@ namespace BlazorTUI.TUI
                     bttIgnore.OnClick = bttIgnore_OnClick;
                     dialog.AddControl(bttIgnore);
                     break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(buttons), buttons, "Unsupported message box button configuration.");
             }
         }
 

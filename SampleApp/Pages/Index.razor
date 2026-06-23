@@ -3,6 +3,7 @@
 @using BlazorTUI
 @using BlazorTUI.TUI
 @using System.Timers;
+@inject IWebHostEnvironment HostEnvironment
 
 <PageTitle>Index</PageTitle>
 
@@ -10,17 +11,17 @@
 
 @code {
 
-    private Screen screen;
+    private Screen screen = null!;
 
-    private Frame frm1;
-    private Frame frm2;
+    private Frame frm1 = null!;
+    private Frame frm2 = null!;
 
-    private System.Timers.Timer tt;
-    private ProgressBar pgbProgressBar;
+    private System.Timers.Timer tt = null!;
+    private ProgressBar pgbProgressBar = null!;
 
-    private ListBox lsbMessageBoxType;
+    private ListBox lsbMessageBoxType = null!;
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
         screen = new Screen(80, 40);
 
@@ -201,8 +202,8 @@
         Label lblPictureBox = new Label("lblPictureBox", "PictureBox:", 47, 16, 11, System.Drawing.Color.Yellow, System.Drawing.Color.RebeccaPurple);
         frm1.AddControl(lblPictureBox);
 
-        System.Drawing.Bitmap bm = new System.Drawing.Bitmap(@".\wwwroot\img\github-mark.png");
-        PictureBox picTest = new PictureBox("picTest", bm, 47, 17, 10, 5, System.Drawing.Color.Yellow, System.Drawing.Color.White);
+        byte[] imageData = File.ReadAllBytes(Path.Combine(HostEnvironment.WebRootPath, "img", "github-mark.png"));
+        PictureBox picTest = new PictureBox("picTest", imageData, 47, 17, 10, 5, System.Drawing.Color.Yellow, System.Drawing.Color.White);
         frm1.AddControl(picTest);
 
         screen.SetFocus("txtName");

@@ -21,11 +21,11 @@ namespace BlazorTUI.TUI
 
         public TextDecoration textDecoration { get; set; }
 
-        public string character { get; set; }
+        public string character { get; set; } = "";
 
         public bool visible { get; set; }
 
-        public string backgroundImage {get; set;}
+        public string backgroundImage { get; set; } = "";
 
         public double scaleX { get; set;}
 

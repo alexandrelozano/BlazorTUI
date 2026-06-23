@@ -23,7 +23,7 @@
 
 @code {
     [Parameter]
-    public Screen screen { get; set; }
+    public Screen screen { get; set; } = null!;
 
     private System.Timers.Timer timer = new System.Timers.Timer(250);
 
@@ -81,7 +81,7 @@
         string result = "";
 
         if (!String.IsNullOrEmpty(cell.backgroundImage))
-            result = $"background-image: url('data:image/png;base64,{cell.backgroundImage}'); background-repeat: no-repeat; background-size: 100% 100%; background-position: center top; background-attachment: fixed; ";
+            result = $"background-image: url('{cell.backgroundImage}'); background-repeat: no-repeat; background-size: 100% 100%; background-position: center top; background-attachment: fixed; ";
 
         return result;
     }
@@ -128,9 +128,10 @@
         if (screen.dialogs.Count == 0)
         {
             bool handled = false;
-            if (screen.menuBar != null && screen.menuBar.visible == true)
+            MenuBar? menuBar = screen.menuBar;
+            if (menuBar != null && menuBar.visible == true)
             {
-                handled = screen.menuBar.Click(cell.x, cell.y);
+                handled = menuBar.Click(cell.x, cell.y);
             }
 
             if (handled == false)

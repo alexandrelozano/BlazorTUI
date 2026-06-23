@@ -10,7 +10,7 @@ namespace BlazorTUI.TUI
 {
     public class DateBox : TextBox
     {
-        public DateOnly? value;
+        public new DateOnly? value;
 
         public enum DateFormat
         {

@@ -6,7 +6,7 @@ namespace BlazorTUI.TUI
     public class RadioButton : Control
     {
         string text;
-        Action OnClick;
+        private readonly Action onClick;
         bool value { get; set; }
 
         public RadioButton(string name, string text, short X, short Y, short width, Color forecolor, Color backgroundcolor, Action OnClick, bool value)
@@ -28,7 +28,7 @@ namespace BlazorTUI.TUI
             this.text = $"    {text}";
             this.foreColor = forecolor;
             this.backgroundColor = backgroundcolor;
-            this.OnClick = OnClick;
+            this.onClick = OnClick;
 
             this.Focus = false;
             this.TabStop = true;
@@ -43,7 +43,7 @@ namespace BlazorTUI.TUI
             {
                 Check();
                 container.TopContainer().SetFocus(name);
-                OnClick.Invoke();
+                onClick.Invoke();
                 handled = true;
             }
 
