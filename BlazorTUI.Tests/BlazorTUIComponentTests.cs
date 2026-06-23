@@ -7,6 +7,12 @@ namespace BlazorTUI.Tests;
 
 public class BlazorTUIComponentTests : BunitContext
 {
+    public BlazorTUIComponentTests()
+    {
+        BunitJSModuleInterop keyboardModule = JSInterop.SetupModule("./_content/BlazorTUI/blazorTui.js");
+        keyboardModule.Mode = JSRuntimeMode.Loose;
+    }
+
     [Fact]
     public void CursorRemainsVisibleOnBlankCell()
     {
@@ -73,6 +79,26 @@ public class BlazorTUIComponentTests : BunitContext
     }
 
     [Fact]
+    public void ComponentExposesAnAccessibleTerminalSurface()
+    {
+        var screen = new Screen(4, 2);
+        screen.TopContainer.AddControl(new Label("label", "OK", 0, 0, 2, Color.White, Color.Black));
+
+        var component = Render<global::BlazorTUI.BlazorTUI>(parameters => parameters
+            .Add(instance => instance.screen, screen)
+            .Add(instance => instance.AriaLabel, "Order entry terminal")
+            .Add(instance => instance.AriaDescription, "Enter and submit an order."));
+
+        var grid = component.Find(".gridfs");
+        Assert.Equal("application", grid.GetAttribute("role"));
+        Assert.Equal("Order entry terminal", grid.GetAttribute("aria-label"));
+        Assert.Contains("Tab", grid.GetAttribute("aria-keyshortcuts"));
+        Assert.Contains("Enter and submit an order.", component.Markup);
+        Assert.Contains("OK", component.Find("pre.blazortui-visually-hidden").TextContent);
+        Assert.All(component.FindAll(".tilefs"), tile => Assert.Equal("true", tile.GetAttribute("aria-hidden")));
+    }
+
+    [Fact]
     public void ComponentSupportsArbitraryScreenDimensions()
     {
         var screen = new Screen(10, 50);
@@ -115,5 +141,40 @@ public class BlazorTUIComponentTests : BunitContext
 
         component.FindAll(".tilefs")[16].Click();
         Assert.True(clicked);
+    }
+
+    [Fact]
+    public void ModifiedBrowserShortcutsAreNotForwardedToControls()
+    {
+        var screen = new Screen(8, 4);
+        var textBox = new TextBox("text", "", 0, 0, 4, Color.White, Color.Black);
+        screen.TopContainer.AddControl(textBox);
+        screen.SetFocus("text");
+
+        var component = Render<global::BlazorTUI.BlazorTUI>(parameters =>
+            parameters.Add(instance => instance.screen, screen));
+        var grid = component.Find(".gridfs");
+
+        grid.KeyDown(new KeyboardEventArgs { Key = "c", CtrlKey = true });
+        grid.KeyDown(new KeyboardEventArgs { Key = "k", MetaKey = true });
+        grid.KeyDown(new KeyboardEventArgs { Key = "x", AltKey = true });
+        Assert.Equal("", textBox.Value);
+
+        grid.KeyDown(new KeyboardEventArgs { Key = "a" });
+        Assert.Equal("a", textBox.Value);
+    }
+
+    [Fact]
+    public void OpenDialogsAreAnnounced()
+    {
+        var screen = new Screen(12, 6);
+        var component = Render<global::BlazorTUI.BlazorTUI>(parameters =>
+            parameters.Add(instance => instance.screen, screen));
+        var dialog = new Dialog("confirm", "Confirm", 10, 4, BorderStyle.Line, Color.White, Color.Black, screen);
+
+        dialog.Show();
+        component.Render(parameters => parameters.Add(instance => instance.screen, screen));
+
+        Assert.Contains("Dialog opened: Confirm", component.Find("[role=status]").TextContent);
     }
 }

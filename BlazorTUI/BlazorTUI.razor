@@ -1,9 +1,28 @@
 @using global::BlazorTUI.TUI
+@using Microsoft.JSInterop
 
 @implements IDisposable
+@inject IJSRuntime JSRuntime
 
 <div class="containerfs">
-    <div tabindex="0" class="gridfs" style="@GridCssVariables" @onkeydown="HandleKeyDown" @onkeydown:preventDefault>
+    <span id="@InstructionsId" class="blazortui-visually-hidden">@KeyboardInstructions</span>
+    @if (!string.IsNullOrWhiteSpace(AriaDescription))
+    {
+        <span id="@DescriptionId" class="blazortui-visually-hidden">@AriaDescription</span>
+    }
+    <pre id="@ScreenTextId" class="blazortui-visually-hidden">@AccessibleScreenText</pre>
+    <span class="blazortui-visually-hidden" role="status" aria-live="polite" aria-atomic="true">@AccessibilityStatusText</span>
+
+    <div @ref="_gridElement"
+         tabindex="0"
+         class="gridfs"
+         style="@GridCssVariables"
+         role="application"
+         aria-label="@AriaLabel"
+         aria-roledescription="text user interface"
+         aria-describedby="@DescriptionIds"
+         aria-keyshortcuts="Alt Tab Shift+Tab ArrowUp ArrowDown ArrowLeft ArrowRight Enter Space Backspace Home End"
+         @onkeydown="HandleKeyDown">
         @foreach (Row row in screen.rows)
         {
             <TuiRow @key="row" Row="row" CellClicked="OnClickCell" />
@@ -15,10 +34,65 @@
     [Parameter, EditorRequired]
     public Screen screen { get; set; } = null!;
 
+    [Parameter]
+    public string AriaLabel { get; set; } = "Text user interface";
+
+    [Parameter]
+    public string? AriaDescription { get; set; }
+
+    [Parameter]
+    public string KeyboardInstructions { get; set; } = "Use Tab and Shift+Tab to move between controls. Use the arrow keys to navigate, and Enter or Space to activate the focused control.";
+
     private readonly System.Timers.Timer _timer = new(250);
+    private readonly string _accessibilityId = $"blazortui-{Guid.NewGuid():N}";
+    private ElementReference _gridElement;
     private Screen? _renderedScreen;
     private long _renderedRevision = -1;
+    private Screen? _accessibleScreen;
+    private long _accessibleRevision = -1;
+    private string _accessibleScreenText = "";
     private bool _disposed;
+
+    private string InstructionsId => $"{_accessibilityId}-instructions";
+
+    private string DescriptionId => $"{_accessibilityId}-description";
+
+    private string ScreenTextId => $"{_accessibilityId}-screen";
+
+    private string DescriptionIds
+        => string.IsNullOrWhiteSpace(AriaDescription)
+            ? $"{InstructionsId} {ScreenTextId}"
+            : $"{InstructionsId} {DescriptionId} {ScreenTextId}";
+
+    private string AccessibleScreenText
+    {
+        get
+        {
+            if (!ReferenceEquals(_accessibleScreen, screen) || _accessibleRevision != screen.Revision)
+            {
+                _accessibleScreenText = string.Join(
+                    Environment.NewLine,
+                    screen.Rows.Select(row => string.Concat(row.ReadOnlyCells.Select(cell => cell.IsVisible ? cell.Character : "")).TrimEnd()))
+                    .TrimEnd();
+                _accessibleScreen = screen;
+                _accessibleRevision = screen.Revision;
+            }
+
+            return _accessibleScreenText;
+        }
+    }
+
+    private string AccessibilityStatusText
+    {
+        get
+        {
+            if (screen.Dialogs.Count > 0)
+                return $"Dialog opened: {screen.Dialogs[^1].Title}";
+
+            Menu? openMenu = screen.MenuBar?.OpenMenu;
+            return openMenu is null ? "" : $"Menu opened: {openMenu.Text}";
+        }
+    }
 
     private string GridCssVariables
     {
@@ -53,6 +127,17 @@
         _renderedRevision = screen.Revision;
     }
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+            return;
+
+        await using IJSObjectReference module = await JSRuntime.InvokeAsync<IJSObjectReference>(
+            "import",
+            "./_content/BlazorTUI/blazorTui.js");
+        await module.InvokeVoidAsync("attachKeyboardHandling", _gridElement);
+    }
+
     private void TimeElapsed(object? sender, System.Timers.ElapsedEventArgs e)
         => _ = InvokeAsync(RefreshFromTimer);
 
@@ -70,6 +155,9 @@
 
     private void HandleKeyDown(KeyboardEventArgs e)
     {
+        if (e.CtrlKey || e.MetaKey || (e.AltKey && e.Key != "Alt"))
+            return;
+
         screen.KeyDown(e.Key, e.ShiftKey);
         screen.Render();
     }

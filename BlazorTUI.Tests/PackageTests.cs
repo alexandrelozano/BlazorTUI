@@ -24,12 +24,18 @@ public class PackageTests
         Assert.Contains(package.Entries, entry => entry.FullName == "README.md");
         Assert.Contains(package.Entries, entry => entry.FullName == "icon.png");
         Assert.Contains(package.Entries, entry => entry.FullName == "lib/net10.0/BlazorTUI.dll");
+        Assert.Contains(package.Entries, entry => entry.FullName == "staticwebassets/blazorTui.js");
+        Assert.DoesNotContain(package.Entries, entry => entry.FullName.EndsWith("exampleJsInterop.js", StringComparison.Ordinal));
+        string keyboardScript = ReadEntry(package, "staticwebassets/blazorTui.js");
+        Assert.Contains("event.preventDefault()", keyboardScript);
+        Assert.Contains("event.ctrlKey || event.metaKey", keyboardScript);
 
         ZipArchiveEntry scopedCssEntry = package.Entries.Single(entry =>
             entry.FullName.StartsWith("staticwebassets/BlazorTUI.", StringComparison.Ordinal) &&
             entry.FullName.EndsWith(".bundle.scp.css", StringComparison.Ordinal));
         string scopedCss = ReadEntry(scopedCssEntry);
         Assert.Contains("grid-template-columns: repeat(var(--tui-columns)", scopedCss);
+        Assert.Contains(".gridfs:focus-visible", scopedCss);
         Assert.DoesNotContain("sizefs-", scopedCss);
 
         string nuspec = ReadEntry(package, "BlazorTUI.nuspec");

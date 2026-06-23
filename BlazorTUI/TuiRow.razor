@@ -7,7 +7,7 @@
 {
     if (cell.visible)
     {
-        <div @key="cell" class="tilefs" @onclick="() => CellClicked.InvokeAsync(cell)" style="@cell.CssStyle">@cell.character</div>
+        <div @key="cell" class="tilefs" aria-hidden="true" @onclick="() => CellClicked.InvokeAsync(cell)" style="@cell.CssStyle">@cell.character</div>
     }
 }
 

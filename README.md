@@ -91,7 +91,7 @@ Add the BlazorTUI namespace to a Razor page, create a `Screen`, and render it wi
 }
 ```
 
-Click inside the terminal before using the keyboard so the screen element receives browser focus.
+Click inside the terminal before using the keyboard so the screen element receives browser focus. The focused terminal has a visible outline.
 
 ## Screen and layout
 
@@ -142,6 +142,17 @@ Lowercase members from earlier releases remain available in the `0.8.x` line for
 - Mouse click: focus or activate the control under the selected cell.
 
 When a dialog is open, it receives input until it is closed.
+
+The component exposes the terminal as a labelled interactive region and provides a text representation for screen readers. Give each terminal a meaningful label and, when useful, a short description:
+
+```razor
+<BlazorTUI.BlazorTUI
+    screen="@screen"
+    AriaLabel="Order entry terminal"
+    AriaDescription="Enter customer and delivery details, then submit the order." />
+```
+
+Browser and assistive-technology shortcuts that use `Ctrl`, `Command`, or modified `Alt` combinations are not forwarded to TUI controls.
 
 ## Images
 
