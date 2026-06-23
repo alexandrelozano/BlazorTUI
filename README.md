@@ -35,7 +35,7 @@ Add the BlazorTUI namespace to a Razor page, create a `Screen`, and render it wi
 
 ```razor
 @page "/terminal"
-@using BlazorTUI.TUI
+@using global::BlazorTUI.TUI
 @using Color = System.Drawing.Color
 
 <BlazorTUI.BlazorTUI screen="@screen" />

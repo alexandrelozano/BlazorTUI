@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build-test-package:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore BlazorTUI.sln
+
+      - name: Build
+        run: dotnet build BlazorTUI.sln --configuration Release --no-restore --warnaserror
+
+      - name: Test with coverage
+        run: dotnet test BlazorTUI.Tests/BlazorTUI.Tests.csproj --configuration Release --no-build --collect:"XPlat Code Coverage" --results-directory TestResults
+
+      - name: Restore package consumer
+        run: dotnet restore tests/BlazorTUI.PackageSmokeTest/BlazorTUI.PackageSmokeTest.csproj --configfile tests/BlazorTUI.PackageSmokeTest/NuGet.Config --packages "./artifacts/package-smoke" --force --no-cache
+
+      - name: Build package consumer
+        run: dotnet build tests/BlazorTUI.PackageSmokeTest/BlazorTUI.PackageSmokeTest.csproj --configuration Release --no-restore --warnaserror
+
+      - name: Upload package
+        uses: actions/upload-artifact@v4
+        with:
+          name: BlazorTUI-package-${{ runner.os }}
+          path: BlazorTUI/bin/Release/*.nupkg
+
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: BlazorTUI-coverage-${{ runner.os }}
+          path: TestResults/**/coverage.cobertura.xml

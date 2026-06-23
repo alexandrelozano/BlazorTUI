@@ -4,6 +4,7 @@
 @using BlazorTUI.TUI
 @using System.Timers;
 @inject IWebHostEnvironment HostEnvironment
+@implements IDisposable
 
 <PageTitle>Index</PageTitle>
 
@@ -256,5 +257,11 @@
 
         MessageBox messageBox = new MessageBox("Do you wan't cookies?", "Another extra", messageBoxType, BorderStyle.line, System.Drawing.Color.Yellow, System.Drawing.Color.Green, screen);
         messageBox.Show();
+    }
+
+    public void Dispose()
+    {
+        tt?.Stop();
+        tt?.Dispose();
     }
 }

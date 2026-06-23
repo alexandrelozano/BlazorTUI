@@ -126,14 +126,17 @@ namespace BlazorTUI.TUI
                 throw new Exception($"Already exists a control with name {control.name}");
             }
 
-            controls.Add(control);
-            control.container = this;
-
-            if (control.TabIndex == 0)
+            if (control.TabStop && control.TabIndex == 0)
             {
-                control.TabIndex = (short)((from p in controls where p.TabStop == true select p).Count() + 1);
+                control.TabIndex = (short)(controls
+                    .Where(existing => existing.TabStop)
+                    .Select(existing => existing.TabIndex)
+                    .DefaultIfEmpty()
+                    .Max() + 1);
             }
 
+            controls.Add(control);
+            control.container = this;
             control.ZOrder = (short)((from p in controls orderby p.ZOrder descending select p.ZOrder).FirstOrDefault() + 1);
         }
 
@@ -173,14 +176,13 @@ namespace BlazorTUI.TUI
         {
             if (control != null)
             {
-                control.ZOrder = 1;
-
-                short z = 1;
+                short z = 0;
                 foreach(Control c in (from c in controls where c.name != control.name orderby c.ZOrder select c))
                 {
-                    z++;
-                    c.ZOrder = z;
+                    c.ZOrder = ++z;
                 }
+
+                control.ZOrder = ++z;
             }
         }
 
@@ -188,13 +190,11 @@ namespace BlazorTUI.TUI
         {
             if (control != null)
             {
-                control.ZOrder = (from c in controls orderby c.ZOrder descending select c.ZOrder).First();
-
-                short z = 0;
+                control.ZOrder = 1;
+                short z = 1;
                 foreach (Control c in (from c in controls where c.name != control.name orderby c.ZOrder select c))
                 {
-                    z++;
-                    c.ZOrder = z;
+                    c.ZOrder = ++z;
                 }
             }
         }
@@ -203,14 +203,13 @@ namespace BlazorTUI.TUI
         {
             if (container != null)
             {
-                container.ZOrder = 1;
-
-                short z = 1;
+                short z = 0;
                 foreach (Container c in (from c in containers where c.name != container.name orderby c.ZOrder select c))
                 {
-                    z++;
-                    c.ZOrder = z;
+                    c.ZOrder = ++z;
                 }
+
+                container.ZOrder = ++z;
             }
         }
 
@@ -218,13 +217,11 @@ namespace BlazorTUI.TUI
         {
             if (container != null)
             {
-                container.ZOrder = (from c in controls orderby c.ZOrder descending select c.ZOrder).First();
-
-                short z = 0;
+                container.ZOrder = 1;
+                short z = 1;
                 foreach (Container c in (from c in containers where c.name != container.name orderby c.ZOrder select c))
                 {
-                    z++;
-                    c.ZOrder = z;
+                    c.ZOrder = ++z;
                 }
             }
         }

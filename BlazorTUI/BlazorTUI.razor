@@ -1,5 +1,7 @@
 ﻿@using global::BlazorTUI.TUI
 
+@implements IDisposable
+
 <div class="containerfs">
     <div tabindex="0" class="gridfs sizefs-@screen.height" @onkeydown="HandleKeyDown" @onkeydown:preventDefault>
         @{
@@ -142,5 +144,12 @@
             Dialog dialog = screen.dialogs.ElementAt(screen.dialogs.Count - 1);
             dialog.Click((short)(cell.x - dialog.X), (short)(cell.y - dialog.Y));
         }
+    }
+
+    public void Dispose()
+    {
+        timer.Enabled = false;
+        timer.Elapsed -= TimeElapsed;
+        timer.Dispose();
     }
 }

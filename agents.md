@@ -37,10 +37,11 @@ Run commands from the repository root:
 ```powershell
 dotnet restore .\BlazorTUI.sln
 dotnet build .\BlazorTUI.sln --configuration Release
+dotnet test .\BlazorTUI.Tests\BlazorTUI.Tests.csproj --configuration Release --no-build
 dotnet run --project .\SampleApp\SampleApp.csproj
 ```
 
-There is currently no automated test project. For library changes, the minimum validation is a successful solution build plus a manual check in `SampleApp` for affected rendering, focus, keyboard, and mouse behavior. Add regression tests if a test project is introduced.
+`BlazorTUI.Tests` contains unit, bUnit component, and package-content tests. Add or update regression coverage for every behavioral change. `tests/BlazorTUI.PackageSmokeTest` is intentionally outside the solution because it consumes the generated NuGet package instead of the project reference; restore it against `BlazorTUI/bin/Release` after packing.
 
 The solution must build with zero warnings. Treat any compiler, analyzer, nullable-reference, package, or platform warning as a regression; fix its cause instead of suppressing it globally.
 
