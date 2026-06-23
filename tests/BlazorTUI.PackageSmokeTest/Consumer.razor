@@ -1,7 +1,18 @@
 @using global::BlazorTUI.TUI
 
-<BlazorTUI.BlazorTUI screen="@screen" />
+<BlazorTUI.BlazorTUI screen="@terminal" />
 
 @code {
-    private readonly Screen screen = new(4, 2);
+    private readonly Screen terminal = CreateTerminal();
+
+    private static Screen CreateTerminal()
+    {
+        var terminal = new Screen(20, 10);
+        var button = new Button(
+            "save", "Save", 2, 2, 8,
+            System.Drawing.Color.White, System.Drawing.Color.DarkGreen);
+        button.Clicked += (_, _) => { };
+        terminal.TopContainer.AddControl(button);
+        return terminal;
+    }
 }

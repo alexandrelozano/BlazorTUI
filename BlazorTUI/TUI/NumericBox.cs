@@ -14,6 +14,8 @@ namespace BlazorTUI.TUI
     {
         public new Double? value;
 
+        public new double? Value { get => value; set => this.value = value; }
+
         short integerPlaces;
         short decimalPlaces;
         char separator;

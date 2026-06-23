@@ -14,6 +14,8 @@ namespace BlazorTUI.TUI
     {
         public new TimeOnly? value;
 
+        public new TimeOnly? Value { get => value; set => this.value = value; }
+
         public TimeBox(string name, TimeOnly? value, short X, short Y, Color forecolor, Color backgroundcolor) : base(name, "", X, Y, 6, forecolor, backgroundcolor)
         {
             this.value = value;

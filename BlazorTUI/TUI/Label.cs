@@ -1,4 +1,4 @@
-﻿using System.Drawing;
+using System.Drawing;
 
 namespace BlazorTUI.TUI
 {
@@ -6,12 +6,15 @@ namespace BlazorTUI.TUI
     {
         string text;
 
+        public string Text { get => text; set => text = value ?? ""; }
+
         public Label(string name, string text, short X, short Y, short width, Color forecolor, Color backgroundcolor)
         {
-            this.name = name;
+            this.Name = name;
             this.X = X;
             this.Y = Y;
             this.width = width;
+            this.height = 1;
             this.text = text;
             this.foreColor = forecolor;
             this.backgroundColor = backgroundcolor;

@@ -13,14 +13,21 @@ namespace BlazorTUI.TUI
     public class MenuBar
     {
         public List<Menu> menus;
+        public IReadOnlyList<Menu> Menus => menus;
         public bool visible;
+        public bool IsVisible { get => visible; set => visible = value; }
         public Color foreColor;
+        public Color ForeColor { get => foreColor; set => foreColor = value; }
         public Color backgroundColor;
+        public Color BackgroundColor { get => backgroundColor; set => backgroundColor = value; }
 
         private Screen screen;
         public bool showShortCutkeys;
+        public bool ShowShortcutKeys { get => showShortCutkeys; set => showShortCutkeys = value; }
 
         public MenuBar(Color foreColor, Color backgroundColor, Screen screen) {
+
+            ArgumentNullException.ThrowIfNull(screen);
 
             menus = new List<Menu>();
             visible = true;
@@ -30,8 +37,16 @@ namespace BlazorTUI.TUI
             this.showShortCutkeys = false;
         }
 
+        public void AddMenu(Menu menu)
+        {
+            ArgumentNullException.ThrowIfNull(menu);
+            menus.Add(menu);
+        }
+
         public bool KeyDown(string key, bool shiftKey)
         {
+            ArgumentException.ThrowIfNullOrEmpty(key);
+
             bool handled = true;
 
             Menu? mnuOpen = OpenedMenu();
@@ -100,7 +115,7 @@ namespace BlazorTUI.TUI
                     case "Enter":
                         if (mnuOpen.selectedItem > 0)
                         {
-                            mnuOpen.menuItems[mnuOpen.selectedItem - 1].OnClick?.Invoke();
+                            mnuOpen.menuItems[mnuOpen.selectedItem - 1].Invoke();
 
                             mnuOpen.selectedItem = 0;
                             mnuOpen.opended = false;
@@ -111,7 +126,7 @@ namespace BlazorTUI.TUI
                         foreach (MenuItem menuItem in mnuOpen.menuItems)
                             if (menuItem.shortCutKey != null && char.ToUpperInvariant(key[0]) == char.ToUpperInvariant(menuItem.shortCutKey.Value))
                             {
-                                menuItem.OnClick?.Invoke();
+                                menuItem.Invoke();
 
                                 mnuOpen.opended = false;
                                 showShortCutkeys = false;
@@ -167,7 +182,7 @@ namespace BlazorTUI.TUI
                                         {
                                             if (Y == (y + 1))
                                             {
-                                                menus[m].menuItems[y].OnClick?.Invoke();
+                                                menus[m].menuItems[y].Invoke();
 
                                                 handled = true;
                                                 break;
@@ -291,5 +306,7 @@ namespace BlazorTUI.TUI
 
             return mnuOpen;
         }
+
+        public Menu? OpenMenu => OpenedMenu();
     }
 }

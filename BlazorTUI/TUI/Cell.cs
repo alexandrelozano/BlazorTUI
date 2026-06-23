@@ -20,9 +20,13 @@ namespace BlazorTUI.TUI
         private string _cssStyle = "";
 
         public short x { get => _x; set => SetField(ref _x, value, true); }
+        public short X { get => x; set => x = value; }
         public short y { get => _y; set => SetField(ref _y, value, true); }
+        public short Y { get => y; set => y = value; }
         public Color foreColor { get => _foreColor; set => SetField(ref _foreColor, value, true); }
+        public Color ForeColor { get => foreColor; set => foreColor = value; }
         public Color backgroundColor { get => _backgroundColor; set => SetField(ref _backgroundColor, value, true); }
+        public Color BackgroundColor { get => backgroundColor; set => backgroundColor = value; }
 
         public enum TextDecoration
         {
@@ -33,11 +37,17 @@ namespace BlazorTUI.TUI
         }
 
         public TextDecoration textDecoration { get => _textDecoration; set => SetField(ref _textDecoration, value, true); }
+        public TextDecoration Decoration { get => textDecoration; set => textDecoration = value; }
         public string character { get => _character; set => SetField(ref _character, value ?? ""); }
+        public string Character { get => character; set => character = value; }
         public bool visible { get => _visible; set => SetField(ref _visible, value); }
+        public bool IsVisible { get => visible; set => visible = value; }
         public string backgroundImage { get => _backgroundImage; set => SetField(ref _backgroundImage, value ?? "", true); }
+        public string BackgroundImage { get => backgroundImage; set => backgroundImage = value; }
         public double scaleX { get => _scaleX; set => SetField(ref _scaleX, value, true); }
+        public double ScaleX { get => scaleX; set => scaleX = value; }
         public double scaleY { get => _scaleY; set => SetField(ref _scaleY, value, true); }
+        public double ScaleY { get => scaleY; set => scaleY = value; }
 
         internal string CssStyle
         {

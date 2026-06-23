@@ -11,6 +11,10 @@ namespace BlazorTUI.TUI
         none,
         line,
         doubleline,
-        solid
+        solid,
+        None = none,
+        Line = line,
+        DoubleLine = doubleline,
+        Solid = solid
     }
 }

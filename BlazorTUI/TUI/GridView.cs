@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -14,16 +14,28 @@ namespace BlazorTUI.TUI
         public class GridRow
         {
             public string[] cells = Array.Empty<string>();
+
+            public IReadOnlyList<string> Cells
+            {
+                get => cells;
+                set => cells = value?.ToArray() ?? throw new ArgumentNullException(nameof(value));
+            }
         }
 
         public class GridColumn
         {
             public string title = "";
+            public string Title { get => title; set => title = value ?? ""; }
             public short width;
+            public short Width { get => width; set => width = value; }
         }
 
         private GridColumn[] columns;
         private GridRow[] gridrows;
+
+        public IReadOnlyList<GridColumn> Columns => columns;
+
+        public IReadOnlyList<GridRow> Rows => gridrows;
 
         private short cursorY;
         private short scrollY;
@@ -32,7 +44,10 @@ namespace BlazorTUI.TUI
 
         public GridView(string name, GridColumn[] columns, GridRow[] gridrows, short X, short Y, short width, short height, Color forecolor, Color backgroundcolor)
         {
-            this.name = name;
+            ArgumentNullException.ThrowIfNull(columns);
+            ArgumentNullException.ThrowIfNull(gridrows);
+
+            this.Name = name;
             this.X = X;
             this.Y = Y;
             this.width = width;
@@ -120,6 +135,9 @@ namespace BlazorTUI.TUI
                 c.SetFocus(name);
                 handled = true;
             }
+
+            if (handled)
+                NotifyClicked();
 
             return handled;
         }

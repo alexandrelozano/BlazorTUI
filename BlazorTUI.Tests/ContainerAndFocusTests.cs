@@ -28,8 +28,8 @@ public class ContainerAndFocusTests
         var container = new Container("root");
         container.AddControl(TextBox("unique", 0));
 
-        Assert.Throws<Exception>(() => container.AddControl(TextBox("unique", 1)));
-        Assert.Throws<Exception>(() => container.AddControl(TextBox(" ", 2)));
+        Assert.Throws<InvalidOperationException>(() => container.AddControl(TextBox("unique", 1)));
+        Assert.Throws<ArgumentException>(() => TextBox(" ", 2));
     }
 
     [Fact]

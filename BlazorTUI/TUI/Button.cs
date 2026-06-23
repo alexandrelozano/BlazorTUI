@@ -1,4 +1,4 @@
-﻿using System.Drawing;
+using System.Drawing;
 using BlazorTUI.Utils;
 
 namespace BlazorTUI.TUI
@@ -7,9 +7,15 @@ namespace BlazorTUI.TUI
     {
         string text;
 
+        public string Text
+        {
+            get => text.Trim();
+            set => text = (value ?? "").CenterString(width);
+        }
+
         public Button(string name, string text, short X, short Y, short width, Color forecolor, Color backgroundcolor)
         {
-            this.name = name;
+            this.Name = name;
             this.X = X;
             this.Y = Y;
             this.width = width;
@@ -30,10 +36,11 @@ namespace BlazorTUI.TUI
             {
                 container.TopContainer().SetFocus(name);
 
-                OnClick?.Invoke(this);
-
                 handled = true;
             }
+
+            if (handled)
+                NotifyClicked();
 
             return handled;
         }
@@ -48,12 +55,13 @@ namespace BlazorTUI.TUI
                 {
                     case "Tab":
                         break;
+                    case "Space":
                     case " ":
-                        OnClick?.Invoke(this);
+                        NotifyClicked();
                         handled = true;
                         break;
                     case "Enter":
-                        OnClick?.Invoke(this);
+                        NotifyClicked();
                         handled = true; 
                         break;
                     case "Backspace":

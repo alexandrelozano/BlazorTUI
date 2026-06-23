@@ -16,25 +16,21 @@
         var menuBar = new MenuBar(Color.White, Color.SteelBlue, screen);
         var actionsMenu = new Menu("Actions", 'A');
 
-        var showDialogItem = new MenuItem("Open dialog", MenuItem.MenuItemType.Item, 'O')
-        {
-            OnClick = ShowDialog
-        };
-        actionsMenu.menuItems.Add(showDialogItem);
+        var showDialogItem = new MenuItem("Open dialog", MenuItem.MenuItemType.Item, 'O');
+        showDialogItem.Clicked += (_, _) => ShowDialog();
+        actionsMenu.AddItem(showDialogItem);
 
-        var showMessageItem = new MenuItem("Show message", MenuItem.MenuItemType.Item, 'S')
-        {
-            OnClick = ShowMessage
-        };
-        actionsMenu.menuItems.Add(showMessageItem);
+        var showMessageItem = new MenuItem("Show message", MenuItem.MenuItemType.Item, 'S');
+        showMessageItem.Clicked += (_, _) => ShowMessage();
+        actionsMenu.AddItem(showMessageItem);
 
-        menuBar.menus.Add(actionsMenu);
-        screen.menuBar = menuBar;
+        menuBar.AddMenu(actionsMenu);
+        screen.MenuBar = menuBar;
 
         var frame = new Frame(
             "menuFrame", "DIALOGS AND MENUS", 8, 6, 44, 16,
-            Frame.BorderStyle.line, Color.Yellow, Color.DarkBlue);
-        screen.topContainer.AddContainer(frame);
+            Frame.BorderStyle.Line, Color.Yellow, Color.DarkBlue);
+        screen.TopContainer.AddContainer(frame);
 
         frame.AddControl(new Label(
             "instructions", "Use Alt+A or activate a button:", 4, 3, 34,
@@ -42,12 +38,12 @@
 
         var dialogButton = new Button(
             "dialogButton", "Open dialog", 6, 7, 14, Color.White, Color.DarkGreen);
-        dialogButton.OnClick = _ => ShowDialog();
+        dialogButton.Clicked += (_, _) => ShowDialog();
         frame.AddControl(dialogButton);
 
         var messageButton = new Button(
             "messageButton", "Message box", 24, 7, 14, Color.White, Color.DarkMagenta);
-        messageButton.OnClick = _ => ShowMessage();
+        messageButton.Clicked += (_, _) => ShowMessage();
         frame.AddControl(messageButton);
 
         screen.SetFocus("dialogButton");
@@ -56,7 +52,7 @@
     private void ShowDialog()
     {
         var dialog = new Dialog(
-            "exampleDialog", "CUSTOM DIALOG", 34, 10, BorderStyle.line,
+            "exampleDialog", "CUSTOM DIALOG", 34, 10, BorderStyle.Line,
             Color.Yellow, Color.DarkGreen, screen);
 
         dialog.AddControl(new Label(
@@ -65,7 +61,7 @@
 
         var closeButton = new Button(
             "closeDialog", "Close", 12, 6, 10, Color.White, Color.DarkBlue);
-        closeButton.OnClick = _ => dialog.Close();
+        closeButton.Clicked += (_, _) => dialog.Close();
         dialog.AddControl(closeButton);
 
         dialog.Show();
@@ -76,7 +72,7 @@
     {
         var message = new MessageBox(
             "MessageBox handles common button layouts.", "MESSAGE BOX",
-            MessageBox.Buttons.OKCancel, BorderStyle.line,
+            MessageBox.Buttons.OKCancel, BorderStyle.Line,
             Color.White, Color.DarkMagenta, screen);
         message.Show();
     }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -12,7 +12,9 @@ namespace BlazorTUI.TUI
         private List<string> text;
 
         public short maxLines;
+        public short MaxLines { get => maxLines; set => maxLines = value; }
         public short maxTextWidth;
+        public short MaxTextWidth { get => maxTextWidth; set => maxTextWidth = value; }
 
         private bool blinkCursor;
         private short cursorX;
@@ -32,9 +34,11 @@ namespace BlazorTUI.TUI
             }
         }
 
+        public string Value { get => value; set => this.value = value; }
+
         public TextArea(string name, string text, short X, short Y, short width, short height, short maxTextWidth, short maxLines, Color forecolor, Color backgroundcolor)
         {
-            this.name = name;
+            this.Name = name;
             this.X = X;
             this.Y = Y;
             this.width = width;
@@ -128,6 +132,9 @@ namespace BlazorTUI.TUI
                 container.TopContainer().SetFocus(name);
                 handled = true;
             }
+
+            if (handled)
+                NotifyClicked();
 
             return handled;
         }

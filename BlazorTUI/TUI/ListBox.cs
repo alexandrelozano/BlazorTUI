@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -11,16 +11,22 @@ namespace BlazorTUI.TUI
     public class ListBox : Control
     {
         public List<string> items = new List<string>();
+        public IReadOnlyList<string> Items => items;
         public List<string> itemsSelected = new List<string>();
+        public IReadOnlyList<string> SelectedItems => itemsSelected;
 
         private bool multipleSelection;
+
+        public bool AllowsMultipleSelection => multipleSelection;
 
         private short cursorY;
         private short scrollY;
 
         public ListBox(string name, List<string> items, bool multipleSelection, short X, short Y, short width, short height, Color forecolor, Color backgroundcolor)
         {
-            this.name = name;
+            ArgumentNullException.ThrowIfNull(items);
+
+            this.Name = name;
             this.X = X;
             this.Y = Y;
 
@@ -53,6 +59,7 @@ namespace BlazorTUI.TUI
                         container.TopContainer().SetFocus(name);
                         handled = true;
                         break;
+                    case "Space":
                     case " ":
                         if (multipleSelection)
                             SelectItem(items[cursorY]);
@@ -89,6 +96,9 @@ namespace BlazorTUI.TUI
                         break;
                 }
             }
+
+            if (handled)
+                NotifyClicked();
 
             return handled;
         }
@@ -139,6 +149,9 @@ namespace BlazorTUI.TUI
                 container.TopContainer().SetFocus(name);
                 handled = true;
             }
+
+            if (handled)
+                NotifyClicked();
 
             return handled;
         }

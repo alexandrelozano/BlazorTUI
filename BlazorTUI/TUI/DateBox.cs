@@ -12,6 +12,8 @@ namespace BlazorTUI.TUI
     {
         public new DateOnly? value;
 
+        public new DateOnly? Value { get => value; set => this.value = value; }
+
         public enum DateFormat
         {
             DDMMYYYY,
@@ -20,6 +22,8 @@ namespace BlazorTUI.TUI
         }
 
         public DateFormat dateFormat { get; set; }
+
+        public DateFormat Format { get => dateFormat; set => dateFormat = value; }
 
         public DateBox(string name, DateOnly? value, DateFormat dateFormat, short X, short Y, Color forecolor, Color backgroundcolor) : base(name, "", X, Y, 11, forecolor, backgroundcolor)
         {

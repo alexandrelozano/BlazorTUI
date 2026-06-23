@@ -1,4 +1,4 @@
-﻿using System.Drawing;
+using System.Drawing;
 
 namespace BlazorTUI.TUI
 {
@@ -22,9 +22,11 @@ namespace BlazorTUI.TUI
             }
         }
 
+        public string Value { get => value; set => this.value = value; }
+
         public TextBox(string name, string text, short X, short Y, short width, Color forecolor, Color backgroundcolor)
         {
-            this.name = name;
+            this.Name = name;
             this.X = X;
             this.Y = Y;
             this.width = width;
@@ -52,6 +54,9 @@ namespace BlazorTUI.TUI
                 container.TopContainer().SetFocus(name);
                 handled = true; 
             }
+
+            if (handled)
+                NotifyClicked();
 
             return handled;
         }

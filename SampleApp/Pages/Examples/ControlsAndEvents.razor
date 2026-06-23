@@ -18,27 +18,27 @@
 
         var frame = new Frame(
             "formFrame", "CONTROLS AND EVENTS", 8, 6, 44, 16,
-            Frame.BorderStyle.line, Color.Yellow, Color.DarkBlue);
-        screen.topContainer.AddContainer(frame);
+            Frame.BorderStyle.Line, Color.Yellow, Color.DarkBlue);
+        screen.TopContainer.AddContainer(frame);
 
         frame.AddControl(new Label(
             "nameLabel", "Name:", 3, 3, 10, Color.White, Color.DarkBlue));
 
         nameInput = new TextBox(
             "nameInput", "", 14, 3, 22, Color.Yellow, Color.Black);
-        nameInput.OnFocus = () => eventStatus.value = "Name focused";
-        nameInput.OnLostFocus = () => eventStatus.value = "Name lost focus";
+        nameInput.GotFocus += (_, _) => eventStatus.Value = "Name focused";
+        nameInput.LostFocus += (_, _) => eventStatus.Value = "Name lost focus";
         frame.AddControl(nameInput);
 
         includeDetails = new CheckBox(
             "includeDetails", "Include details", 14, 6, 22,
-            Color.Yellow, Color.DarkBlue,
-            () => eventStatus.value = "Checkbox changed", false);
+            Color.Yellow, Color.DarkBlue);
+        includeDetails.Clicked += (_, _) => eventStatus.Value = "Checkbox changed";
         frame.AddControl(includeDetails);
 
         var greetButton = new Button(
             "greetButton", "Greet", 14, 9, 12, Color.White, Color.DarkGreen);
-        greetButton.OnClick = _ => ShowGreeting();
+        greetButton.Clicked += (_, _) => ShowGreeting();
         frame.AddControl(greetButton);
 
         frame.AddControl(new Label(
@@ -56,12 +56,12 @@
 
     private void ShowGreeting()
     {
-        string name = string.IsNullOrWhiteSpace(nameInput.value) ? "guest" : nameInput.value;
-        string suffix = includeDetails.value ? " Details enabled." : "";
+        string name = string.IsNullOrWhiteSpace(nameInput.Value) ? "guest" : nameInput.Value;
+        string suffix = includeDetails.Value ? " Details enabled." : "";
 
         var message = new MessageBox(
             $"Hello, {name}!{suffix}", "EVENT RESULT", MessageBox.Buttons.OKOnly,
-            BorderStyle.line, Color.White, Color.DarkGreen, screen);
+            BorderStyle.Line, Color.White, Color.DarkGreen, screen);
         message.Show();
     }
 }

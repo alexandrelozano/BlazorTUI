@@ -18,6 +18,8 @@ namespace BlazorTUI.TUI
 
         public Buttons buttons { get; set; }
 
+        public Buttons ButtonSet { get => buttons; set => buttons = value; }
+
         private Dialog dialog { get; set; }
 
         public enum Result
@@ -34,6 +36,8 @@ namespace BlazorTUI.TUI
         private string internalId {  get; set; }
 
         public Result result { get; set; }  
+
+        public Result DialogResult => result;
 
         private Button defaultButton { get; set; }  
 

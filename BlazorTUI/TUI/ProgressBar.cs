@@ -1,4 +1,4 @@
-﻿using System.Drawing;
+using System.Drawing;
 
 namespace BlazorTUI.TUI
 {
@@ -13,17 +13,24 @@ namespace BlazorTUI.TUI
 
         ProgressBarType progessBarType;
 
+        public ProgressBarType Type { get => progessBarType; set => progessBarType = value; }
+
         public Double value;
+        public double Value { get => value; set => this.value = value; }
         public Double MaxValue;
+        public double Maximum { get => MaxValue; set => MaxValue = value; }
 
         private bool showPercent;
 
+        public bool ShowPercentage { get => showPercent; set => showPercent = value; }
+
         public ProgressBar(string name, ProgressBarType progessBarType, short X, short Y, short width, Double value, Double maxValue, bool showPercent, Color forecolor, Color backgroundcolor)
         {
-            this.name = name;
+            this.Name = name;
             this.X = X;
             this.Y = Y;
             this.width = width;
+            this.height = 1;
             this.progessBarType = progessBarType;
             this.foreColor = forecolor;
             this.backgroundColor = backgroundcolor;

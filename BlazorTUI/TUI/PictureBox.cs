@@ -27,7 +27,7 @@ namespace BlazorTUI.TUI
                 throw new ArgumentException("The media type must be a valid image MIME type.", nameof(mediaType));
             }
 
-            this.name = name;
+            this.Name = name;
             this.X = X;
             this.Y = Y;
             this.width = width;

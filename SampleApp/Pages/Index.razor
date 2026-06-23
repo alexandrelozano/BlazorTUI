@@ -1,4 +1,4 @@
-﻿@page "/"
+@page "/"
 @using SampleApp.Data
 @using BlazorTUI
 @using BlazorTUI.TUI
@@ -30,52 +30,52 @@
 
         Menu mnuFile = new Menu("File",'F');
         MenuItem mniOpen = new MenuItem("Open", MenuItem.MenuItemType.Item, 'O');
-        mnuFile.menuItems.Add(mniOpen);
+        mnuFile.AddItem(mniOpen);
         MenuItem mniClose = new MenuItem("Close", MenuItem.MenuItemType.Item, 'C');
-        mnuFile.menuItems.Add(mniClose);
+        mnuFile.AddItem(mniClose);
         MenuItem mniFileSep1 = new MenuItem("mniFileSep1", MenuItem.MenuItemType.Separator);
-        mnuFile.menuItems.Add(mniFileSep1);
+        mnuFile.AddItem(mniFileSep1);
         MenuItem mniPrint = new MenuItem("Print", MenuItem.MenuItemType.Item, 'P');
-        mnuFile.menuItems.Add(mniPrint);
+        mnuFile.AddItem(mniPrint);
         MenuItem mniFileSep2 = new MenuItem("mniFileSep2", MenuItem.MenuItemType.Separator);
-        mnuFile.menuItems.Add(mniFileSep2);
+        mnuFile.AddItem(mniFileSep2);
         MenuItem mniExit = new MenuItem("Exit", MenuItem.MenuItemType.Item, 'E');
-        mnuFile.menuItems.Add(mniExit);
-        menuBar.menus.Add(mnuFile);
+        mnuFile.AddItem(mniExit);
+        menuBar.AddMenu(mnuFile);
 
         Menu mnuEdit = new Menu("Edit",'E');
         MenuItem mniUndo = new MenuItem("Undo", MenuItem.MenuItemType.Item, 'U');
-        mnuEdit.menuItems.Add(mniUndo);
+        mnuEdit.AddItem(mniUndo);
         MenuItem mniRedo = new MenuItem("Redo", MenuItem.MenuItemType.Item, 'R');
-        mnuEdit.menuItems.Add(mniRedo);
+        mnuEdit.AddItem(mniRedo);
         MenuItem mnuEditSep1 = new MenuItem("mnuEditSep1", MenuItem.MenuItemType.Separator);
-        mnuEdit.menuItems.Add(mnuEditSep1);
+        mnuEdit.AddItem(mnuEditSep1);
         MenuItem mniCopy = new MenuItem("Copy", MenuItem.MenuItemType.Item, 'C');
-        mnuEdit.menuItems.Add(mniCopy);
+        mnuEdit.AddItem(mniCopy);
         MenuItem mniCut = new MenuItem("Cut", MenuItem.MenuItemType.Item, 'U');
-        mnuEdit.menuItems.Add(mniCut);
+        mnuEdit.AddItem(mniCut);
         MenuItem mniPaste = new MenuItem("Paste", MenuItem.MenuItemType.Item, 'P');
-        mnuEdit.menuItems.Add(mniPaste);
+        mnuEdit.AddItem(mniPaste);
         MenuItem mniDelete = new MenuItem("Delete", MenuItem.MenuItemType.Item, 'D');
-        mnuEdit.menuItems.Add(mniDelete);
+        mnuEdit.AddItem(mniDelete);
         MenuItem mnuEditSep2 = new MenuItem("mnuEditSep2", MenuItem.MenuItemType.Separator);
-        mnuEdit.menuItems.Add(mnuEditSep2);
+        mnuEdit.AddItem(mnuEditSep2);
         MenuItem mniPreferences = new MenuItem("Preferences", MenuItem.MenuItemType.Item, 'E');
-        mniPreferences.OnClick = mniPreferences_OnClick;
-        mnuEdit.menuItems.Add(mniPreferences);
-        menuBar.menus.Add(mnuEdit);
+        mniPreferences.Clicked += (_, _) => mniPreferences_OnClick();
+        mnuEdit.AddItem(mniPreferences);
+        menuBar.AddMenu(mnuEdit);
 
         Menu mnuHelp = new Menu("Help",'H');
         MenuItem mniAbout = new MenuItem("About", MenuItem.MenuItemType.Item, 'A');
-        mnuHelp.menuItems.Add(mniAbout);
-        menuBar.menus.Add(mnuHelp);
+        mnuHelp.AddItem(mniAbout);
+        menuBar.AddMenu(mnuHelp);
 
-        screen.menuBar = menuBar;
+        screen.MenuBar = menuBar;
 
-        frm1 = new Frame("frm1", "FRAME", 11, 4, 60, 29, Frame.BorderStyle.solid, System.Drawing.Color.Cornsilk, System.Drawing.Color.RebeccaPurple);
-        screen.topContainer.AddContainer(frm1);
+        frm1 = new Frame("frm1", "FRAME", 11, 4, 60, 29, Frame.BorderStyle.Solid, System.Drawing.Color.Cornsilk, System.Drawing.Color.RebeccaPurple);
+        screen.TopContainer.AddContainer(frm1);
 
-        frm2 = new Frame("frm2", "CHILD FRAME", 2, 2, 56, 13, Frame.BorderStyle.line, System.Drawing.Color.Yellow, System.Drawing.Color.Green);
+        frm2 = new Frame("frm2", "CHILD FRAME", 2, 2, 56, 13, Frame.BorderStyle.Line, System.Drawing.Color.Yellow, System.Drawing.Color.Green);
         frm1.AddContainer(frm2);
 
         Label lblName = new Label("lblName", "Name:", 2, 2, 15, System.Drawing.Color.Yellow, System.Drawing.Color.Green);
@@ -90,16 +90,16 @@
         TextBox txtSurname = new TextBox("txtSurname", "", 2, 5, 15, System.Drawing.Color.Yellow, System.Drawing.Color.Black);
         frm2.AddControl(txtSurname);
 
-        CheckBox chkEmployee = new CheckBox("chkEmployee", "Employee", 2, 6, 15, System.Drawing.Color.Yellow, System.Drawing.Color.Green, (() => { }), false);
+        CheckBox chkEmployee = new CheckBox("chkEmployee", "Employee", 2, 6, 15, System.Drawing.Color.Yellow, System.Drawing.Color.Green);
         frm2.AddControl(chkEmployee);
 
         Label lblGender = new Label("lblGender", "Gender:", 2, 7, 15, System.Drawing.Color.Yellow, System.Drawing.Color.Green);
         frm2.AddControl(lblGender);
 
-        RadioButton rbMale = new RadioButton("rbMale", "Male", 2, 8, 8, System.Drawing.Color.Yellow, System.Drawing.Color.Green, (() => { }), false);
+        RadioButton rbMale = new RadioButton("rbMale", "Male", 2, 8, 8, System.Drawing.Color.Yellow, System.Drawing.Color.Green);
         frm2.AddControl(rbMale);
 
-        RadioButton rbFemale = new RadioButton("rbFemale", "Female", 11, 8, 10, System.Drawing.Color.Yellow, System.Drawing.Color.Green, (() => { }), false);
+        RadioButton rbFemale = new RadioButton("rbFemale", "Female", 11, 8, 10, System.Drawing.Color.Yellow, System.Drawing.Color.Green);
         frm2.AddControl(rbFemale);
 
         Label lblTime = new Label("lblTime", "Time:", 2, 9, 5, System.Drawing.Color.Yellow, System.Drawing.Color.Green);
@@ -128,7 +128,7 @@
         frm2.AddControl(lsbMessageBoxType);
 
         Button bttSubmit = new Button("bttSubmit", "Submit", 26, 7, 8, System.Drawing.Color.Yellow, System.Drawing.Color.Green);
-        bttSubmit.OnClick = bttSubmit_OnClick;
+        bttSubmit.Clicked += (_, _) => bttSubmit_OnClick();
         frm2.AddControl(bttSubmit);
 
         Label lblSpinners = new Label("lblSpinners", "Spinners:", 22, 8, 9, System.Drawing.Color.Yellow, System.Drawing.Color.Green);
@@ -164,37 +164,37 @@
         Label lblGridView = new Label("lblGridView", "GridView:", 2, 16, 9, System.Drawing.Color.Yellow, System.Drawing.Color.RebeccaPurple);
         frm1.AddControl(lblGridView);
 
-        GridView.GridColumn col1 = new GridView.GridColumn() { title = "Order #", width = 8 };
-        GridView.GridColumn col2 = new GridView.GridColumn() { title = "Pizza", width = 12 };
-        GridView.GridColumn col3 = new GridView.GridColumn() { title = "Delivery man", width = 13 };
-        GridView.GridColumn col4 = new GridView.GridColumn() { title = "Status", width = 11 };
+        GridView.GridColumn col1 = new GridView.GridColumn() { Title = "Order #", Width = 8 };
+        GridView.GridColumn col2 = new GridView.GridColumn() { Title = "Pizza", Width = 12 };
+        GridView.GridColumn col3 = new GridView.GridColumn() { Title = "Delivery man", Width = 13 };
+        GridView.GridColumn col4 = new GridView.GridColumn() { Title = "Status", Width = 11 };
 
         GridView.GridColumn[] columns = new GridView.GridColumn[] { col1, col2, col3, col4 };
 
         GridView.GridRow r1 = new GridView.GridRow();
-        r1.cells = new string[] { "1", "Pepperoni", "John River", "Delivering" };
+        r1.Cells = new string[] { "1", "Pepperoni", "John River", "Delivering" };
         GridView.GridRow r2 = new GridView.GridRow();
-        r2.cells = new string[] { "2", "Tomato,Gorgonzola", "", "Cooking" };
+        r2.Cells = new string[] { "2", "Tomato,Gorgonzola", "", "Cooking" };
         GridView.GridRow r3 = new GridView.GridRow();
-        r3.cells = new string[] { "3", "Pineapple", "", "Cooking" };
+        r3.Cells = new string[] { "3", "Pineapple", "", "Cooking" };
         GridView.GridRow r4 = new GridView.GridRow();
-        r4.cells = new string[] { "4", "Pepperoni", "John River", "Delivering" };
+        r4.Cells = new string[] { "4", "Pepperoni", "John River", "Delivering" };
         GridView.GridRow r5 = new GridView.GridRow();
-        r5.cells = new string[] { "5", "Tomato,Gorgonzola", "", "Cooking" };
+        r5.Cells = new string[] { "5", "Tomato,Gorgonzola", "", "Cooking" };
         GridView.GridRow r6 = new GridView.GridRow();
-        r6.cells = new string[] { "6", "Pineapple", "", "Cooking" };
+        r6.Cells = new string[] { "6", "Pineapple", "", "Cooking" };
         GridView.GridRow r7 = new GridView.GridRow();
-        r7.cells = new string[] { "7", "Pepperoni", "John River", "Delivering" };
+        r7.Cells = new string[] { "7", "Pepperoni", "John River", "Delivering" };
         GridView.GridRow r8 = new GridView.GridRow();
-        r8.cells = new string[] { "8", "Tomato,Gorgonzola", "", "Cooking" };
+        r8.Cells = new string[] { "8", "Tomato,Gorgonzola", "", "Cooking" };
         GridView.GridRow r9 = new GridView.GridRow();
-        r9.cells = new string[] { "9", "Pineapple", "", "Cooking" };
+        r9.Cells = new string[] { "9", "Pineapple", "", "Cooking" };
         GridView.GridRow r10 = new GridView.GridRow();
-        r10.cells = new string[] { "10", "Pepperoni", "John River", "Delivering" };
+        r10.Cells = new string[] { "10", "Pepperoni", "John River", "Delivering" };
         GridView.GridRow r11 = new GridView.GridRow();
-        r11.cells = new string[] { "11", "Tomato,Gorgonzola", "", "Cooking" };
+        r11.Cells = new string[] { "11", "Tomato,Gorgonzola", "", "Cooking" };
         GridView.GridRow r12 = new GridView.GridRow();
-        r12.cells = new string[] { "12", "Pineapple", "", "Cooking" };
+        r12.Cells = new string[] { "12", "Pineapple", "", "Cooking" };
 
         GridView.GridRow[] arrOrders = { r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12 };
         GridView grdOrders = new GridView("grdOrders", columns, arrOrders, 2, 17, 44, 10, System.Drawing.Color.Yellow, System.Drawing.Color.Black);
@@ -216,24 +216,24 @@
 
     private void TimerElapsed(object? sender, ElapsedEventArgs e)
     {
-        pgbProgressBar.value++;
-        if (pgbProgressBar.value > pgbProgressBar.MaxValue)
-            pgbProgressBar.value = 0;
+        pgbProgressBar.Value++;
+        if (pgbProgressBar.Value > pgbProgressBar.Maximum)
+            pgbProgressBar.Value = 0;
     }
 
     public void mniPreferences_OnClick()
     {
         MessageBox.Buttons messageBoxType = MessageBox.Buttons.OKOnly;
-        MessageBox messageBox = new MessageBox("Hello world!!", "Preferences", messageBoxType, BorderStyle.line, System.Drawing.Color.Yellow, System.Drawing.Color.Green, screen);
+        MessageBox messageBox = new MessageBox("Hello world!!", "Preferences", messageBoxType, BorderStyle.Line, System.Drawing.Color.Yellow, System.Drawing.Color.Green, screen);
         messageBox.Show();
     }
 
-    public void bttSubmit_OnClick(Control sender)
+    public void bttSubmit_OnClick()
     {
         MessageBox.Buttons messageBoxType = MessageBox.Buttons.OKOnly;
 
-        if (lsbMessageBoxType.itemsSelected != null && lsbMessageBoxType.itemsSelected.Count > 0){
-            switch (lsbMessageBoxType.itemsSelected[0]){
+        if (lsbMessageBoxType.SelectedItems.Count > 0){
+            switch (lsbMessageBoxType.SelectedItems[0]){
                 case "OKOnly":
                     messageBoxType = MessageBox.Buttons.OKOnly;
                     break;
@@ -255,7 +255,7 @@
             }
         }
 
-        MessageBox messageBox = new MessageBox("Do you wan't cookies?", "Another extra", messageBoxType, BorderStyle.line, System.Drawing.Color.Yellow, System.Drawing.Color.Green, screen);
+        MessageBox messageBox = new MessageBox("Do you wan't cookies?", "Another extra", messageBoxType, BorderStyle.Line, System.Drawing.Color.Yellow, System.Drawing.Color.Green, screen);
         messageBox.Show();
     }
 

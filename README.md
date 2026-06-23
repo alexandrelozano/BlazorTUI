@@ -54,11 +54,11 @@ Add the BlazorTUI namespace to a Razor page, create a `Screen`, and render it wi
             5,
             56,
             12,
-            Frame.BorderStyle.line,
+            Frame.BorderStyle.Line,
             Color.Yellow,
             Color.DarkBlue);
 
-        screen.topContainer.AddContainer(frame);
+        screen.TopContainer.AddContainer(frame);
 
         frame.AddControl(new Label(
             "nameLabel", "Name:", 2, 2, 12, Color.White, Color.DarkBlue));
@@ -69,13 +69,13 @@ Add the BlazorTUI namespace to a Razor page, create a `Screen`, and render it wi
         var saveButton = new Button(
             "saveButton", "Save", 14, 5, 10, Color.White, Color.DarkGreen);
 
-        saveButton.OnClick = _ =>
+        saveButton.Clicked += (_, _) =>
         {
             var message = new MessageBox(
                 "Saved",
                 "Result",
                 MessageBox.Buttons.OKOnly,
-                BorderStyle.line,
+                BorderStyle.Line,
                 Color.White,
                 Color.DarkGreen,
                 screen);
@@ -119,7 +119,18 @@ These methods initialize parent references, tab order, and z-order. Use `screen.
 | Data and feedback | `GridView`, `ProgressBar`, `Spinner`, `PictureBox` |
 | Modal UI | `Dialog`, `MessageBox` |
 
-Control constructors accept `System.Drawing.Color` values for foreground and background colors. Interactive controls expose callbacks such as `OnClick`, `OnFocus`, and `OnLostFocus`.
+Control constructors accept `System.Drawing.Color` values for foreground and background colors.
+
+## Public API conventions
+
+The recommended API follows standard .NET naming and event conventions:
+
+- Use properties such as `Screen.Width`, `Screen.Rows`, `Screen.TopContainer`, `Control.Name`, `Control.Width`, and `TextBox.Value`.
+- Subscribe to `Clicked`, `GotFocus`, and `LostFocus` with `+=`. These events work consistently for mouse and keyboard activation.
+- Use `MenuBar.AddMenu` and `Menu.AddItem` to build menus. Their `Menus` and `Items` properties provide read-only views.
+- Use PascalCase enum members such as `BorderStyle.Line` and `Frame.BorderStyle.Solid`.
+
+Lowercase members from earlier releases remain available in the `0.8.x` line for source and binary compatibility. New code should use the recommended members above.
 
 ## Keyboard and mouse interaction
 

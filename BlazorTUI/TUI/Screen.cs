@@ -9,20 +9,35 @@ namespace BlazorTUI.TUI
 
         public short width { get; set; }
 
+        public short Width => width;
+
         public short height { get; set; }
+
+        public short Height => height;
 
         public IList<Row> rows;
 
+        public IReadOnlyList<Row> Rows => rows as IReadOnlyList<Row> ?? rows.ToArray();
+
         public Container topContainer { get; set; }
+
+        public Container TopContainer => topContainer;
 
         public IList<Dialog> dialogs;
 
+        public IReadOnlyList<Dialog> Dialogs => dialogs as IReadOnlyList<Dialog> ?? dialogs.ToArray();
+
         public MenuBar? menuBar;
+
+        public MenuBar? MenuBar { get => menuBar; set => menuBar = value; }
 
         public long Revision { get; private set; }
 
         public Screen(short width, short height)
         {
+            ArgumentOutOfRangeException.ThrowIfLessThan(width, (short)1);
+            ArgumentOutOfRangeException.ThrowIfLessThan(height, (short)1);
+
             this.width = width;
             this.height = height;
 
@@ -61,6 +76,8 @@ namespace BlazorTUI.TUI
 
         public void SetFocus(string name)
         {
+            ArgumentException.ThrowIfNullOrWhiteSpace(name);
+
             if (dialogs.Count == 0)
                 topContainer.SetFocus(name);
             else
@@ -69,6 +86,8 @@ namespace BlazorTUI.TUI
 
         public void KeyDown(string key, bool shiftKey)
         {
+            ArgumentException.ThrowIfNullOrEmpty(key);
+
             MenuBar? activeMenuBar = menuBar;
 
             if (key == "Alt" && activeMenuBar != null)

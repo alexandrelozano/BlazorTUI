@@ -1,4 +1,4 @@
-﻿using BlazorTUI.Utils;
+using BlazorTUI.Utils;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -12,10 +12,30 @@ namespace BlazorTUI.TUI
     public class ColorPicker : Control
     {
         public Color color;
+        public Color Color { get => color; set => color = value; }
         public bool showColorName;
+        public bool ShowColorName { get => showColorName; set => showColorName = value; }
 
         public new Color foreColor;
+        public new Color ForeColor
+        {
+            get => foreColor;
+            set
+            {
+                foreColor = value;
+                base.foreColor = value;
+            }
+        }
         public new Color backgroundColor;
+        public new Color BackgroundColor
+        {
+            get => backgroundColor;
+            set
+            {
+                backgroundColor = value;
+                base.backgroundColor = value;
+            }
+        }
 
         private Screen screen;
 
@@ -23,15 +43,15 @@ namespace BlazorTUI.TUI
 
         public ColorPicker(string name, Color color, bool showColorName, short X, short Y, short width, Color foreColor, Color backgroundColor, Screen screen)
         {
-            this.name = name;
+            this.Name = name;
             this.X = X;
             this.Y = Y;
             this.color = color;
             this.showColorName = showColorName;
             this.width = width;
             this.height = 1;
-            this.foreColor = foreColor;
-            this.backgroundColor = backgroundColor;
+            this.ForeColor = foreColor;
+            this.BackgroundColor = backgroundColor;
             this.screen = screen;
             this.TabStop = true;
         }
@@ -91,10 +111,11 @@ namespace BlazorTUI.TUI
 
                 PickColor();
 
-                OnClick?.Invoke(this);
-
                 handled = true;
             }
+
+            if (handled)
+                NotifyClicked();
 
             return handled;
         }
@@ -109,16 +130,17 @@ namespace BlazorTUI.TUI
                 {
                     case "Tab":
                         break;
+                    case "Space":
                     case " ":
                         PickColor();
 
-                        OnClick?.Invoke(this);
+                        NotifyClicked();
                         handled = true;
                         break;
                     case "Enter":
                         PickColor();
 
-                        OnClick?.Invoke(this);
+                        NotifyClicked();
                         handled = true;
                         break;
                     case "Backspace":

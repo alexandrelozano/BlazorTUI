@@ -1,11 +1,21 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
 namespace BlazorTUI.TUI
 {
     public class Container
     {
-        public string name { get; set; }
+        public string name { get; set; } = "";
+
+        public string Name
+        {
+            get => name;
+            set
+            {
+                ArgumentException.ThrowIfNullOrWhiteSpace(value);
+                name = value;
+            }
+        }
 
         public short X { get; set; }
 
@@ -13,7 +23,11 @@ namespace BlazorTUI.TUI
 
         public short width { get; set; }
 
+        public short Width { get => width; set => width = value; }
+
         public short height { get; set; }
+
+        public short Height { get => height; set => height = value; }
 
         public bool Visible { get; set; } = true;
 
@@ -21,13 +35,20 @@ namespace BlazorTUI.TUI
 
         public List<Control> controls { get; set; } = new List<Control>();
 
+        public IReadOnlyList<Control> Controls => controls;
+
         public List<Container> containers { get; set; } = new List<Container>();
+
+        public IReadOnlyList<Container> Containers => containers;
 
         public Container? parent { get; set; } = null;
 
+        public Container? Parent => parent;
+
         public Container(string name)
         {
-            this.name = name;
+            ArgumentException.ThrowIfNullOrWhiteSpace(name);
+            this.Name = name;
         }
 
         public Container TopContainer()
@@ -44,6 +65,8 @@ namespace BlazorTUI.TUI
 
         public void SetFocus(string name)
         {
+            ArgumentException.ThrowIfNullOrWhiteSpace(name);
+
             foreach (Control control in controls)
             {
                 if (control.name == name && control.TabStop)
@@ -81,6 +104,8 @@ namespace BlazorTUI.TUI
 
         public void KeyDown(string key, bool shiftKey)
         {
+            ArgumentException.ThrowIfNullOrEmpty(key);
+
             if (key == "Tab")
             {
                 Control? currentFocusControl = TopContainer().GetCurrentFocusControl();
@@ -116,14 +141,16 @@ namespace BlazorTUI.TUI
 
         public void AddControl(Control control)
         {
+            ArgumentNullException.ThrowIfNull(control);
+
             if (String.IsNullOrWhiteSpace(control.name))
             {
-                throw new Exception($"Control must have a name");
+                throw new ArgumentException("Control must have a non-empty name.", nameof(control));
             }
 
             if (TopContainer().GetControl(control.name)!=null)
             {
-                throw new Exception($"Already exists a control with name {control.name}");
+                throw new InvalidOperationException($"A control named '{control.name}' already exists.");
             }
 
             if (control.TabStop && control.TabIndex == 0)
@@ -135,6 +162,9 @@ namespace BlazorTUI.TUI
                     .Max() + 1);
             }
 
+            if (control.width < 1 || control.height < 1)
+                throw new ArgumentOutOfRangeException(nameof(control), "Control dimensions must be positive.");
+
             controls.Add(control);
             control.container = this;
             control.ZOrder = (short)((from p in controls orderby p.ZOrder descending select p.ZOrder).FirstOrDefault() + 1);
@@ -142,6 +172,11 @@ namespace BlazorTUI.TUI
 
         public void AddContainer(Container container)
         {
+            ArgumentNullException.ThrowIfNull(container);
+
+            if (container.width < 1 || container.height < 1)
+                throw new ArgumentOutOfRangeException(nameof(container), "Container dimensions must be positive.");
+
             containers.Add(container);
             container.parent = this;
             container.ZOrder = (short)((from p in containers orderby p.ZOrder descending select p.ZOrder).FirstOrDefault() + 1);
@@ -149,6 +184,8 @@ namespace BlazorTUI.TUI
 
         public Control? GetControl(string name)
         {
+            ArgumentException.ThrowIfNullOrWhiteSpace(name);
+
             Control? ret = null;
 
             if (controls != null)
@@ -174,6 +211,8 @@ namespace BlazorTUI.TUI
 
         public void BringToFront(Control control)
         {
+            ArgumentNullException.ThrowIfNull(control);
+
             if (control != null)
             {
                 short z = 0;
@@ -186,8 +225,12 @@ namespace BlazorTUI.TUI
             }
         }
 
+        public Container GetTopContainer() => TopContainer();
+
         public void BringToBottom(Control control)
         {
+            ArgumentNullException.ThrowIfNull(control);
+
             if (control != null)
             {
                 control.ZOrder = 1;
@@ -201,6 +244,8 @@ namespace BlazorTUI.TUI
 
         public void BringToFront(Container container)
         {
+            ArgumentNullException.ThrowIfNull(container);
+
             if (container != null)
             {
                 short z = 0;
@@ -215,6 +260,8 @@ namespace BlazorTUI.TUI
 
         public void BringToBottom(Container container)
         {
+            ArgumentNullException.ThrowIfNull(container);
+
             if (container != null)
             {
                 container.ZOrder = 1;
@@ -308,6 +355,8 @@ namespace BlazorTUI.TUI
                 return this.Y;  
         }
 
+        public short GetYOffset() => YOffset();
+
         public short XOffset()
         {
             if (this.parent != null)
@@ -316,7 +365,10 @@ namespace BlazorTUI.TUI
                 return this.X;
         }
 
-        public virtual void Render(IList<Row> rows) { 
+        public short GetXOffset() => XOffset();
+
+        public virtual void Render(IList<Row> rows) {
+            ArgumentNullException.ThrowIfNull(rows);
         
             foreach (Control control in (from c in controls orderby c.ZOrder select c))
             {

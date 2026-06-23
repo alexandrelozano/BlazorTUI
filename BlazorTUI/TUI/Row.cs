@@ -8,7 +8,12 @@ namespace BlazorTUI.TUI
         private CellState[] _renderedCells = Array.Empty<CellState>();
 
         public short y { get; set; }
+
+        public short Y { get => y; set => y = value; }
+
         public IList<Cell> Cells { get; set; } = new List<Cell>();
+
+        public IReadOnlyList<Cell> ReadOnlyCells => Cells as IReadOnlyList<Cell> ?? Cells.ToArray();
 
         internal long Revision { get; private set; }
 

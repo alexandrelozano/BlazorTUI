@@ -1,4 +1,4 @@
-﻿using System.Drawing;
+using System.Drawing;
 using System.Timers;
 
 namespace BlazorTUI.TUI
@@ -14,15 +14,19 @@ namespace BlazorTUI.TUI
 
         SpinnerType spinnerType;
 
+        public SpinnerType Type => spinnerType;
+
         private System.Timers.Timer tt;
         private readonly string elements;
         private short n;
 
         public Spinner(string name, SpinnerType spinnerType, short X, short Y, Color forecolor, Color backgroundcolor)
         {
-            this.name = name;
+            this.Name = name;
             this.X = X;
             this.Y = Y;
+            this.width = 1;
+            this.height = 1;
             this.spinnerType = spinnerType;
             this.foreColor = forecolor;
             this.backgroundColor = backgroundcolor;

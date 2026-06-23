@@ -1,4 +1,4 @@
-﻿using System.Drawing;
+using System.Drawing;
 
 namespace BlazorTUI.TUI
 {
@@ -6,23 +6,39 @@ namespace BlazorTUI.TUI
     {
         public string title { get; set; }
 
+        public string Title { get => title; set => title = value ?? ""; }
+
         public Color foreColor { get; set; }
 
+        public Color ForeColor { get => foreColor; set => foreColor = value; }
+
         public Color backgroundColor { get; set; }
+
+        public Color BackgroundColor { get => backgroundColor; set => backgroundColor = value; }
 
         public enum BorderStyle
         {
             none,
             line,
             doubleline,
-            solid
+            solid,
+            None = none,
+            Line = line,
+            DoubleLine = doubleline,
+            Solid = solid
         }
 
         public BorderStyle borderStyle { get; set; }
 
+        public BorderStyle Border { get => borderStyle; set => borderStyle = value; }
+
         public Frame(string name, string title, short X, short Y, short width, short height, BorderStyle borderStyle, Color foreColor, Color backgroundColor) : base(name)
         {
-            this.name = name;
+            ArgumentNullException.ThrowIfNull(title);
+            ArgumentOutOfRangeException.ThrowIfLessThan(width, (short)1);
+            ArgumentOutOfRangeException.ThrowIfLessThan(height, (short)1);
+
+            this.Name = name;
             this.title = title; 
             this.X = X;
             this.Y = Y;

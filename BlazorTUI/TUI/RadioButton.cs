@@ -1,4 +1,4 @@
-﻿using System.Drawing;
+using System.Drawing;
 using BlazorTUI.Utils;
 
 namespace BlazorTUI.TUI
@@ -6,12 +6,15 @@ namespace BlazorTUI.TUI
     public class RadioButton : Control
     {
         string text;
+        public string Text { get => text[4..]; set => text = $"    {value ?? ""}"; }
         private readonly Action onClick;
         bool value { get; set; }
 
+        public bool Value { get => value; set => this.value = value; }
+
         public RadioButton(string name, string text, short X, short Y, short width, Color forecolor, Color backgroundcolor, Action OnClick, bool value)
         {
-            this.name = name;
+            this.Name = name;
             this.X = X;
             this.Y = Y;
             this.height = 1;
@@ -35,6 +38,11 @@ namespace BlazorTUI.TUI
             this.value = value;
         }
 
+        public RadioButton(string name, string text, short X, short Y, short width, Color forecolor, Color backgroundcolor, bool value = false)
+            : this(name, text, X, Y, width, forecolor, backgroundcolor, () => { }, value)
+        {
+        }
+
         public override bool Click(short X, short Y)
         {
             bool handled = false;
@@ -46,6 +54,9 @@ namespace BlazorTUI.TUI
                 onClick.Invoke();
                 handled = true;
             }
+
+            if (handled)
+                NotifyClicked();
 
             return handled;
         }
@@ -63,11 +74,16 @@ namespace BlazorTUI.TUI
                     case "Enter":
                         Check();
                         container.TopContainer().SetFocus(name);
+                        onClick.Invoke();
+                        NotifyClicked();
                         handled = true;
                         break;
+                    case "Space":
                     case " ":
                         Check();
                         container.TopContainer().SetFocus(name);
+                        onClick.Invoke();
+                        NotifyClicked();
                         handled = true;
                         break;
                     case "Backspace":
