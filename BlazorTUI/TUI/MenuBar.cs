@@ -139,76 +139,67 @@ namespace BlazorTUI.TUI
         }
         public bool Click(short X, short Y)
         {
-            bool handled = false;
+            if (!visible)
+                return false;
 
-            if (visible)
+            if (Y == 0)
             {
-                if (Y == 0)
+                int menuStartX = 0;
+                foreach (Menu menu in menus)
                 {
-                    int c = 0;
-                    for (int i = 0; i < menus.Count; i++) {
-                        if (X >= c && X < (c + menus[i].text.Length)) {
-                            menus[i].opended = true;
-                            showShortCutkeys = true;
-
-                            for (int j = 0; j < menus.Count; j++)
-                                if (i != j)
-                                    menus[j].opended = false;
-
-                            handled = true;
-                            break;
-                        }
-                        else
-                            c += menus[i].text.Length;
-                    }
-                }
-                else
-                {
-                    int c = 0;
-                    int m = 0;
-                    for (int x = 0; x < screen.rows[0].Cells.Count; x++)
+                    if (X >= menuStartX && X < menuStartX + menu.text.Length)
                     {
-                        if (m < menus.Count)
-                        {
-                            if (c < menus[m].text.Length)
-                            {
-                                if (menus[m].opended == true)
-                                {
-                                    menus[m].opended = false;
-                                    if (c == 0)
-                                    {
-                                        int maxLenght = (from p in menus[m].menuItems select p.text.Length).Max();
-                                        for (int y = 1; y <= menus[m].menuItems.Count; y++)
-                                        {
-                                            if (Y == (y + 1))
-                                            {
-                                                menus[m].menuItems[y].Invoke();
-
-                                                handled = true;
-                                                break;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-
-                            c++;
-
-                            if (c >= menus[m].text.Length)
-                            {
-                                c = 0;
-                                m++;
-                            }
-                        }
+                        CloseMenus();
+                        menu.opended = true;
+                        showShortCutkeys = true;
+                        return true;
                     }
+
+                    menuStartX += menu.text.Length;
                 }
+
+                CloseMenus();
+                return false;
             }
 
-            if (handled == false)
-                for (int i = 0; i < menus.Count;i++)
-                    menus[i].opended = false;
+            Menu? openMenu = OpenedMenu();
+            if (openMenu is null)
+                return false;
 
-            return handled;
+            int openMenuStartX = 0;
+            foreach (Menu menu in menus)
+            {
+                if (ReferenceEquals(menu, openMenu))
+                    break;
+                openMenuStartX += menu.text.Length;
+            }
+
+            int itemIndex = Y - 1;
+            int dropDownWidth = openMenu.menuItems.Count == 0
+                ? 0
+                : openMenu.menuItems.Max(item => item.text.Length);
+            bool itemClicked = itemIndex >= 0 && itemIndex < openMenu.menuItems.Count &&
+                X >= openMenuStartX && X < openMenuStartX + dropDownWidth;
+
+            CloseMenus();
+            if (!itemClicked)
+                return false;
+
+            MenuItem item = openMenu.menuItems[itemIndex];
+            if (item.menuItemType != MenuItem.MenuItemType.Separator)
+                item.Invoke();
+
+            return true;
+        }
+
+        private void CloseMenus()
+        {
+            foreach (Menu menu in menus)
+            {
+                menu.opended = false;
+                menu.selectedItem = 0;
+            }
+            showShortCutkeys = false;
         }
 
         public void Render(IList<Row> rows)

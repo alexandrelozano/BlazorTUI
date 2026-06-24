@@ -67,4 +67,86 @@ public class DialogAndMenuTests
         Assert.False(menu.opended);
         Assert.False(menuBar.showShortCutkeys);
     }
+
+    [Fact]
+    public void ClickingOutsideAnOpenMenuClosesItAndReturnsUnhandled()
+    {
+        var screen = new Screen(20, 10);
+        var menuBar = new MenuBar(Color.White, Color.DarkBlue, screen);
+        var menu = new Menu("File", 'F');
+        menu.AddItem(new MenuItem("Open", MenuItem.MenuItemType.Item, 'O'));
+        menu.AddItem(new MenuItem("Save", MenuItem.MenuItemType.Item, 'S'));
+        menuBar.AddMenu(menu);
+
+        Assert.True(menuBar.Click(0, 0));
+        bool handled = menuBar.Click(10, 5);
+
+        Assert.False(handled);
+        Assert.False(menu.IsOpen);
+        Assert.False(menuBar.ShowShortcutKeys);
+    }
+
+    [Fact]
+    public void ClickingImmediatelyBelowMenuItemsDoesNotAccessPastTheCollection()
+    {
+        var screen = new Screen(20, 10);
+        var menuBar = new MenuBar(Color.White, Color.DarkBlue, screen);
+        var menu = new Menu("File");
+        menu.AddItem(new MenuItem("Open", MenuItem.MenuItemType.Item));
+        menu.AddItem(new MenuItem("Save", MenuItem.MenuItemType.Item));
+        menuBar.AddMenu(menu);
+        menuBar.Click(0, 0);
+
+        bool handled = menuBar.Click(0, 3);
+
+        Assert.False(handled);
+        Assert.False(menu.IsOpen);
+    }
+
+    [Theory]
+    [InlineData(1, 0)]
+    [InlineData(2, 1)]
+    public void ClickingAMenuItemInvokesTheCorrectEntry(short row, int expectedIndex)
+    {
+        var screen = new Screen(20, 10);
+        var menuBar = new MenuBar(Color.White, Color.DarkBlue, screen);
+        var menu = new Menu("File");
+        int invokedIndex = -1;
+        var open = new MenuItem("Open", MenuItem.MenuItemType.Item);
+        open.Clicked += (_, _) => invokedIndex = 0;
+        var save = new MenuItem("Save", MenuItem.MenuItemType.Item);
+        save.Clicked += (_, _) => invokedIndex = 1;
+        menu.AddItem(open);
+        menu.AddItem(save);
+        menuBar.AddMenu(menu);
+        menuBar.Click(0, 0);
+
+        bool handled = menuBar.Click(0, row);
+
+        Assert.True(handled);
+        Assert.Equal(expectedIndex, invokedIndex);
+        Assert.False(menu.IsOpen);
+    }
+
+    [Fact]
+    public void OutsideMenuClickCanContinueToTheUnderlyingControl()
+    {
+        var screen = new Screen(20, 10);
+        var menuBar = new MenuBar(Color.White, Color.DarkBlue, screen);
+        var menu = new Menu("File");
+        menu.AddItem(new MenuItem("Open", MenuItem.MenuItemType.Item));
+        menuBar.AddMenu(menu);
+        bool buttonClicked = false;
+        var button = new Button("underlying", "Open", 10, 5, 8, Color.White, Color.Black);
+        button.Clicked += (_, _) => buttonClicked = true;
+        screen.TopContainer.AddControl(button);
+        menuBar.Click(0, 0);
+
+        bool handled = menuBar.Click(10, 5);
+        if (!handled)
+            screen.TopContainer.Click(10, 5);
+
+        Assert.True(buttonClicked);
+        Assert.False(menu.IsOpen);
+    }
 }
