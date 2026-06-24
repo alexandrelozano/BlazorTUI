@@ -87,6 +87,9 @@ namespace BlazorTUI.TUI
 
         public virtual void Click(short X, short Y)
         {
+            if (TryClickOpenPopup(X, Y))
+                return;
+
             foreach (Control control in controls)
             {
                 if (control.Visible && control.X <= X && control.X + control.width > X && control.Y <= Y && control.Y + control.height > Y)
@@ -223,6 +226,33 @@ namespace BlazorTUI.TUI
 
                 control.ZOrder = ++z;
             }
+        }
+
+        private bool TryClickOpenPopup(short X, short Y)
+        {
+            foreach (Control control in controls.OrderByDescending(control => control.ZOrder))
+            {
+                if (control is not IPopupControl { IsPopupOpen: true } popup)
+                    continue;
+
+                if (popup.ContainsPopupPoint(X, Y))
+                {
+                    control.Click((short)(X - control.X), (short)(Y - control.Y));
+                    return true;
+                }
+
+                popup.ClosePopup();
+            }
+
+            foreach (Container container in containers
+                .Where(container => container.Visible)
+                .OrderByDescending(container => container.ZOrder))
+            {
+                if (container.TryClickOpenPopup((short)(X - container.X), (short)(Y - container.Y)))
+                    return true;
+            }
+
+            return false;
         }
 
         public Container GetTopContainer() => TopContainer();

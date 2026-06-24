@@ -17,7 +17,7 @@
         screen = new Screen(60, 30);
 
         var frame = new Frame(
-            "formFrame", "CONTROLS AND EVENTS", 8, 5, 44, 20,
+            "formFrame", "CONTROLS AND EVENTS", 8, 4, 44, 22,
             Frame.BorderStyle.Line, Color.Yellow, Color.DarkBlue);
         screen.TopContainer.AddContainer(frame);
 
@@ -37,22 +37,35 @@
             "passwordInput", "secret", 14, 6, 22, Color.Yellow, Color.Black);
         frame.AddControl(passwordInput);
 
+        frame.AddControl(new Label(
+            "priorityLabel", "Priority:", 3, 9, 10, Color.White, Color.DarkBlue));
+
+        var priorityInput = new ComboBox(
+            "priorityInput",
+            new[] { "Low", "Normal", "High", "Urgent" },
+            14, 9, 22, Color.Yellow, Color.Black,
+            selectedIndex: 1,
+            maxDropDownItems: 4);
+        priorityInput.SelectedIndexChanged += (_, _) =>
+            eventStatus.Value = $"Priority: {priorityInput.SelectedItem}";
+        frame.AddControl(priorityInput);
+
         includeDetails = new CheckBox(
-            "includeDetails", "Include details", 14, 9, 22,
+            "includeDetails", "Include details", 14, 14, 22,
             Color.Yellow, Color.DarkBlue);
         includeDetails.Clicked += (_, _) => eventStatus.Value = "Checkbox changed";
         frame.AddControl(includeDetails);
 
         var greetButton = new Button(
-            "greetButton", "Greet", 14, 12, 12, Color.White, Color.DarkGreen);
+            "greetButton", "Greet", 14, 16, 12, Color.White, Color.DarkGreen);
         greetButton.Clicked += (_, _) => ShowGreeting();
         frame.AddControl(greetButton);
 
         frame.AddControl(new Label(
-            "eventLabel", "Event:", 3, 15, 10, Color.White, Color.DarkBlue));
+            "eventLabel", "Event:", 3, 18, 10, Color.White, Color.DarkBlue));
 
         eventStatus = new TextBox(
-            "eventStatus", "Ready", 14, 15, 22, Color.Cyan, Color.Black)
+            "eventStatus", "Ready", 14, 18, 22, Color.Cyan, Color.Black)
         {
             TabStop = false
         };

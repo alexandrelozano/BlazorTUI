@@ -10,6 +10,8 @@ const handledKeys = new Set([
     "Spacebar",
     "Backspace",
     "Delete",
+    "Escape",
+    "F4",
     "Home",
     "End"
 ]);

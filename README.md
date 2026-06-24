@@ -114,7 +114,7 @@ These methods initialize parent references, tab order, and z-order. Use `screen.
 | --- | --- |
 | Layout | `Frame`, `TabControl`, `TabPage` |
 | Text and input | `Label`, `TextBox`, `PasswordBox`, `TextArea`, `NumericBox`, `DateBox`, `TimeBox` |
-| Selection | `CheckBox`, `RadioButton`, `ListBox`, `ColorPicker` |
+| Selection | `CheckBox`, `RadioButton`, `ComboBox`, `ListBox`, `ColorPicker` |
 | Actions and navigation | `Button`, `MenuBar`, `Menu`, `MenuItem` |
 | Data and feedback | `GridView`, `ProgressBar`, `Spinner`, `PictureBox` |
 | Modal UI | `Dialog`, `MessageBox` |
@@ -139,8 +139,9 @@ Lowercase members from earlier releases remain available in the `0.8.x` line for
 - `Tab`: move to the next focusable control.
 - `Shift+Tab`: move to the previous focusable control.
 - `Alt+PageDown` or `Alt+PageUp`: move to the next or previous page of the focused `TabControl`. `Ctrl+Tab` is also supported when the browser does not reserve it for browser-tab navigation.
-- `Enter` or `Space`: activate buttons and selection controls.
-- Arrow keys: navigate text, lists, grids, color pickers, and menus where applicable.
+- `Enter` or `Space`: activate buttons and selection controls, and open or confirm a `ComboBox`.
+- `F4`: open or close the focused `ComboBox`; `Escape` closes it without changing the selection.
+- Arrow keys: navigate text, combo boxes, lists, grids, color pickers, and menus where applicable.
 - `Shift` plus the arrow, `Home`, or `End` keys: select text in `TextBox` and `TextArea`.
 - `Ctrl+A`, `Ctrl+C`, `Ctrl+X`, and `Ctrl+V`: select all, copy, cut, and paste in text controls. Use `Command` instead of `Ctrl` on macOS.
 - `Ctrl+Z` and `Ctrl+Y`: undo and redo text edits. On macOS, use `Command+Z` and `Command+Shift+Z`.
@@ -163,6 +164,30 @@ Clipboard and edit-history shortcuts are intercepted only while a compatible `Te
 Each text control retains its latest 100 text-changing operations. Undo and redo restore the text, cursor, selection, and `TextArea` scroll position. Assigning `Value` or calling `ClearHistory()` starts a new history.
 
 Pasting into a `TextBox` converts line breaks to spaces and respects the control width. `TextArea` preserves line breaks and applies its `MaxTextWidth` and `MaxLines` limits.
+
+## Combo box
+
+`ComboBox` displays one selected value and opens a scrollable list over the controls below it:
+
+```csharp
+var priority = new ComboBox(
+    "priority",
+    new[] { "Low", "Normal", "High", "Urgent" },
+    14,
+    9,
+    22,
+    Color.Yellow,
+    Color.Black,
+    selectedIndex: 1,
+    maxDropDownItems: 4);
+
+priority.SelectedIndexChanged += (_, _) =>
+    status.Value = $"Priority: {priority.SelectedItem}";
+
+frame.AddControl(priority);
+```
+
+Use `SelectedIndex`, `SelectedItem`, `SelectIndex`, or `SelectItem` to control the selection. `Items` is read-only; update it through `AddItem`, `RemoveItem`, and `ClearItems`. Users can change a closed combo box with the arrow, `Home`, and `End` keys, or open it with `Enter`, `Space`, or `F4`. While open, `Enter` confirms the highlighted item and `Escape` cancels it.
 
 ## Password input
 
@@ -250,7 +275,7 @@ The repository contains focused pages that can be run directly:
 
 | Example | Demonstrates |
 | --- | --- |
-| [Controls and events](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/ControlsAndEvents.razor) | Text input, checkbox state, focus callbacks, click callbacks, and focus order |
+| [Controls and events](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/ControlsAndEvents.razor) | Text and password input, combo-box selection, checkbox state, callbacks, and focus order |
 | [Dialogs and menus](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/DialogsAndMenus.razor) | Menu shortcuts, custom modal dialogs, and message boxes |
 | [Images](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/Images.razor) | Loading encoded image bytes into a `PictureBox` |
 | [TabControl](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/Tabs.razor) | Tab pages, nested controls, focus changes, mouse selection, and keyboard navigation |
@@ -262,6 +287,7 @@ Run `dotnet run --project SampleApp` from the repository root and open `/example
 
 ### 0.8.5 — 2026-06-24
 
+- Added `ComboBox` with a bounded scrollable drop-down, mouse selection, keyboard navigation, collection helpers, and selection-change events.
 - Added `TabControl` and `TabPage` containers with independent page contents, mouse selection, programmatic selection, and change events.
 - Added focus-aware `Ctrl+Tab` and `Ctrl+Shift+Tab` navigation with screen-reader announcements.
 - Added `Alt+PageDown` and `Alt+PageUp` navigation for browsers that reserve `Ctrl+Tab` and do not expose it to web pages.

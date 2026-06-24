@@ -27,6 +27,12 @@
         terminal.TopContainer.AddControl(input);
         terminal.TopContainer.AddControl(password);
         terminal.TopContainer.AddControl(button);
+        var priority = new ComboBox(
+            "priority", new[] { "Low", "High" }, 11, 1, 9,
+            System.Drawing.Color.White, System.Drawing.Color.Black);
+        priority.SelectedIndexChanged += (_, _) => { };
+        priority.SelectItem("High");
+        terminal.TopContainer.AddControl(priority);
         var tabs = new TabControl(
             "tabs", 0, 5, 20, 5,
             System.Drawing.Color.White, System.Drawing.Color.DarkBlue);
