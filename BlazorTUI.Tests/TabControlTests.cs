@@ -80,6 +80,7 @@ public class TabControlTests
         screen.TopContainer.AddContainer(tabs);
         TabPage first = tabs.AddTab("firstTab", "First");
         TabPage second = tabs.AddTab("secondTab", "Second");
+        tabs.AddTab("emptyTab", "Empty");
         var firstButton = new Button("firstButton", "First", 1, 1, 8, Color.White, Color.Black);
         var secondButton = new Button("secondButton", "Second", 1, 1, 8, Color.White, Color.Black);
         first.AddControl(firstButton);
@@ -90,11 +91,16 @@ public class TabControlTests
         Assert.True(secondButton.Focus);
 
         tabs.SelectNextTab();
+        Assert.Equal(2, tabs.SelectedIndex);
+        Assert.Null(tabs.GetCurrentFocusControl());
+        Assert.True(tabs.IsKeyboardActive);
+
+        tabs.SelectNextTab();
         Assert.Equal(0, tabs.SelectedIndex);
         Assert.True(firstButton.Focus);
 
         tabs.SelectPreviousTab();
-        Assert.Equal(1, tabs.SelectedIndex);
+        Assert.Equal(2, tabs.SelectedIndex);
     }
 
     [Fact]

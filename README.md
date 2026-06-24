@@ -138,7 +138,7 @@ Lowercase members from earlier releases remain available in the `0.8.x` line for
 
 - `Tab`: move to the next focusable control.
 - `Shift+Tab`: move to the previous focusable control.
-- `Ctrl+Tab` or `Ctrl+Shift+Tab`: move to the next or previous page of the focused `TabControl`.
+- `Alt+PageDown` or `Alt+PageUp`: move to the next or previous page of the focused `TabControl`. `Ctrl+Tab` is also supported when the browser does not reserve it for browser-tab navigation.
 - `Enter` or `Space`: activate buttons and selection controls.
 - Arrow keys: navigate text, lists, grids, color pickers, and menus where applicable.
 - `Shift` plus the arrow, `Home`, or `End` keys: select text in `TextBox` and `TextArea`.
@@ -205,7 +205,7 @@ options.AddControl(new CheckBox(
     Color.Yellow, Color.DarkBlue));
 ```
 
-Select pages with `SelectedIndex`, `SelectTab`, `SelectNextTab`, or `SelectPreviousTab`. Users can click headers or press `Ctrl+Tab` and `Ctrl+Shift+Tab`; focus moves to the first focusable control on the new page.
+Select pages with `SelectedIndex`, `SelectTab`, `SelectNextTab`, or `SelectPreviousTab`. Users can click headers or press `Alt+PageDown` and `Alt+PageUp`; focus moves to the first focusable control on the new page. `Ctrl+Tab` remains available in browsers that deliver that shortcut to web content.
 
 ## Images
 
@@ -253,7 +253,7 @@ The repository contains focused pages that can be run directly:
 | [Controls and events](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/ControlsAndEvents.razor) | Text input, checkbox state, focus callbacks, click callbacks, and focus order |
 | [Dialogs and menus](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/DialogsAndMenus.razor) | Menu shortcuts, custom modal dialogs, and message boxes |
 | [Images](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/Images.razor) | Loading encoded image bytes into a `PictureBox` |
-| [TabControl](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/Tabs.razor) | Tab pages, nested controls, focus changes, mouse selection, and `Ctrl+Tab` navigation |
+| [TabControl](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/Tabs.razor) | Tab pages, nested controls, focus changes, mouse selection, and keyboard navigation |
 | [Complete showcase](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Index.razor) | All controls, nested frames, z-order, callbacks, and animation |
 
 Run `dotnet run --project SampleApp` from the repository root and open `/examples` to browse them. The example routes are exercised by the automated test suite so API changes cannot silently leave the documentation out of date.
@@ -264,6 +264,8 @@ Run `dotnet run --project SampleApp` from the repository root and open `/example
 
 - Added `TabControl` and `TabPage` containers with independent page contents, mouse selection, programmatic selection, and change events.
 - Added focus-aware `Ctrl+Tab` and `Ctrl+Shift+Tab` navigation with screen-reader announcements.
+- Added `Alt+PageDown` and `Alt+PageUp` navigation for browsers that reserve `Ctrl+Tab` and do not expose it to web pages.
+- Preserved tab navigation when the selected page has no focusable controls, including wrap-around from the final page.
 - Prevented hidden containers from receiving keyboard input and preserved unique control-name validation across prebuilt tab pages.
 
 ### 0.8.4 — 2026-06-24

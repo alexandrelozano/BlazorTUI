@@ -262,6 +262,7 @@ public class BlazorTUIComponentTests : BunitContext
         screen.TopContainer.AddContainer(tabs);
         TabPage first = tabs.AddTab("firstTab", "First");
         TabPage second = tabs.AddTab("secondTab", "Second");
+        tabs.AddTab("aboutTab", "About");
         var firstInput = new TextBox("firstInput", "", 1, 1, 8, Color.White, Color.Black);
         var secondInput = new TextBox("secondInput", "", 1, 1, 8, Color.White, Color.Black);
         first.AddControl(firstInput);
@@ -273,13 +274,20 @@ public class BlazorTUIComponentTests : BunitContext
 
         Assert.Equal("true", component.Find(".gridfs").GetAttribute("data-tab-navigation-enabled"));
         Assert.Contains("Control+Tab", component.Find(".gridfs").GetAttribute("aria-keyshortcuts"));
+        Assert.Contains("Alt+PageDown", component.Find(".gridfs").GetAttribute("aria-keyshortcuts"));
 
         await component.InvokeAsync(() => component.Instance.MoveTab(false));
         Assert.Equal(1, tabs.SelectedIndex);
         Assert.True(secondInput.Focus);
         Assert.Contains("Tab selected: Second", component.Find("[role=status]").TextContent);
 
-        await component.InvokeAsync(() => component.Instance.MoveTab(true));
+        await component.InvokeAsync(() => component.Instance.MoveTab(false));
+        Assert.Equal(2, tabs.SelectedIndex);
+        Assert.Null(tabs.GetCurrentFocusControl());
+        Assert.Equal("true", component.Find(".gridfs").GetAttribute("data-tab-navigation-enabled"));
+        Assert.Contains("Tab selected: About", component.Find("[role=status]").TextContent);
+
+        await component.InvokeAsync(() => component.Instance.MoveTab(false));
         Assert.Equal(0, tabs.SelectedIndex);
         Assert.True(firstInput.Focus);
     }

@@ -22,6 +22,8 @@ namespace BlazorTUI.TUI
 
         public Color BackgroundColor { get; set; }
 
+        public bool IsKeyboardActive { get; private set; }
+
         public event EventHandler? SelectedTabChanged;
 
         public TabControl(
@@ -101,6 +103,7 @@ namespace BlazorTUI.TUI
             ArgumentException.ThrowIfNullOrWhiteSpace(name);
 
             int tabIndex = tabs.FindIndex(tab => tab.GetControl(name) is not null);
+            IsKeyboardActive = tabIndex >= 0;
             if (tabIndex >= 0 && tabIndex != selectedIndex)
                 ActivateTab(tabIndex, false);
 
@@ -150,6 +153,7 @@ namespace BlazorTUI.TUI
         {
             ArgumentOutOfRangeException.ThrowIfNegative(index);
             ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(index, tabs.Count);
+            ActivateKeyboardContext();
             if (index == selectedIndex)
                 return;
 
@@ -163,6 +167,14 @@ namespace BlazorTUI.TUI
                 TopContainer().SetFocus(firstControl.Name);
 
             SelectedTabChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        private void ActivateKeyboardContext()
+        {
+            foreach (TabControl tabControl in EnumerateTabControls(TopContainer()))
+                tabControl.IsKeyboardActive = false;
+
+            IsKeyboardActive = true;
         }
 
         private void UpdateTabLayout()
@@ -293,6 +305,18 @@ namespace BlazorTUI.TUI
             {
                 foreach (Control control in EnumerateControls(child))
                     yield return control;
+            }
+        }
+
+        private static IEnumerable<TabControl> EnumerateTabControls(Container container)
+        {
+            if (container is TabControl tabControl)
+                yield return tabControl;
+
+            foreach (Container child in container.Containers)
+            {
+                foreach (TabControl nestedTabControl in EnumerateTabControls(child))
+                    yield return nestedTabControl;
             }
         }
     }

@@ -21,7 +21,7 @@
          aria-label="@AriaLabel"
          aria-roledescription="text user interface"
          aria-describedby="@DescriptionIds"
-         aria-keyshortcuts="Alt Tab Shift+Tab Control+Tab Control+Shift+Tab ArrowUp ArrowDown ArrowLeft ArrowRight Enter Space Backspace Home End Control+A Control+C Control+X Control+V Control+Z Control+Y Meta+A Meta+C Meta+X Meta+V Meta+Z Meta+Shift+Z"
+         aria-keyshortcuts="Alt Tab Shift+Tab Control+Tab Control+Shift+Tab Alt+PageDown Alt+PageUp ArrowUp ArrowDown ArrowLeft ArrowRight Enter Space Backspace Home End Control+A Control+C Control+X Control+V Control+Z Control+Y Meta+A Meta+C Meta+X Meta+V Meta+Z Meta+Shift+Z"
          data-clipboard-enabled="@(ActiveClipboardControl is not null ? "true" : "false")"
          data-clipboard-copy-enabled="@(ClipboardCopyEnabled ? "true" : "false")"
          data-clipboard-paste-enabled="@(ClipboardPasteEnabled ? "true" : "false")"
@@ -46,7 +46,7 @@
     public string? AriaDescription { get; set; }
 
     [Parameter]
-    public string KeyboardInstructions { get; set; } = "Use Tab and Shift+Tab to move between controls, Control+Tab to change tab pages, the arrow keys to navigate, Enter or Space to activate controls, and standard clipboard, undo, and redo shortcuts in text controls.";
+    public string KeyboardInstructions { get; set; } = "Use Tab and Shift+Tab to move between controls, Alt+PageDown and Alt+PageUp to change tab pages, the arrow keys to navigate, Enter or Space to activate controls, and standard clipboard, undo, and redo shortcuts in text controls.";
 
     private readonly System.Timers.Timer _timer = new(250);
     private readonly string _accessibilityId = $"blazortui-{Guid.NewGuid():N}";
@@ -150,8 +150,22 @@
                 currentContainer = currentContainer.Parent;
             }
 
-            return null;
+            return FindKeyboardActiveTabControl(activeContainer);
         }
+    }
+
+    private static TabControl? FindKeyboardActiveTabControl(Container container)
+    {
+        if (container is TabControl { IsKeyboardActive: true } tabControl)
+            return tabControl;
+
+        foreach (Container child in container.Containers.Where(child => child.Visible))
+        {
+            if (FindKeyboardActiveTabControl(child) is { } activeTabControl)
+                return activeTabControl;
+        }
+
+        return null;
     }
 
     private string GridCssVariables
