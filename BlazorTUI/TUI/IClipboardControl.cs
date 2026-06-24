@@ -12,4 +12,11 @@ namespace BlazorTUI.TUI
 
         void Paste(string value);
     }
+
+    public interface IClipboardPermissions
+    {
+        bool AllowCopy { get; set; }
+
+        bool AllowPaste { get; set; }
+    }
 }

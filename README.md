@@ -113,7 +113,7 @@ These methods initialize parent references, tab order, and z-order. Use `screen.
 | Category | Controls |
 | --- | --- |
 | Layout | `Frame` |
-| Text and input | `Label`, `TextBox`, `TextArea`, `NumericBox`, `DateBox`, `TimeBox` |
+| Text and input | `Label`, `TextBox`, `PasswordBox`, `TextArea`, `NumericBox`, `DateBox`, `TimeBox` |
 | Selection | `CheckBox`, `RadioButton`, `ListBox`, `ColorPicker` |
 | Actions and navigation | `Button`, `MenuBar`, `Menu`, `MenuItem` |
 | Data and feedback | `GridView`, `ProgressBar`, `Spinner`, `PictureBox` |
@@ -162,6 +162,26 @@ Clipboard and edit-history shortcuts are intercepted only while a compatible `Te
 Each text control retains its latest 100 text-changing operations. Undo and redo restore the text, cursor, selection, and `TextArea` scroll position. Assigning `Value` or calling `ClearHistory()` starts a new history.
 
 Pasting into a `TextBox` converts line breaks to spaces and respects the control width. `TextArea` preserves line breaks and applies its `MaxTextWidth` and `MaxLines` limits.
+
+## Password input
+
+`PasswordBox` provides the selection, paste, and undo/redo behavior of `TextBox` while rendering a mask instead of the stored value:
+
+```csharp
+var password = new PasswordBox(
+    "password",
+    "",
+    14,
+    6,
+    22,
+    Color.Yellow,
+    Color.Black,
+    '*');
+
+frame.AddControl(password);
+```
+
+The default mask is `•`. Use `IsRevealed` or `ToggleReveal()` to show the value explicitly. Copying and cutting are disabled by default, while pasting remains enabled; configure `AllowCopy` and `AllowPaste` when different behavior is required. `Value` always contains the unmasked text and should be handled as sensitive data.
 
 ## Images
 
@@ -214,6 +234,12 @@ The repository contains focused pages that can be run directly:
 Run `dotnet run --project SampleApp` from the repository root and open `/examples` to browse them. The example routes are exercised by the automated test suite so API changes cannot silently leave the documentation out of date.
 
 ## Changelog
+
+### 0.8.4 — 2026-06-24
+
+- Added `PasswordBox` with configurable masking and explicit reveal support.
+- Preserved text selection and bounded undo/redo behavior while keeping the unmasked value out of the cell buffer by default.
+- Added configurable copy and paste policies; password copying and cutting are disabled by default while pasting remains enabled.
 
 ### 0.8.3 — 2026-06-24
 

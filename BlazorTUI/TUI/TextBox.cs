@@ -2,7 +2,7 @@ using System.Drawing;
 
 namespace BlazorTUI.TUI
 {
-    public class TextBox : Control, IClipboardControl, IUndoableControl
+    public class TextBox : Control, IClipboardControl, IClipboardPermissions, IUndoableControl
     {
         private readonly EditHistory<TextBoxState> editHistory = new();
         internal string text;
@@ -33,6 +33,10 @@ namespace BlazorTUI.TUI
         public short SelectionLength => HasSelection ? (short)Math.Abs(selectionAnchor!.Value - cursor) : (short)0;
 
         public string SelectedText => HasSelection ? text.Substring(SelectionStart, SelectionLength) : "";
+
+        public virtual bool AllowCopy { get; set; } = true;
+
+        public virtual bool AllowPaste { get; set; } = true;
 
         public bool CanUndo => editHistory.CanUndo;
 
@@ -223,7 +227,7 @@ namespace BlazorTUI.TUI
                 cell.foreColor = selected ? backgroundColor : foreColor;
                 cell.backgroundColor = selected ? foreColor : backgroundColor;
                 cell.textDecoration = Cell.TextDecoration.None;
-                cell.character = n < text.Length ? text.Substring(n, 1) : " ";
+                cell.character = GetDisplayCharacter(n);
 
                 if (Focus && n == cursor)
                 {
@@ -246,6 +250,9 @@ namespace BlazorTUI.TUI
             selectionAnchor = null;
             return true;
         }
+
+        protected virtual string GetDisplayCharacter(short position)
+            => position < text.Length ? text.Substring(position, 1) : " ";
 
         private bool IsSelected(short position)
             => HasSelection && position >= SelectionStart && position < SelectionStart + SelectionLength;

@@ -2,7 +2,7 @@ using System.Drawing;
 
 namespace BlazorTUI.TUI
 {
-    public class TextArea : Control, IClipboardControl, IUndoableControl
+    public class TextArea : Control, IClipboardControl, IClipboardPermissions, IUndoableControl
     {
         private readonly EditHistory<TextAreaState> editHistory = new();
         private List<string> text;
@@ -60,6 +60,10 @@ namespace BlazorTUI.TUI
                 return selectedText.Replace("\n", Environment.NewLine, StringComparison.Ordinal);
             }
         }
+
+        public bool AllowCopy { get; set; } = true;
+
+        public bool AllowPaste { get; set; } = true;
 
         public bool CanUndo => editHistory.CanUndo;
 

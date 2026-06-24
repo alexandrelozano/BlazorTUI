@@ -14,12 +14,18 @@
         var input = new TextBox(
             "name", "Alex", 2, 1, 10,
             System.Drawing.Color.White, System.Drawing.Color.Black);
+        var password = new PasswordBox(
+            "password", "secret", 2, 3, 10,
+            System.Drawing.Color.White, System.Drawing.Color.Black);
         IClipboardControl clipboard = input;
+        IClipboardPermissions passwordClipboard = password;
         IUndoableControl editHistory = input;
         clipboard.SelectAll();
+        passwordClipboard.AllowPaste = true;
         editHistory.ClearHistory();
         button.Clicked += (_, _) => { };
         terminal.TopContainer.AddControl(input);
+        terminal.TopContainer.AddControl(password);
         terminal.TopContainer.AddControl(button);
         return terminal;
     }

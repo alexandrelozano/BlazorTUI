@@ -217,4 +217,40 @@ public class BlazorTUIComponentTests : BunitContext
         Assert.Equal("false", component.Find(".gridfs").GetAttribute("data-clipboard-enabled"));
         Assert.Equal("false", component.Find(".gridfs").GetAttribute("data-edit-history-enabled"));
     }
+
+    [Fact]
+    public async Task PasswordBoxAppliesClipboardPermissions()
+    {
+        var screen = new Screen(12, 4);
+        var password = new PasswordBox("password", "secret", 0, 0, 10, Color.White, Color.Black);
+        screen.TopContainer.AddControl(password);
+        screen.SetFocus("password");
+
+        var component = Render<global::BlazorTUI.BlazorTUI>(parameters =>
+            parameters.Add(instance => instance.screen, screen));
+        var grid = component.Find(".gridfs");
+
+        Assert.Equal("false", grid.GetAttribute("data-clipboard-copy-enabled"));
+        Assert.Equal("true", grid.GetAttribute("data-clipboard-paste-enabled"));
+
+        await component.InvokeAsync(component.Instance.SelectAllForClipboard);
+        Assert.Null(component.Instance.CopySelectionForClipboard());
+        await component.InvokeAsync(component.Instance.CutSelectionForClipboard);
+        Assert.Equal("secret", password.Value);
+
+        await component.InvokeAsync(() => component.Instance.PasteFromClipboard("new"));
+        Assert.Equal("new", password.Value);
+
+        password.AllowCopy = true;
+        component.Render(parameters => parameters.Add(instance => instance.screen, screen));
+        Assert.Equal("true", component.Find(".gridfs").GetAttribute("data-clipboard-copy-enabled"));
+        await component.InvokeAsync(component.Instance.SelectAllForClipboard);
+        Assert.Equal("new", component.Instance.CopySelectionForClipboard());
+
+        password.AllowPaste = false;
+        component.Render(parameters => parameters.Add(instance => instance.screen, screen));
+        Assert.Equal("false", component.Find(".gridfs").GetAttribute("data-clipboard-paste-enabled"));
+        await component.InvokeAsync(() => component.Instance.PasteFromClipboard("blocked"));
+        Assert.Equal("new", password.Value);
+    }
 }

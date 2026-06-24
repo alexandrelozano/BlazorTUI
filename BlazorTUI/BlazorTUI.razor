@@ -23,6 +23,8 @@
          aria-describedby="@DescriptionIds"
          aria-keyshortcuts="Alt Tab Shift+Tab ArrowUp ArrowDown ArrowLeft ArrowRight Enter Space Backspace Home End Control+A Control+C Control+X Control+V Control+Z Control+Y Meta+A Meta+C Meta+X Meta+V Meta+Z Meta+Shift+Z"
          data-clipboard-enabled="@(ActiveClipboardControl is not null ? "true" : "false")"
+         data-clipboard-copy-enabled="@(ClipboardCopyEnabled ? "true" : "false")"
+         data-clipboard-paste-enabled="@(ClipboardPasteEnabled ? "true" : "false")"
          data-edit-history-enabled="@(ActiveUndoableControl is not null ? "true" : "false")"
          @onkeydown="HandleKeyDown">
         @foreach (Row row in screen.rows)
@@ -51,6 +53,8 @@
     private DotNetObjectReference<BlazorTUI>? _componentReference;
     private Screen? _renderedScreen;
     private IClipboardControl? _renderedClipboardControl;
+    private bool _renderedClipboardCopyEnabled;
+    private bool _renderedClipboardPasteEnabled;
     private IUndoableControl? _renderedUndoableControl;
     private long _renderedRevision = -1;
     private Screen? _accessibleScreen;
@@ -117,6 +121,14 @@
         }
     }
 
+    private bool ClipboardCopyEnabled
+        => ActiveClipboardControl is { } control &&
+            control is not IClipboardPermissions { AllowCopy: false };
+
+    private bool ClipboardPasteEnabled
+        => ActiveClipboardControl is { } control &&
+            control is not IClipboardPermissions { AllowPaste: false };
+
     private string GridCssVariables
     {
         get
@@ -145,6 +157,8 @@
         => !ReferenceEquals(_renderedScreen, screen) ||
             _renderedRevision != screen.Revision ||
             !ReferenceEquals(_renderedClipboardControl, ActiveClipboardControl) ||
+            _renderedClipboardCopyEnabled != ClipboardCopyEnabled ||
+            _renderedClipboardPasteEnabled != ClipboardPasteEnabled ||
             !ReferenceEquals(_renderedUndoableControl, ActiveUndoableControl);
 
     protected override void OnAfterRender(bool firstRender)
@@ -152,6 +166,8 @@
         _renderedScreen = screen;
         _renderedRevision = screen.Revision;
         _renderedClipboardControl = ActiveClipboardControl;
+        _renderedClipboardCopyEnabled = ClipboardCopyEnabled;
+        _renderedClipboardPasteEnabled = ClipboardPasteEnabled;
         _renderedUndoableControl = ActiveUndoableControl;
     }
 
@@ -181,13 +197,13 @@
     public string? CopySelectionForClipboard()
     {
         IClipboardControl? control = ActiveClipboardControl;
-        return control is { HasSelection: true } ? control.SelectedText : null;
+        return control is { HasSelection: true } && ClipboardCopyEnabled ? control.SelectedText : null;
     }
 
     [JSInvokable("BlazorTUICutSelection")]
     public void CutSelectionForClipboard()
     {
-        if (ActiveClipboardControl is not { HasSelection: true } control)
+        if (ActiveClipboardControl is not { HasSelection: true } control || !ClipboardCopyEnabled)
             return;
 
         control.CutSelection();
@@ -198,7 +214,7 @@
     public void PasteFromClipboard(string value)
     {
         ArgumentNullException.ThrowIfNull(value);
-        if (ActiveClipboardControl is not { } control)
+        if (ActiveClipboardControl is not { } control || !ClipboardPasteEnabled)
             return;
 
         control.Paste(value);

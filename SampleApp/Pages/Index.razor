@@ -75,7 +75,7 @@
         frm1 = new Frame("frm1", "FRAME", 11, 4, 60, 29, Frame.BorderStyle.Solid, System.Drawing.Color.Cornsilk, System.Drawing.Color.RebeccaPurple);
         screen.TopContainer.AddContainer(frm1);
 
-        frm2 = new Frame("frm2", "CHILD FRAME", 2, 2, 56, 13, Frame.BorderStyle.Line, System.Drawing.Color.Yellow, System.Drawing.Color.Green);
+        frm2 = new Frame("frm2", "CHILD FRAME", 2, 2, 57, 13, Frame.BorderStyle.Line, System.Drawing.Color.Yellow, System.Drawing.Color.Green);
         frm1.AddContainer(frm2);
 
         Label lblName = new Label("lblName", "Name:", 2, 2, 15, System.Drawing.Color.Yellow, System.Drawing.Color.Green);
@@ -152,14 +152,28 @@
         Label lblTextArea = new Label("lblTextArea", "TextArea:", 39, 2, 9, System.Drawing.Color.Yellow, System.Drawing.Color.Green);
         frm2.AddControl(lblTextArea);
 
-        TextArea txtTextArea = new TextArea("txtTextArea", "", 39, 3, 15, 5, 20, 8, System.Drawing.Color.Yellow, System.Drawing.Color.Black);
+        TextArea txtTextArea = new TextArea("txtTextArea", "", 39, 3, 16, 5, 20, 8, System.Drawing.Color.Yellow, System.Drawing.Color.Black);
         frm2.AddControl(txtTextArea);
 
         Label lblColorPicker = new Label("lblColorPicker", "ColorPicker:", 39, 8, 12, System.Drawing.Color.Yellow, System.Drawing.Color.Green);
         frm2.AddControl(lblColorPicker);
 
-        ColorPicker clrColor = new ColorPicker("clrColor", System.Drawing.Color.DarkMagenta, true, 39, 9, 15, System.Drawing.Color.Yellow, System.Drawing.Color.Green, screen);
+        ColorPicker clrColor = new ColorPicker("clrColor", System.Drawing.Color.DarkMagenta, true, 39, 9, 16, System.Drawing.Color.Yellow, System.Drawing.Color.Green, screen);
         frm2.AddControl(clrColor);
+
+        Label lblPassword = new Label("lblPassword", "Password:", 39, 10, 9, System.Drawing.Color.Yellow, System.Drawing.Color.Green);
+        frm2.AddControl(lblPassword);
+
+        PasswordBox pwdPassword = new PasswordBox("pwdPassword", "secret", 39, 11, 16, System.Drawing.Color.Yellow, System.Drawing.Color.Black);
+        frm2.AddControl(pwdPassword);
+
+        Button bttRevealPassword = new Button("bttRevealPassword", "Show", 49, 10, 6, System.Drawing.Color.Yellow, System.Drawing.Color.Green);
+        bttRevealPassword.Clicked += (_, _) =>
+        {
+            pwdPassword.ToggleReveal();
+            bttRevealPassword.Text = pwdPassword.IsRevealed ? "Hide" : "Show";
+        };
+        frm2.AddControl(bttRevealPassword);
 
         Label lblGridView = new Label("lblGridView", "GridView:", 2, 16, 9, System.Drawing.Color.Yellow, System.Drawing.Color.RebeccaPurple);
         frm1.AddControl(lblGridView);

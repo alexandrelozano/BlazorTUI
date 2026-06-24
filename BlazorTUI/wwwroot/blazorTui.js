@@ -46,6 +46,14 @@ export function attachKeyboardHandling(element, dotNetReference) {
                 return;
             }
 
+            if ((clipboardKey === "c" || clipboardKey === "x") && element.dataset.clipboardCopyEnabled !== "true") {
+                return;
+            }
+
+            if (clipboardKey === "v" && element.dataset.clipboardPasteEnabled !== "true") {
+                return;
+            }
+
             if (clipboardKey === "v" && !navigator.clipboard?.readText) {
                 return;
             }
@@ -67,7 +75,7 @@ export function attachKeyboardHandling(element, dotNetReference) {
     }, { capture: true });
 
     element.addEventListener("paste", event => {
-        if (element.dataset.clipboardEnabled !== "true") {
+        if (element.dataset.clipboardEnabled !== "true" || element.dataset.clipboardPasteEnabled !== "true") {
             return;
         }
 
