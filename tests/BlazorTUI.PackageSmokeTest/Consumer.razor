@@ -15,7 +15,9 @@
             "name", "Alex", 2, 1, 10,
             System.Drawing.Color.White, System.Drawing.Color.Black);
         IClipboardControl clipboard = input;
+        IUndoableControl editHistory = input;
         clipboard.SelectAll();
+        editHistory.ClearHistory();
         button.Clicked += (_, _) => { };
         terminal.TopContainer.AddControl(input);
         terminal.TopContainer.AddControl(button);

@@ -2,8 +2,9 @@ using System.Drawing;
 
 namespace BlazorTUI.TUI
 {
-    public class TextArea : Control, IClipboardControl
+    public class TextArea : Control, IClipboardControl, IUndoableControl
     {
+        private readonly EditHistory<TextAreaState> editHistory = new();
         private List<string> text;
         private bool blinkCursor;
         private short cursorX;
@@ -29,6 +30,7 @@ namespace BlazorTUI.TUI
                 scrollX = 0;
                 scrollY = 0;
                 selectionAnchor = null;
+                editHistory.Clear();
             }
         }
 
@@ -58,6 +60,10 @@ namespace BlazorTUI.TUI
                 return selectedText.Replace("\n", Environment.NewLine, StringComparison.Ordinal);
             }
         }
+
+        public bool CanUndo => editHistory.CanUndo;
+
+        public bool CanRedo => editHistory.CanRedo;
 
         private TextPosition CursorPosition => new(cursorY, cursorX);
 
@@ -92,8 +98,10 @@ namespace BlazorTUI.TUI
 
         public string CutSelection()
         {
+            TextAreaState previousState = CaptureState();
             string selectedText = SelectedText;
             DeleteSelection();
+            RecordEdit(previousState);
             return selectedText;
         }
 
@@ -105,6 +113,7 @@ namespace BlazorTUI.TUI
             if (normalizedValue.Length == 0)
                 return;
 
+            TextAreaState previousState = CaptureState();
             DeleteSelection();
             string currentText = CanonicalText;
             int cursorOffset = GetOffset(CursorPosition);
@@ -124,6 +133,30 @@ namespace BlazorTUI.TUI
             cursorX = (short)Math.Min(candidateCursor.Column, text[cursorY].Length);
             selectionAnchor = null;
             EnsureCursorVisible();
+            RecordEdit(previousState);
+        }
+
+        public bool Undo()
+        {
+            if (!editHistory.TryUndo(CaptureState(), out TextAreaState targetState))
+                return false;
+
+            RestoreState(targetState);
+            return true;
+        }
+
+        public bool Redo()
+        {
+            if (!editHistory.TryRedo(CaptureState(), out TextAreaState targetState))
+                return false;
+
+            RestoreState(targetState);
+            return true;
+        }
+
+        public void ClearHistory()
+        {
+            editHistory.Clear();
         }
 
         public override bool Click(short X, short Y)
@@ -186,10 +219,14 @@ namespace BlazorTUI.TUI
                         Paste(Environment.NewLine);
                     break;
                 case "Backspace":
+                    TextAreaState stateBeforeBackspace = CaptureState();
                     Backspace();
+                    RecordEdit(stateBeforeBackspace);
                     break;
                 case "Delete":
+                    TextAreaState stateBeforeDelete = CaptureState();
                     Delete();
+                    RecordEdit(stateBeforeDelete);
                     break;
                 case "ArrowRight":
                     MoveHorizontally(1, shiftKey);
@@ -391,6 +428,26 @@ namespace BlazorTUI.TUI
             return offset >= start && offset < end;
         }
 
+        private TextAreaState CaptureState()
+            => new(CanonicalText, cursorX, cursorY, scrollX, scrollY, selectionAnchor);
+
+        private void RestoreState(TextAreaState state)
+        {
+            text = state.Text.Split('\n').ToList();
+            cursorX = state.CursorX;
+            cursorY = state.CursorY;
+            scrollX = state.ScrollX;
+            scrollY = state.ScrollY;
+            selectionAnchor = state.SelectionAnchor;
+            EnsureCursorVisible();
+        }
+
+        private void RecordEdit(TextAreaState previousState)
+        {
+            if (!string.Equals(previousState.Text, CanonicalText, StringComparison.Ordinal))
+                editHistory.Record(previousState);
+        }
+
         private (int Start, int End) GetSelectionRange()
         {
             int cursorOffset = GetOffset(CursorPosition);
@@ -451,5 +508,13 @@ namespace BlazorTUI.TUI
             => value.Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n');
 
         private readonly record struct TextPosition(int Line, int Column);
+
+        private readonly record struct TextAreaState(
+            string Text,
+            short CursorX,
+            short CursorY,
+            short ScrollX,
+            short ScrollY,
+            TextPosition? SelectionAnchor);
     }
 }

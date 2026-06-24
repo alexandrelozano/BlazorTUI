@@ -15,13 +15,32 @@ const handledKeys = new Set([
 ]);
 
 const clipboardKeys = new Set(["a", "c", "x", "v"]);
+const editHistoryKeys = new Set(["y", "z"]);
 
 export function attachKeyboardHandling(element, dotNetReference) {
     let pasteHandledByShortcut = false;
 
     element.addEventListener("keydown", async event => {
         const acceleratorPressed = event.ctrlKey || event.metaKey;
-        const clipboardKey = event.key.toLowerCase();
+        const shortcutKey = event.key.toLowerCase();
+        if (acceleratorPressed && !event.altKey && editHistoryKeys.has(shortcutKey)) {
+            if (element.dataset.editHistoryEnabled !== "true") {
+                return;
+            }
+
+            event.preventDefault();
+            const redo = shortcutKey === "y" || (shortcutKey === "z" && event.shiftKey);
+            const method = redo ? "BlazorTUIRedo" : "BlazorTUIUndo";
+            try {
+                await dotNetReference.invokeMethodAsync(method);
+            }
+            catch {
+                // The component may have been disposed while the browser event was pending.
+            }
+            return;
+        }
+
+        const clipboardKey = shortcutKey;
         if (acceleratorPressed && !event.altKey && clipboardKeys.has(clipboardKey)) {
             if (element.dataset.clipboardEnabled !== "true") {
                 return;

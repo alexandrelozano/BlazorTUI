@@ -32,6 +32,8 @@ public class PackageTests
         Assert.Contains("navigator.clipboard.readText()", keyboardScript);
         Assert.Contains("BlazorTUICopySelection", keyboardScript);
         Assert.Contains("BlazorTUIPaste", keyboardScript);
+        Assert.Contains("BlazorTUIUndo", keyboardScript);
+        Assert.Contains("BlazorTUIRedo", keyboardScript);
 
         ZipArchiveEntry scopedCssEntry = package.Entries.Single(entry =>
             entry.FullName.StartsWith("staticwebassets/BlazorTUI.", StringComparison.Ordinal) &&

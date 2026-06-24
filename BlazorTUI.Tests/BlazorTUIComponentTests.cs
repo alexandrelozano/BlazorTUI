@@ -192,7 +192,9 @@ public class BlazorTUIComponentTests : BunitContext
             parameters.Add(instance => instance.screen, screen));
 
         Assert.Equal("true", component.Find(".gridfs").GetAttribute("data-clipboard-enabled"));
+        Assert.Equal("true", component.Find(".gridfs").GetAttribute("data-edit-history-enabled"));
         Assert.Contains("Control+C", component.Find(".gridfs").GetAttribute("aria-keyshortcuts"));
+        Assert.Contains("Control+Z", component.Find(".gridfs").GetAttribute("aria-keyshortcuts"));
 
         await component.InvokeAsync(component.Instance.SelectAllForClipboard);
         Assert.Equal("Alex", component.Instance.CopySelectionForClipboard());
@@ -205,8 +207,14 @@ public class BlazorTUIComponentTests : BunitContext
         Assert.Contains(">J</div>", component.Markup);
         Assert.Contains(">o</div>", component.Markup);
 
+        await component.InvokeAsync(component.Instance.UndoTextEdit);
+        Assert.Equal("", textBox.Value);
+        await component.InvokeAsync(component.Instance.RedoTextEdit);
+        Assert.Equal("Jo", textBox.Value);
+
         screen.SetFocus("save");
         component.Render(parameters => parameters.Add(instance => instance.screen, screen));
         Assert.Equal("false", component.Find(".gridfs").GetAttribute("data-clipboard-enabled"));
+        Assert.Equal("false", component.Find(".gridfs").GetAttribute("data-edit-history-enabled"));
     }
 }

@@ -127,6 +127,7 @@ The recommended API follows standard .NET naming and event conventions:
 
 - Use properties such as `Screen.Width`, `Screen.Rows`, `Screen.TopContainer`, `Control.Name`, `Control.Width`, and `TextBox.Value`.
 - Use `IClipboardControl` when application code needs to select, inspect, cut, or paste text programmatically.
+- Use `IUndoableControl` to inspect, clear, undo, or redo a text control's bounded edit history programmatically.
 - Subscribe to `Clicked`, `GotFocus`, and `LostFocus` with `+=`. These events work consistently for mouse and keyboard activation.
 - Use `MenuBar.AddMenu` and `Menu.AddItem` to build menus. Their `Menus` and `Items` properties provide read-only views.
 - Use PascalCase enum members such as `BorderStyle.Line` and `Frame.BorderStyle.Solid`.
@@ -141,6 +142,7 @@ Lowercase members from earlier releases remain available in the `0.8.x` line for
 - Arrow keys: navigate text, lists, grids, color pickers, and menus where applicable.
 - `Shift` plus the arrow, `Home`, or `End` keys: select text in `TextBox` and `TextArea`.
 - `Ctrl+A`, `Ctrl+C`, `Ctrl+X`, and `Ctrl+V`: select all, copy, cut, and paste in text controls. Use `Command` instead of `Ctrl` on macOS.
+- `Ctrl+Z` and `Ctrl+Y`: undo and redo text edits. On macOS, use `Command+Z` and `Command+Shift+Z`.
 - `Alt`: show menu shortcut keys.
 - Mouse click: focus or activate the control under the selected cell.
 
@@ -155,7 +157,9 @@ The component exposes the terminal as a labelled interactive region and provides
     AriaDescription="Enter customer and delivery details, then submit the order." />
 ```
 
-Clipboard shortcuts are intercepted only while a `TextBox` or `TextArea` has focus. Other browser and assistive-technology shortcuts that use `Ctrl`, `Command`, or modified `Alt` combinations remain available to the browser. Clipboard access follows browser security and permission rules; use HTTPS outside local development.
+Clipboard and edit-history shortcuts are intercepted only while a compatible `TextBox` or `TextArea` has focus. Other browser and assistive-technology shortcuts that use `Ctrl`, `Command`, or modified `Alt` combinations remain available to the browser. Clipboard access follows browser security and permission rules; use HTTPS outside local development.
+
+Each text control retains its latest 100 text-changing operations. Undo and redo restore the text, cursor, selection, and `TextArea` scroll position. Assigning `Value` or calling `ClearHistory()` starts a new history.
 
 Pasting into a `TextBox` converts line breaks to spaces and respects the control width. `TextArea` preserves line breaks and applies its `MaxTextWidth` and `MaxLines` limits.
 
@@ -216,6 +220,7 @@ Run `dotnet run --project SampleApp` from the repository root and open `/example
 - Added text selection and clipboard support to `TextBox` and `TextArea` through `Ctrl`/`Command` + `A`, `C`, `X`, and `V`.
 - Added the public `IClipboardControl` API for programmatic selection, inspection, cutting, and pasting.
 - Added multiline paste normalization, configured text-limit enforcement, visible selection colors, and browser clipboard fallbacks.
+- Added bounded undo and redo history for `TextBox` and `TextArea`, including `Ctrl`/`Command` keyboard shortcuts and the public `IUndoableControl` API.
 
 ### 0.8.2 — 2026-06-23
 

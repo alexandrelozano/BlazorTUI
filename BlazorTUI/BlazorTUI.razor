@@ -21,8 +21,9 @@
          aria-label="@AriaLabel"
          aria-roledescription="text user interface"
          aria-describedby="@DescriptionIds"
-         aria-keyshortcuts="Alt Tab Shift+Tab ArrowUp ArrowDown ArrowLeft ArrowRight Enter Space Backspace Home End Control+A Control+C Control+X Control+V Meta+A Meta+C Meta+X Meta+V"
+         aria-keyshortcuts="Alt Tab Shift+Tab ArrowUp ArrowDown ArrowLeft ArrowRight Enter Space Backspace Home End Control+A Control+C Control+X Control+V Control+Z Control+Y Meta+A Meta+C Meta+X Meta+V Meta+Z Meta+Shift+Z"
          data-clipboard-enabled="@(ActiveClipboardControl is not null ? "true" : "false")"
+         data-edit-history-enabled="@(ActiveUndoableControl is not null ? "true" : "false")"
          @onkeydown="HandleKeyDown">
         @foreach (Row row in screen.rows)
         {
@@ -42,7 +43,7 @@
     public string? AriaDescription { get; set; }
 
     [Parameter]
-    public string KeyboardInstructions { get; set; } = "Use Tab and Shift+Tab to move between controls. Use the arrow keys to navigate, Enter or Space to activate the focused control, and standard copy, cut, paste, and select-all shortcuts in text controls.";
+    public string KeyboardInstructions { get; set; } = "Use Tab and Shift+Tab to move between controls. Use the arrow keys to navigate, Enter or Space to activate the focused control, and standard clipboard, undo, and redo shortcuts in text controls.";
 
     private readonly System.Timers.Timer _timer = new(250);
     private readonly string _accessibilityId = $"blazortui-{Guid.NewGuid():N}";
@@ -50,6 +51,7 @@
     private DotNetObjectReference<BlazorTUI>? _componentReference;
     private Screen? _renderedScreen;
     private IClipboardControl? _renderedClipboardControl;
+    private IUndoableControl? _renderedUndoableControl;
     private long _renderedRevision = -1;
     private Screen? _accessibleScreen;
     private long _accessibleRevision = -1;
@@ -106,6 +108,15 @@
         }
     }
 
+    private IUndoableControl? ActiveUndoableControl
+    {
+        get
+        {
+            Container activeContainer = screen.Dialogs.Count == 0 ? screen.TopContainer : screen.Dialogs[^1];
+            return activeContainer.GetCurrentFocusControl() as IUndoableControl;
+        }
+    }
+
     private string GridCssVariables
     {
         get
@@ -133,13 +144,15 @@
     protected override bool ShouldRender()
         => !ReferenceEquals(_renderedScreen, screen) ||
             _renderedRevision != screen.Revision ||
-            !ReferenceEquals(_renderedClipboardControl, ActiveClipboardControl);
+            !ReferenceEquals(_renderedClipboardControl, ActiveClipboardControl) ||
+            !ReferenceEquals(_renderedUndoableControl, ActiveUndoableControl);
 
     protected override void OnAfterRender(bool firstRender)
     {
         _renderedScreen = screen;
         _renderedRevision = screen.Revision;
         _renderedClipboardControl = ActiveClipboardControl;
+        _renderedUndoableControl = ActiveUndoableControl;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -161,7 +174,7 @@
             return;
 
         control.SelectAll();
-        RenderAfterClipboardChange();
+        RenderAfterControlChange();
     }
 
     [JSInvokable("BlazorTUICopySelection")]
@@ -178,7 +191,7 @@
             return;
 
         control.CutSelection();
-        RenderAfterClipboardChange();
+        RenderAfterControlChange();
     }
 
     [JSInvokable("BlazorTUIPaste")]
@@ -189,7 +202,21 @@
             return;
 
         control.Paste(value);
-        RenderAfterClipboardChange();
+        RenderAfterControlChange();
+    }
+
+    [JSInvokable("BlazorTUIUndo")]
+    public void UndoTextEdit()
+    {
+        if (ActiveUndoableControl?.Undo() == true)
+            RenderAfterControlChange();
+    }
+
+    [JSInvokable("BlazorTUIRedo")]
+    public void RedoTextEdit()
+    {
+        if (ActiveUndoableControl?.Redo() == true)
+            RenderAfterControlChange();
     }
 
     private void TimeElapsed(object? sender, System.Timers.ElapsedEventArgs e)
@@ -216,7 +243,7 @@
         screen.Render();
     }
 
-    private void RenderAfterClipboardChange()
+    private void RenderAfterControlChange()
     {
         screen.Render();
         StateHasChanged();

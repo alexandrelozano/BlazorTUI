@@ -2,8 +2,9 @@ using System.Drawing;
 
 namespace BlazorTUI.TUI
 {
-    public class TextBox : Control, IClipboardControl
+    public class TextBox : Control, IClipboardControl, IUndoableControl
     {
+        private readonly EditHistory<TextBoxState> editHistory = new();
         internal string text;
 
         internal bool blinkCursor;
@@ -19,6 +20,7 @@ namespace BlazorTUI.TUI
                 text = value;
                 cursor = (short)Math.Min(value.Length, short.MaxValue);
                 selectionAnchor = null;
+                editHistory.Clear();
             }
         }
 
@@ -31,6 +33,10 @@ namespace BlazorTUI.TUI
         public short SelectionLength => HasSelection ? (short)Math.Abs(selectionAnchor!.Value - cursor) : (short)0;
 
         public string SelectedText => HasSelection ? text.Substring(SelectionStart, SelectionLength) : "";
+
+        public bool CanUndo => editHistory.CanUndo;
+
+        public bool CanRedo => editHistory.CanRedo;
 
         public TextBox(string name, string text, short X, short Y, short width, Color forecolor, Color backgroundcolor)
         {
@@ -58,8 +64,10 @@ namespace BlazorTUI.TUI
 
         public string CutSelection()
         {
+            TextBoxState previousState = CaptureState();
             string selectedText = SelectedText;
             DeleteSelection();
+            RecordEdit(previousState);
             return selectedText;
         }
 
@@ -71,14 +79,42 @@ namespace BlazorTUI.TUI
             if (singleLineValue.Length == 0)
                 return;
 
+            TextBoxState previousState = CaptureState();
             DeleteSelection();
             int capacity = Math.Max(0, width - 1 - text.Length);
             if (capacity == 0)
+            {
+                RecordEdit(previousState);
                 return;
+            }
 
             string insertedText = singleLineValue[..Math.Min(singleLineValue.Length, capacity)];
             text = text.Insert(cursor, insertedText);
             cursor += (short)insertedText.Length;
+            RecordEdit(previousState);
+        }
+
+        public bool Undo()
+        {
+            if (!editHistory.TryUndo(CaptureState(), out TextBoxState targetState))
+                return false;
+
+            RestoreState(targetState);
+            return true;
+        }
+
+        public bool Redo()
+        {
+            if (!editHistory.TryRedo(CaptureState(), out TextBoxState targetState))
+                return false;
+
+            RestoreState(targetState);
+            return true;
+        }
+
+        public void ClearHistory()
+        {
+            editHistory.Clear();
         }
 
         public override bool Click(short X, short Y)
@@ -119,11 +155,20 @@ namespace BlazorTUI.TUI
                         handled = true;
                         break;
                     case "Backspace":
+                        TextBoxState stateBeforeBackspace = CaptureState();
                         if (!DeleteSelection() && cursor > 0)
                         {
                             text = text.Remove(cursor - 1, 1);
                             cursor--;
                         }
+                        RecordEdit(stateBeforeBackspace);
+                        handled = true;
+                        break;
+                    case "Delete":
+                        TextBoxState stateBeforeDelete = CaptureState();
+                        if (!DeleteSelection() && cursor < text.Length)
+                            text = text.Remove(cursor, 1);
+                        RecordEdit(stateBeforeDelete);
                         handled = true;
                         break;
                     case "ArrowRight":
@@ -143,12 +188,14 @@ namespace BlazorTUI.TUI
                     default:
                         if (key.Length == 1)
                         {
+                            TextBoxState stateBeforeInput = CaptureState();
                             DeleteSelection();
                             if (text.Length < width - 1)
                             {
                                 text = text.Insert(cursor, key);
                                 cursor++;
                             }
+                            RecordEdit(stateBeforeInput);
                         }
                         handled = true;
                         break;
@@ -203,6 +250,22 @@ namespace BlazorTUI.TUI
         private bool IsSelected(short position)
             => HasSelection && position >= SelectionStart && position < SelectionStart + SelectionLength;
 
+        private TextBoxState CaptureState()
+            => new(text, cursor, selectionAnchor);
+
+        private void RestoreState(TextBoxState state)
+        {
+            text = state.Text;
+            cursor = state.Cursor;
+            selectionAnchor = state.SelectionAnchor;
+        }
+
+        private void RecordEdit(TextBoxState previousState)
+        {
+            if (!string.Equals(previousState.Text, text, StringComparison.Ordinal))
+                editHistory.Record(previousState);
+        }
+
         private void MoveCursor(short newPosition, bool extendSelection)
         {
             if (extendSelection)
@@ -219,5 +282,7 @@ namespace BlazorTUI.TUI
             => value.Replace("\r\n", " ", StringComparison.Ordinal)
                 .Replace('\r', ' ')
                 .Replace('\n', ' ');
+
+        private readonly record struct TextBoxState(string Text, short Cursor, short? SelectionAnchor);
     }
 }
