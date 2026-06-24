@@ -63,7 +63,7 @@ namespace BlazorTUI.TUI
             }
         }
 
-        public void SetFocus(string name)
+        public virtual void SetFocus(string name)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(name);
 
@@ -85,7 +85,7 @@ namespace BlazorTUI.TUI
             }
         }
 
-        public void Click(short X, short Y)
+        public virtual void Click(short X, short Y)
         {
             foreach (Control control in controls)
             {
@@ -102,7 +102,7 @@ namespace BlazorTUI.TUI
             }
         }
 
-        public void KeyDown(string key, bool shiftKey)
+        public virtual void KeyDown(string key, bool shiftKey)
         {
             ArgumentException.ThrowIfNullOrEmpty(key);
 
@@ -132,7 +132,7 @@ namespace BlazorTUI.TUI
                     }
                 }
 
-                foreach (Container container in containers)
+                foreach (Container container in containers.Where(container => container.Visible))
                 {
                     container.KeyDown(key, shiftKey);
                 }
@@ -273,7 +273,7 @@ namespace BlazorTUI.TUI
             }
         }
 
-        public Control? GetCurrentFocusControl()
+        public virtual Control? GetCurrentFocusControl()
         {
             Control? ret = null;
 

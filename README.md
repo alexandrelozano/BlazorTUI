@@ -112,7 +112,7 @@ These methods initialize parent references, tab order, and z-order. Use `screen.
 
 | Category | Controls |
 | --- | --- |
-| Layout | `Frame` |
+| Layout | `Frame`, `TabControl`, `TabPage` |
 | Text and input | `Label`, `TextBox`, `PasswordBox`, `TextArea`, `NumericBox`, `DateBox`, `TimeBox` |
 | Selection | `CheckBox`, `RadioButton`, `ListBox`, `ColorPicker` |
 | Actions and navigation | `Button`, `MenuBar`, `Menu`, `MenuItem` |
@@ -138,6 +138,7 @@ Lowercase members from earlier releases remain available in the `0.8.x` line for
 
 - `Tab`: move to the next focusable control.
 - `Shift+Tab`: move to the previous focusable control.
+- `Ctrl+Tab` or `Ctrl+Shift+Tab`: move to the next or previous page of the focused `TabControl`.
 - `Enter` or `Space`: activate buttons and selection controls.
 - Arrow keys: navigate text, lists, grids, color pickers, and menus where applicable.
 - `Shift` plus the arrow, `Home`, or `End` keys: select text in `TextBox` and `TextArea`.
@@ -182,6 +183,29 @@ frame.AddControl(password);
 ```
 
 The default mask is `•`. Use `IsRevealed` or `ToggleReveal()` to show the value explicitly. Copying and cutting are disabled by default, while pasting remains enabled; configure `AllowCopy` and `AllowPaste` when different behavior is required. `Value` always contains the unmasked text and should be handled as sensitive data.
+
+## Tabbed layouts
+
+`TabControl` is a container whose `TabPage` children each own an independent control tree. Add the tab control to a frame or screen before populating its pages so control-name validation covers the complete screen:
+
+```csharp
+var tabs = new TabControl(
+    "settingsTabs", 3, 4, 40, 14,
+    Color.Yellow, Color.DarkBlue);
+frame.AddContainer(tabs);
+
+TabPage profile = tabs.AddTab("profileTab", "Profile");
+profile.AddControl(new TextBox(
+    "userName", "", 2, 2, 18,
+    Color.Yellow, Color.Black));
+
+TabPage options = tabs.AddTab("optionsTab", "Options");
+options.AddControl(new CheckBox(
+    "notifications", "Enable notifications", 2, 2, 28,
+    Color.Yellow, Color.DarkBlue));
+```
+
+Select pages with `SelectedIndex`, `SelectTab`, `SelectNextTab`, or `SelectPreviousTab`. Users can click headers or press `Ctrl+Tab` and `Ctrl+Shift+Tab`; focus moves to the first focusable control on the new page.
 
 ## Images
 
@@ -229,11 +253,18 @@ The repository contains focused pages that can be run directly:
 | [Controls and events](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/ControlsAndEvents.razor) | Text input, checkbox state, focus callbacks, click callbacks, and focus order |
 | [Dialogs and menus](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/DialogsAndMenus.razor) | Menu shortcuts, custom modal dialogs, and message boxes |
 | [Images](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/Images.razor) | Loading encoded image bytes into a `PictureBox` |
+| [TabControl](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/Tabs.razor) | Tab pages, nested controls, focus changes, mouse selection, and `Ctrl+Tab` navigation |
 | [Complete showcase](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Index.razor) | All controls, nested frames, z-order, callbacks, and animation |
 
 Run `dotnet run --project SampleApp` from the repository root and open `/examples` to browse them. The example routes are exercised by the automated test suite so API changes cannot silently leave the documentation out of date.
 
 ## Changelog
+
+### 0.8.5 — 2026-06-24
+
+- Added `TabControl` and `TabPage` containers with independent page contents, mouse selection, programmatic selection, and change events.
+- Added focus-aware `Ctrl+Tab` and `Ctrl+Shift+Tab` navigation with screen-reader announcements.
+- Prevented hidden containers from receiving keyboard input and preserved unique control-name validation across prebuilt tab pages.
 
 ### 0.8.4 — 2026-06-24
 

@@ -43,12 +43,14 @@ public class SampleAppSmokeTests : IClassFixture<WebApplicationFactory<Program>>
         Assert.Contains("examples/controls-events", html);
         Assert.Contains("examples/dialogs-menus", html);
         Assert.Contains("examples/images", html);
+        Assert.Contains("examples/tabs", html);
     }
 
     [Theory]
     [InlineData("/examples/controls-events", "Controls and events example")]
     [InlineData("/examples/dialogs-menus", "Dialogs and menus example")]
     [InlineData("/examples/images", "Images example")]
+    [InlineData("/examples/tabs", "TabControl example")]
     public async Task FocusedExampleStartsAndRendersTerminal(string route, string title)
     {
         using HttpClient client = factory.CreateClient();

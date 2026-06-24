@@ -21,11 +21,12 @@
          aria-label="@AriaLabel"
          aria-roledescription="text user interface"
          aria-describedby="@DescriptionIds"
-         aria-keyshortcuts="Alt Tab Shift+Tab ArrowUp ArrowDown ArrowLeft ArrowRight Enter Space Backspace Home End Control+A Control+C Control+X Control+V Control+Z Control+Y Meta+A Meta+C Meta+X Meta+V Meta+Z Meta+Shift+Z"
+         aria-keyshortcuts="Alt Tab Shift+Tab Control+Tab Control+Shift+Tab ArrowUp ArrowDown ArrowLeft ArrowRight Enter Space Backspace Home End Control+A Control+C Control+X Control+V Control+Z Control+Y Meta+A Meta+C Meta+X Meta+V Meta+Z Meta+Shift+Z"
          data-clipboard-enabled="@(ActiveClipboardControl is not null ? "true" : "false")"
          data-clipboard-copy-enabled="@(ClipboardCopyEnabled ? "true" : "false")"
          data-clipboard-paste-enabled="@(ClipboardPasteEnabled ? "true" : "false")"
          data-edit-history-enabled="@(ActiveUndoableControl is not null ? "true" : "false")"
+         data-tab-navigation-enabled="@(ActiveTabControl is not null ? "true" : "false")"
          @onkeydown="HandleKeyDown">
         @foreach (Row row in screen.rows)
         {
@@ -45,7 +46,7 @@
     public string? AriaDescription { get; set; }
 
     [Parameter]
-    public string KeyboardInstructions { get; set; } = "Use Tab and Shift+Tab to move between controls. Use the arrow keys to navigate, Enter or Space to activate the focused control, and standard clipboard, undo, and redo shortcuts in text controls.";
+    public string KeyboardInstructions { get; set; } = "Use Tab and Shift+Tab to move between controls, Control+Tab to change tab pages, the arrow keys to navigate, Enter or Space to activate controls, and standard clipboard, undo, and redo shortcuts in text controls.";
 
     private readonly System.Timers.Timer _timer = new(250);
     private readonly string _accessibilityId = $"blazortui-{Guid.NewGuid():N}";
@@ -56,6 +57,7 @@
     private bool _renderedClipboardCopyEnabled;
     private bool _renderedClipboardPasteEnabled;
     private IUndoableControl? _renderedUndoableControl;
+    private TabControl? _renderedTabControl;
     private long _renderedRevision = -1;
     private Screen? _accessibleScreen;
     private long _accessibleRevision = -1;
@@ -99,7 +101,12 @@
                 return $"Dialog opened: {screen.Dialogs[^1].Title}";
 
             Menu? openMenu = screen.MenuBar?.OpenMenu;
-            return openMenu is null ? "" : $"Menu opened: {openMenu.Text}";
+            if (openMenu is not null)
+                return $"Menu opened: {openMenu.Text}";
+
+            return ActiveTabControl?.SelectedTab is { } selectedTab
+                ? $"Tab selected: {selectedTab.Title}"
+                : "";
         }
     }
 
@@ -128,6 +135,24 @@
     private bool ClipboardPasteEnabled
         => ActiveClipboardControl is { } control &&
             control is not IClipboardPermissions { AllowPaste: false };
+
+    private TabControl? ActiveTabControl
+    {
+        get
+        {
+            Container activeContainer = screen.Dialogs.Count == 0 ? screen.TopContainer : screen.Dialogs[^1];
+            Container? currentContainer = activeContainer.GetCurrentFocusControl()?.ParentContainer;
+            while (currentContainer is not null)
+            {
+                if (currentContainer is TabControl tabControl)
+                    return tabControl;
+
+                currentContainer = currentContainer.Parent;
+            }
+
+            return null;
+        }
+    }
 
     private string GridCssVariables
     {
@@ -159,7 +184,8 @@
             !ReferenceEquals(_renderedClipboardControl, ActiveClipboardControl) ||
             _renderedClipboardCopyEnabled != ClipboardCopyEnabled ||
             _renderedClipboardPasteEnabled != ClipboardPasteEnabled ||
-            !ReferenceEquals(_renderedUndoableControl, ActiveUndoableControl);
+            !ReferenceEquals(_renderedUndoableControl, ActiveUndoableControl) ||
+            !ReferenceEquals(_renderedTabControl, ActiveTabControl);
 
     protected override void OnAfterRender(bool firstRender)
     {
@@ -169,6 +195,7 @@
         _renderedClipboardCopyEnabled = ClipboardCopyEnabled;
         _renderedClipboardPasteEnabled = ClipboardPasteEnabled;
         _renderedUndoableControl = ActiveUndoableControl;
+        _renderedTabControl = ActiveTabControl;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -233,6 +260,20 @@
     {
         if (ActiveUndoableControl?.Redo() == true)
             RenderAfterControlChange();
+    }
+
+    [JSInvokable("BlazorTUIMoveTab")]
+    public void MoveTab(bool previous)
+    {
+        if (ActiveTabControl is not { } tabControl)
+            return;
+
+        if (previous)
+            tabControl.SelectPreviousTab();
+        else
+            tabControl.SelectNextTab();
+
+        RenderAfterControlChange();
     }
 
     private void TimeElapsed(object? sender, System.Timers.ElapsedEventArgs e)

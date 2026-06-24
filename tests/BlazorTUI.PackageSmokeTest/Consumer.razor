@@ -27,6 +27,14 @@
         terminal.TopContainer.AddControl(input);
         terminal.TopContainer.AddControl(password);
         terminal.TopContainer.AddControl(button);
+        var tabs = new TabControl(
+            "tabs", 0, 5, 20, 5,
+            System.Drawing.Color.White, System.Drawing.Color.DarkBlue);
+        terminal.TopContainer.AddContainer(tabs);
+        TabPage page = tabs.AddTab("generalTab", "General");
+        page.AddControl(new Label(
+            "tabLabel", "Tabs work", 1, 1, 10,
+            System.Drawing.Color.White, System.Drawing.Color.DarkBlue));
         return terminal;
     }
 }

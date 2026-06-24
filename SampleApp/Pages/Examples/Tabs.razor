@@ -1,0 +1,54 @@
+@page "/examples/tabs"
+@using global::BlazorTUI.TUI
+@using Color = System.Drawing.Color
+
+<PageTitle>TabControl example</PageTitle>
+
+<BlazorTUI.BlazorTUI screen="@screen" />
+
+@code {
+    private Screen screen = null!;
+
+    protected override void OnInitialized()
+    {
+        screen = new Screen(60, 30);
+
+        var frame = new Frame(
+            "tabsFrame", "TAB CONTROL", 7, 4, 46, 21,
+            Frame.BorderStyle.Line, Color.Yellow, Color.DarkBlue);
+        screen.TopContainer.AddContainer(frame);
+
+        frame.AddControl(new Label(
+            "tabsInstructions", "Click a tab or use Ctrl+Tab.", 8, 2, 30,
+            Color.White, Color.DarkBlue));
+
+        var tabs = new TabControl(
+            "settingsTabs", 3, 4, 40, 14, Color.Yellow, Color.DarkBlue);
+        frame.AddContainer(tabs);
+
+        TabPage profileTab = tabs.AddTab("profileTab", "Profile");
+        profileTab.AddControl(new Label(
+            "userNameLabel", "User name:", 2, 2, 12, Color.White, Color.DarkBlue));
+        profileTab.AddControl(new TextBox(
+            "userName", "Alex", 15, 2, 18, Color.Yellow, Color.Black));
+        profileTab.AddControl(new Label(
+            "passwordLabel", "Password:", 2, 4, 12, Color.White, Color.DarkBlue));
+        profileTab.AddControl(new PasswordBox(
+            "password", "secret", 15, 4, 18, Color.Yellow, Color.Black));
+
+        TabPage optionsTab = tabs.AddTab("optionsTab", "Options");
+        optionsTab.AddControl(new CheckBox(
+            "notifications", "Enable notifications", 2, 2, 28,
+            Color.Yellow, Color.DarkBlue));
+        optionsTab.AddControl(new CheckBox(
+            "compactMode", "Compact mode", 2, 4, 28,
+            Color.Yellow, Color.DarkBlue));
+
+        TabPage aboutTab = tabs.AddTab("aboutTab", "About");
+        aboutTab.AddControl(new Label(
+            "aboutText", "Each tab owns its controls.", 2, 3, 31,
+            Color.White, Color.DarkBlue));
+
+        screen.SetFocus("userName");
+    }
+}

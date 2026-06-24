@@ -253,4 +253,34 @@ public class BlazorTUIComponentTests : BunitContext
         await component.InvokeAsync(() => component.Instance.PasteFromClipboard("blocked"));
         Assert.Equal("new", password.Value);
     }
+
+    [Fact]
+    public async Task ComponentRoutesTabNavigationToTheFocusedTabControl()
+    {
+        var screen = new Screen(30, 12);
+        var tabs = new TabControl("tabs", 1, 1, 26, 9, Color.White, Color.Black);
+        screen.TopContainer.AddContainer(tabs);
+        TabPage first = tabs.AddTab("firstTab", "First");
+        TabPage second = tabs.AddTab("secondTab", "Second");
+        var firstInput = new TextBox("firstInput", "", 1, 1, 8, Color.White, Color.Black);
+        var secondInput = new TextBox("secondInput", "", 1, 1, 8, Color.White, Color.Black);
+        first.AddControl(firstInput);
+        second.AddControl(secondInput);
+        screen.SetFocus("firstInput");
+
+        var component = Render<global::BlazorTUI.BlazorTUI>(parameters =>
+            parameters.Add(instance => instance.screen, screen));
+
+        Assert.Equal("true", component.Find(".gridfs").GetAttribute("data-tab-navigation-enabled"));
+        Assert.Contains("Control+Tab", component.Find(".gridfs").GetAttribute("aria-keyshortcuts"));
+
+        await component.InvokeAsync(() => component.Instance.MoveTab(false));
+        Assert.Equal(1, tabs.SelectedIndex);
+        Assert.True(secondInput.Focus);
+        Assert.Contains("Tab selected: Second", component.Find("[role=status]").TextContent);
+
+        await component.InvokeAsync(() => component.Instance.MoveTab(true));
+        Assert.Equal(0, tabs.SelectedIndex);
+        Assert.True(firstInput.Focus);
+    }
 }

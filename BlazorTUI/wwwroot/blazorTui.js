@@ -23,6 +23,17 @@ export function attachKeyboardHandling(element, dotNetReference) {
     element.addEventListener("keydown", async event => {
         const acceleratorPressed = event.ctrlKey || event.metaKey;
         const shortcutKey = event.key.toLowerCase();
+        if (event.ctrlKey && !event.metaKey && !event.altKey && event.key === "Tab" && element.dataset.tabNavigationEnabled === "true") {
+            event.preventDefault();
+            try {
+                await dotNetReference.invokeMethodAsync("BlazorTUIMoveTab", event.shiftKey);
+            }
+            catch {
+                // The component may have been disposed while the browser event was pending.
+            }
+            return;
+        }
+
         if (acceleratorPressed && !event.altKey && editHistoryKeys.has(shortcutKey)) {
             if (element.dataset.editHistoryEnabled !== "true") {
                 return;
