@@ -33,19 +33,16 @@ public class SampleAppSmokeTests : IClassFixture<WebApplicationFactory<Program>>
     }
 
     [Fact]
-    public async Task ExampleCatalogListsFocusedExamples()
+    public async Task ExampleCatalogRendersAsABlazorTerminal()
     {
         using HttpClient client = factory.CreateClient();
 
         string html = await client.GetStringAsync("/examples");
 
-        Assert.Contains("BlazorTUI examples", html);
-        Assert.Contains("examples/controls-events", html);
-        Assert.Contains("examples/dialogs-menus", html);
-        Assert.Contains("examples/images", html);
-        Assert.Contains("examples/tabs", html);
-        Assert.Contains("examples/tree-view", html);
-        Assert.Contains("examples/sliders", html);
+        Assert.Contains("<title>BlazorTUI examples</title>", html);
+        Assert.Contains("class=\"gridfs\"", html);
+        Assert.Contains("--tui-columns:60; --tui-rows:30", html);
+        Assert.Contains("aria-label=\"BlazorTUI example catalog\"", html);
     }
 
     [Theory]

@@ -1,18 +1,67 @@
 @page "/examples"
+@using global::BlazorTUI.TUI
+@using Color = System.Drawing.Color
+@inject NavigationManager Navigation
 
 <PageTitle>BlazorTUI examples</PageTitle>
 
-<main class="container py-4">
-    <h1>BlazorTUI examples</h1>
-    <p>Each example focuses on one common integration scenario.</p>
+<BlazorTUI.BlazorTUI
+    screen="@screen"
+    AriaLabel="BlazorTUI example catalog"
+    AriaDescription="Choose an example and press Enter or Space to open it." />
 
-    <ul>
-        <li><a href="examples/controls-events">Controls and events</a></li>
-        <li><a href="examples/dialogs-menus">Dialogs and menus</a></li>
-        <li><a href="examples/images">Images</a></li>
-        <li><a href="examples/tabs">TabControl</a></li>
-        <li><a href="examples/tree-view">TreeView</a></li>
-        <li><a href="examples/sliders">Slider</a></li>
-        <li><a href="/">Complete control showcase</a></li>
-    </ul>
-</main>
+@code {
+    private static readonly ExampleDestination[] Destinations =
+    {
+        new("controlsExample", "Controls and events", "Inputs and callbacks", "/examples/controls-events"),
+        new("dialogsExample", "Dialogs and menus", "Modal interactions", "/examples/dialogs-menus"),
+        new("imagesExample", "Images", "PictureBox rendering", "/examples/images"),
+        new("tabsExample", "TabControl", "Tabbed layouts", "/examples/tabs"),
+        new("treeExample", "TreeView", "Hierarchical data", "/examples/tree-view"),
+        new("sliderExample", "Slider", "Numeric ranges", "/examples/sliders"),
+        new("showcaseExample", "Complete showcase", "All controls", "/")
+    };
+
+    private Screen screen = null!;
+
+    protected override void OnInitialized()
+    {
+        screen = new Screen(60, 30);
+
+        var frame = new Frame(
+            "examplesFrame", "BLAZORTUI EXAMPLES", 3, 3, 54, 24,
+            Frame.BorderStyle.Line, Color.Yellow, Color.DarkBlue);
+        screen.TopContainer.AddContainer(frame);
+
+        frame.AddControl(new Label(
+            "catalogInstructions", "Choose an example with Tab and press Enter.",
+            3, 2, 42, Color.White, Color.DarkBlue));
+
+        for (int index = 0; index < Destinations.Length; index++)
+        {
+            ExampleDestination destination = Destinations[index];
+            short row = (short)(5 + index * 2);
+            var button = new Button(
+                destination.ControlName, destination.Title,
+                3, row, 23, Color.Yellow, Color.Black);
+            button.Clicked += (_, _) => Navigation.NavigateTo(destination.Route);
+            frame.AddControl(button);
+
+            frame.AddControl(new Label(
+                $"{destination.ControlName}Description", destination.Description,
+                28, row, 22, Color.Cyan, Color.DarkBlue));
+        }
+
+        frame.AddControl(new Label(
+            "catalogFooter", "Mouse clicks are also supported.",
+            3, 20, 36, Color.White, Color.DarkBlue));
+
+        screen.SetFocus(Destinations[0].ControlName);
+    }
+
+    private sealed record ExampleDestination(
+        string ControlName,
+        string Title,
+        string Description,
+        string Route);
+}
