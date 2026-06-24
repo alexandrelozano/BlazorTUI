@@ -114,7 +114,7 @@ These methods initialize parent references, tab order, and z-order. Use `screen.
 | --- | --- |
 | Layout | `Frame`, `TabControl`, `TabPage` |
 | Text and input | `Label`, `TextBox`, `PasswordBox`, `TextArea`, `NumericBox`, `DateBox`, `TimeBox` |
-| Selection | `CheckBox`, `RadioButton`, `ComboBox`, `ListBox`, `ColorPicker` |
+| Selection | `CheckBox`, `RadioButton`, `ComboBox`, `ListBox`, `TreeView`, `ColorPicker` |
 | Actions and navigation | `Button`, `MenuBar`, `Menu`, `MenuItem` |
 | Data and feedback | `GridView`, `ProgressBar`, `Spinner`, `PictureBox` |
 | Modal UI | `Dialog`, `MessageBox` |
@@ -139,9 +139,9 @@ Lowercase members from earlier releases remain available in the `0.8.x` line for
 - `Tab`: move to the next focusable control.
 - `Shift+Tab`: move to the previous focusable control.
 - `Alt+PageDown` or `Alt+PageUp`: move to the next or previous page of the focused `TabControl`. `Ctrl+Tab` is also supported when the browser does not reserve it for browser-tab navigation.
-- `Enter` or `Space`: activate buttons and selection controls, and open or confirm a `ComboBox`.
+- `Enter` or `Space`: activate buttons and selection controls, open or confirm a `ComboBox`, and toggle the selected `TreeView` node.
 - `F4`: open or close the focused `ComboBox`; `Escape` closes it without changing the selection.
-- Arrow keys: navigate text, combo boxes, lists, grids, color pickers, and menus where applicable.
+- Arrow keys: navigate text, combo boxes, trees, lists, grids, color pickers, and menus where applicable. In a `TreeView`, left and right collapse, expand, or move between parent and child nodes.
 - `Shift` plus the arrow, `Home`, or `End` keys: select text in `TextBox` and `TextArea`.
 - `Ctrl+A`, `Ctrl+C`, `Ctrl+X`, and `Ctrl+V`: select all, copy, cut, and paste in text controls. Use `Command` instead of `Ctrl` on macOS.
 - `Ctrl+Z` and `Ctrl+Y`: undo and redo text edits. On macOS, use `Command+Z` and `Command+Shift+Z`.
@@ -188,6 +188,33 @@ frame.AddControl(priority);
 ```
 
 Use `SelectedIndex`, `SelectedItem`, `SelectIndex`, or `SelectItem` to control the selection. `Items` is read-only; update it through `AddItem`, `RemoveItem`, and `ClearItems`. Users can change a closed combo box with the arrow, `Home`, and `End` keys, or open it with `Enter`, `Space`, or `F4`. While open, `Enter` confirms the highlighted item and `Escape` cancels it.
+
+## Hierarchical data
+
+`TreeView` displays expandable `TreeNode` hierarchies with automatic scrolling and keyboard navigation:
+
+```csharp
+var tree = new TreeView(
+    "projectTree", 3, 4, 28, 14,
+    Color.Yellow, Color.Black);
+
+TreeNode workspace = tree.AddNode("workspace", "Workspace", true);
+TreeNode source = workspace.AddNode("source", "src", true);
+source.AddNode("programFile", "Program.cs");
+source.AddNode("componentsFolder", "Components");
+
+TreeNode documentation = workspace.AddNode("documentation", "docs");
+documentation.AddNode("readmeFile", "README.md");
+
+tree.SelectedNodeChanged += (_, args) =>
+    status.Value = args.SelectedNode?.Text ?? "No selection";
+
+frame.AddControl(tree);
+```
+
+Node names must be unique within a tree. `Nodes` and `Children` expose read-only views; use `AddNode`, `RemoveNode`, and `ClearNodes` to change the hierarchy. Use `SelectNode`, `ToggleNode`, `ExpandAll`, and `CollapseAll` for programmatic control. `SelectedNodeChanged` exposes the previous and new selections through `TreeNodeSelectionChangedEventArgs`; `NodeExpanded`, `NodeCollapsed`, and `NodeActivated` identify the affected node through `TreeNodeEventArgs`.
+
+Users navigate visible nodes with `ArrowUp`, `ArrowDown`, `Home`, and `End`. `ArrowRight` expands a node or enters its first child; `ArrowLeft` collapses it or selects its parent. `Enter` and `Space` toggle and activate the selected node.
 
 ## Password input
 
@@ -279,11 +306,19 @@ The repository contains focused pages that can be run directly:
 | [Dialogs and menus](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/DialogsAndMenus.razor) | Menu shortcuts, custom modal dialogs, and message boxes |
 | [Images](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/Images.razor) | Loading encoded image bytes into a `PictureBox` |
 | [TabControl](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/Tabs.razor) | Tab pages, nested controls, focus changes, mouse selection, and keyboard navigation |
+| [TreeView](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/TreeViewExample.razor) | Hierarchical nodes, dynamic expansion, selection events, mouse input, and keyboard navigation |
 | [Complete showcase](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Index.razor) | All controls, nested frames, z-order, callbacks, and animation |
 
 Run `dotnet run --project SampleApp` from the repository root and open `/examples` to browse them. The example routes are exercised by the automated test suite so API changes cannot silently leave the documentation out of date.
 
 ## Changelog
+
+### 0.8.6 — 2026-06-24
+
+- Added `TreeView`, `TreeNode`, typed node and selection event arguments, nested read-only collections, and unique node names.
+- Added mouse selection, expand/collapse markers, automatic scrolling, and conventional tree keyboard navigation.
+- Added selection, expansion, collapse, and activation events plus programmatic selection and bulk expand/collapse APIs.
+- Added a focused executable TreeView example and NuGet consumer coverage for the new public API.
 
 ### 0.8.5 — 2026-06-24
 

@@ -1,0 +1,61 @@
+@page "/examples/tree-view"
+@using global::BlazorTUI.TUI
+@using Color = System.Drawing.Color
+
+<PageTitle>TreeView example</PageTitle>
+
+<BlazorTUI.BlazorTUI
+    screen="@screen"
+    AriaLabel="Project tree example"
+    AriaDescription="Navigate, expand, collapse, and activate project nodes." />
+
+@code {
+    private Screen screen = null!;
+    private TextBox status = null!;
+
+    protected override void OnInitialized()
+    {
+        screen = new Screen(60, 30);
+
+        var frame = new Frame(
+            "treeFrame", "TREE VIEW", 5, 3, 50, 24,
+            Frame.BorderStyle.Line, Color.Yellow, Color.DarkBlue);
+        screen.TopContainer.AddContainer(frame);
+
+        frame.AddControl(new Label(
+            "treeInstructions", "Arrows navigate; Enter/Space toggles a node.", 3, 2, 44,
+            Color.White, Color.DarkBlue));
+
+        var tree = new TreeView(
+            "projectTree", 3, 4, 27, 15,
+            Color.Yellow, Color.Black);
+        frame.AddControl(tree);
+
+        TreeNode workspace = tree.AddNode("workspace", "Workspace", true);
+        TreeNode source = workspace.AddNode("source", "src", true);
+        source.AddNode("programFile", "Program.cs");
+        source.AddNode("componentsFolder", "Components");
+        TreeNode documentation = workspace.AddNode("documentation", "docs");
+        documentation.AddNode("readmeFile", "README.md");
+        TreeNode dependencies = tree.AddNode("dependencies", "Dependencies");
+        dependencies.AddNode("nugetPackages", "NuGet packages");
+        tree.AddNode("archive", "Archive");
+
+        frame.AddControl(new Label(
+            "statusLabel", "Selected node:", 32, 4, 15,
+            Color.White, Color.DarkBlue));
+        status = new TextBox(
+            "treeStatus", workspace.Text, 32, 6, 15,
+            Color.Cyan, Color.Black)
+        {
+            TabStop = false
+        };
+        frame.AddControl(status);
+
+        tree.SelectedNodeChanged += (_, args) =>
+            status.Value = args.SelectedNode?.Text ?? "No selection";
+        tree.NodeActivated += (_, args) => status.Value = $"Opened: {args.Node.Text}";
+
+        screen.SetFocus("projectTree");
+    }
+}

@@ -38,9 +38,13 @@
             System.Drawing.Color.White, System.Drawing.Color.DarkBlue);
         terminal.TopContainer.AddContainer(tabs);
         TabPage page = tabs.AddTab("generalTab", "General");
-        page.AddControl(new Label(
-            "tabLabel", "Tabs work", 1, 1, 10,
-            System.Drawing.Color.White, System.Drawing.Color.DarkBlue));
+        var tree = new TreeView(
+            "consumerTree", 1, 0, 16, 2,
+            System.Drawing.Color.White, System.Drawing.Color.DarkBlue);
+        TreeNode root = tree.AddNode("rootNode", "Root", true);
+        root.AddNode("childNode", "Child");
+        tree.SelectedNodeChanged += (_, args) => _ = args.SelectedNode?.Name;
+        page.AddControl(tree);
         return terminal;
     }
 }
