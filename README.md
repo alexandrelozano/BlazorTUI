@@ -240,6 +240,7 @@ Run `dotnet run --project SampleApp` from the repository root and open `/example
 - Added `PasswordBox` with configurable masking and explicit reveal support.
 - Preserved text selection and bounded undo/redo behavior while keeping the unmasked value out of the cell buffer by default.
 - Added configurable copy and paste policies; password copying and cutting are disabled by default while pasting remains enabled.
+- Removed the unused `ExampleJsInterop` template class, which referenced a JavaScript file that is not part of the package.
 
 ### 0.8.3 — 2026-06-24
 
