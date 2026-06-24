@@ -126,6 +126,7 @@ Control constructors accept `System.Drawing.Color` values for foreground and bac
 The recommended API follows standard .NET naming and event conventions:
 
 - Use properties such as `Screen.Width`, `Screen.Rows`, `Screen.TopContainer`, `Control.Name`, `Control.Width`, and `TextBox.Value`.
+- Use `IClipboardControl` when application code needs to select, inspect, cut, or paste text programmatically.
 - Subscribe to `Clicked`, `GotFocus`, and `LostFocus` with `+=`. These events work consistently for mouse and keyboard activation.
 - Use `MenuBar.AddMenu` and `Menu.AddItem` to build menus. Their `Menus` and `Items` properties provide read-only views.
 - Use PascalCase enum members such as `BorderStyle.Line` and `Frame.BorderStyle.Solid`.
@@ -138,6 +139,8 @@ Lowercase members from earlier releases remain available in the `0.8.x` line for
 - `Shift+Tab`: move to the previous focusable control.
 - `Enter` or `Space`: activate buttons and selection controls.
 - Arrow keys: navigate text, lists, grids, color pickers, and menus where applicable.
+- `Shift` plus the arrow, `Home`, or `End` keys: select text in `TextBox` and `TextArea`.
+- `Ctrl+A`, `Ctrl+C`, `Ctrl+X`, and `Ctrl+V`: select all, copy, cut, and paste in text controls. Use `Command` instead of `Ctrl` on macOS.
 - `Alt`: show menu shortcut keys.
 - Mouse click: focus or activate the control under the selected cell.
 
@@ -152,7 +155,9 @@ The component exposes the terminal as a labelled interactive region and provides
     AriaDescription="Enter customer and delivery details, then submit the order." />
 ```
 
-Browser and assistive-technology shortcuts that use `Ctrl`, `Command`, or modified `Alt` combinations are not forwarded to TUI controls.
+Clipboard shortcuts are intercepted only while a `TextBox` or `TextArea` has focus. Other browser and assistive-technology shortcuts that use `Ctrl`, `Command`, or modified `Alt` combinations remain available to the browser. Clipboard access follows browser security and permission rules; use HTTPS outside local development.
+
+Pasting into a `TextBox` converts line breaks to spaces and respects the control width. `TextArea` preserves line breaks and applies its `MaxTextWidth` and `MaxLines` limits.
 
 ## Images
 
@@ -203,6 +208,34 @@ The repository contains focused pages that can be run directly:
 | [Complete showcase](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Index.razor) | All controls, nested frames, z-order, callbacks, and animation |
 
 Run `dotnet run --project SampleApp` from the repository root and open `/examples` to browse them. The example routes are exercised by the automated test suite so API changes cannot silently leave the documentation out of date.
+
+## Changelog
+
+### 0.8.3 — 2026-06-24
+
+- Added text selection and clipboard support to `TextBox` and `TextArea` through `Ctrl`/`Command` + `A`, `C`, `X`, and `V`.
+- Added the public `IClipboardControl` API for programmatic selection, inspection, cutting, and pasting.
+- Added multiline paste normalization, configured text-limit enforcement, visible selection colors, and browser clipboard fallbacks.
+
+### 0.8.2 — 2026-06-23
+
+- Added a consistent PascalCase public API, standard .NET events, read-only collection views, and precise argument validation while retaining the legacy `0.8.x` members.
+- Added focused executable examples for controls, events, dialogs, menus, and images.
+- Added accessible terminal semantics, screen-reader text, live menu and dialog announcements, visible focus, and selective keyboard interception that preserves browser shortcuts.
+
+### 0.8.1 — 2026-06-23
+
+- Added revision-based incremental rendering, unchanged-row skipping, cached cell CSS, and synchronization-safe timer updates.
+- Added responsive rendering for arbitrary positive screen dimensions without a predefined row limit.
+- Corrected cursor visibility and duplicate frame-title rendering regressions.
+
+### 0.8.0 — 2026-06-23
+
+- Upgraded the library, sample, dependencies, and package to .NET 10.
+- Removed the `System.Drawing.Common` dependency and changed `PictureBox` to consume encoded image bytes for cross-platform use.
+- Eliminated compiler, analyzer, nullable, package, and platform warnings.
+- Added automated unit, component, HTTP, and NuGet-consumer tests with Windows and Linux CI validation.
+- Reworked the README around installing and using the library from NuGet.
 
 ## License
 

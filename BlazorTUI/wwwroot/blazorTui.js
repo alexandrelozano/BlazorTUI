@@ -9,12 +9,35 @@ const handledKeys = new Set([
     " ",
     "Spacebar",
     "Backspace",
+    "Delete",
     "Home",
     "End"
 ]);
 
-export function attachKeyboardHandling(element) {
-    element.addEventListener("keydown", event => {
+const clipboardKeys = new Set(["a", "c", "x", "v"]);
+
+export function attachKeyboardHandling(element, dotNetReference) {
+    let pasteHandledByShortcut = false;
+
+    element.addEventListener("keydown", async event => {
+        const acceleratorPressed = event.ctrlKey || event.metaKey;
+        const clipboardKey = event.key.toLowerCase();
+        if (acceleratorPressed && !event.altKey && clipboardKeys.has(clipboardKey)) {
+            if (element.dataset.clipboardEnabled !== "true") {
+                return;
+            }
+
+            if (clipboardKey === "v" && !navigator.clipboard?.readText) {
+                return;
+            }
+
+            event.preventDefault();
+            await handleClipboardShortcut(clipboardKey, element, dotNetReference, value => {
+                pasteHandledByShortcut = value;
+            });
+            return;
+        }
+
         if (event.ctrlKey || event.metaKey || (event.altKey && event.key !== "Alt")) {
             return;
         }
@@ -23,4 +46,90 @@ export function attachKeyboardHandling(element) {
             event.preventDefault();
         }
     }, { capture: true });
+
+    element.addEventListener("paste", event => {
+        if (element.dataset.clipboardEnabled !== "true") {
+            return;
+        }
+
+        if (pasteHandledByShortcut) {
+            event.preventDefault();
+            return;
+        }
+
+        const text = event.clipboardData?.getData("text/plain");
+        if (typeof text !== "string") {
+            return;
+        }
+
+        event.preventDefault();
+        void dotNetReference.invokeMethodAsync("BlazorTUIPaste", text).catch(() => { });
+    });
+}
+
+async function handleClipboardShortcut(key, element, dotNetReference, setPasteInProgress) {
+    try {
+        switch (key) {
+            case "a":
+                await dotNetReference.invokeMethodAsync("BlazorTUISelectAll");
+                break;
+            case "c": {
+                const text = await dotNetReference.invokeMethodAsync("BlazorTUICopySelection");
+                if (text !== null) {
+                    await writeClipboardText(text, element);
+                }
+                break;
+            }
+            case "x": {
+                const text = await dotNetReference.invokeMethodAsync("BlazorTUICopySelection");
+                if (text !== null && await writeClipboardText(text, element)) {
+                    await dotNetReference.invokeMethodAsync("BlazorTUICutSelection");
+                }
+                break;
+            }
+            case "v": {
+                setPasteInProgress(true);
+                const text = await navigator.clipboard.readText();
+                await dotNetReference.invokeMethodAsync("BlazorTUIPaste", text);
+                break;
+            }
+        }
+    }
+    catch {
+        // Clipboard permissions and availability are controlled by the browser.
+    }
+    finally {
+        setPasteInProgress(false);
+    }
+}
+
+async function writeClipboardText(text, element) {
+    if (navigator.clipboard?.writeText) {
+        try {
+            await navigator.clipboard.writeText(text);
+            return true;
+        }
+        catch {
+            // Fall through to the legacy browser copy command.
+        }
+    }
+
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.setAttribute("readonly", "");
+    textArea.style.position = "fixed";
+    textArea.style.opacity = "0";
+    document.body.appendChild(textArea);
+    textArea.select();
+
+    let copied = false;
+    try {
+        copied = document.execCommand("copy");
+    }
+    finally {
+        textArea.remove();
+        element.focus({ preventScroll: true });
+    }
+
+    return copied;
 }

@@ -21,7 +21,8 @@
          aria-label="@AriaLabel"
          aria-roledescription="text user interface"
          aria-describedby="@DescriptionIds"
-         aria-keyshortcuts="Alt Tab Shift+Tab ArrowUp ArrowDown ArrowLeft ArrowRight Enter Space Backspace Home End"
+         aria-keyshortcuts="Alt Tab Shift+Tab ArrowUp ArrowDown ArrowLeft ArrowRight Enter Space Backspace Home End Control+A Control+C Control+X Control+V Meta+A Meta+C Meta+X Meta+V"
+         data-clipboard-enabled="@(ActiveClipboardControl is not null ? "true" : "false")"
          @onkeydown="HandleKeyDown">
         @foreach (Row row in screen.rows)
         {
@@ -41,12 +42,14 @@
     public string? AriaDescription { get; set; }
 
     [Parameter]
-    public string KeyboardInstructions { get; set; } = "Use Tab and Shift+Tab to move between controls. Use the arrow keys to navigate, and Enter or Space to activate the focused control.";
+    public string KeyboardInstructions { get; set; } = "Use Tab and Shift+Tab to move between controls. Use the arrow keys to navigate, Enter or Space to activate the focused control, and standard copy, cut, paste, and select-all shortcuts in text controls.";
 
     private readonly System.Timers.Timer _timer = new(250);
     private readonly string _accessibilityId = $"blazortui-{Guid.NewGuid():N}";
     private ElementReference _gridElement;
+    private DotNetObjectReference<BlazorTUI>? _componentReference;
     private Screen? _renderedScreen;
+    private IClipboardControl? _renderedClipboardControl;
     private long _renderedRevision = -1;
     private Screen? _accessibleScreen;
     private long _accessibleRevision = -1;
@@ -94,6 +97,15 @@
         }
     }
 
+    private IClipboardControl? ActiveClipboardControl
+    {
+        get
+        {
+            Container activeContainer = screen.Dialogs.Count == 0 ? screen.TopContainer : screen.Dialogs[^1];
+            return activeContainer.GetCurrentFocusControl() as IClipboardControl;
+        }
+    }
+
     private string GridCssVariables
     {
         get
@@ -119,12 +131,15 @@
         => screen.Render();
 
     protected override bool ShouldRender()
-        => !ReferenceEquals(_renderedScreen, screen) || _renderedRevision != screen.Revision;
+        => !ReferenceEquals(_renderedScreen, screen) ||
+            _renderedRevision != screen.Revision ||
+            !ReferenceEquals(_renderedClipboardControl, ActiveClipboardControl);
 
     protected override void OnAfterRender(bool firstRender)
     {
         _renderedScreen = screen;
         _renderedRevision = screen.Revision;
+        _renderedClipboardControl = ActiveClipboardControl;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -132,10 +147,49 @@
         if (!firstRender)
             return;
 
+        _componentReference = DotNetObjectReference.Create(this);
         await using IJSObjectReference module = await JSRuntime.InvokeAsync<IJSObjectReference>(
             "import",
             "./_content/BlazorTUI/blazorTui.js");
-        await module.InvokeVoidAsync("attachKeyboardHandling", _gridElement);
+        await module.InvokeVoidAsync("attachKeyboardHandling", _gridElement, _componentReference);
+    }
+
+    [JSInvokable("BlazorTUISelectAll")]
+    public void SelectAllForClipboard()
+    {
+        if (ActiveClipboardControl is not { } control)
+            return;
+
+        control.SelectAll();
+        RenderAfterClipboardChange();
+    }
+
+    [JSInvokable("BlazorTUICopySelection")]
+    public string? CopySelectionForClipboard()
+    {
+        IClipboardControl? control = ActiveClipboardControl;
+        return control is { HasSelection: true } ? control.SelectedText : null;
+    }
+
+    [JSInvokable("BlazorTUICutSelection")]
+    public void CutSelectionForClipboard()
+    {
+        if (ActiveClipboardControl is not { HasSelection: true } control)
+            return;
+
+        control.CutSelection();
+        RenderAfterClipboardChange();
+    }
+
+    [JSInvokable("BlazorTUIPaste")]
+    public void PasteFromClipboard(string value)
+    {
+        ArgumentNullException.ThrowIfNull(value);
+        if (ActiveClipboardControl is not { } control)
+            return;
+
+        control.Paste(value);
+        RenderAfterClipboardChange();
     }
 
     private void TimeElapsed(object? sender, System.Timers.ElapsedEventArgs e)
@@ -160,6 +214,12 @@
 
         screen.KeyDown(e.Key, e.ShiftKey);
         screen.Render();
+    }
+
+    private void RenderAfterClipboardChange()
+    {
+        screen.Render();
+        StateHasChanged();
     }
 
     private void OnClickCell(Cell cell)
@@ -189,5 +249,6 @@
         _timer.Enabled = false;
         _timer.Elapsed -= TimeElapsed;
         _timer.Dispose();
+        _componentReference?.Dispose();
     }
 }

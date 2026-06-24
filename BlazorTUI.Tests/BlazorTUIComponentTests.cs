@@ -177,4 +177,36 @@ public class BlazorTUIComponentTests : BunitContext
 
         Assert.Contains("Dialog opened: Confirm", component.Find("[role=status]").TextContent);
     }
+
+    [Fact]
+    public async Task ComponentRoutesClipboardOperationsToTheFocusedTextControl()
+    {
+        var screen = new Screen(12, 4);
+        var textBox = new TextBox("name", "Alex", 0, 0, 8, Color.White, Color.Black);
+        var button = new Button("save", "Save", 0, 1, 6, Color.White, Color.DarkGreen);
+        screen.TopContainer.AddControl(textBox);
+        screen.TopContainer.AddControl(button);
+        screen.SetFocus("name");
+
+        var component = Render<global::BlazorTUI.BlazorTUI>(parameters =>
+            parameters.Add(instance => instance.screen, screen));
+
+        Assert.Equal("true", component.Find(".gridfs").GetAttribute("data-clipboard-enabled"));
+        Assert.Contains("Control+C", component.Find(".gridfs").GetAttribute("aria-keyshortcuts"));
+
+        await component.InvokeAsync(component.Instance.SelectAllForClipboard);
+        Assert.Equal("Alex", component.Instance.CopySelectionForClipboard());
+
+        await component.InvokeAsync(component.Instance.CutSelectionForClipboard);
+        Assert.Equal("", textBox.Value);
+
+        await component.InvokeAsync(() => component.Instance.PasteFromClipboard("Jo"));
+        Assert.Equal("Jo", textBox.Value);
+        Assert.Contains(">J</div>", component.Markup);
+        Assert.Contains(">o</div>", component.Markup);
+
+        screen.SetFocus("save");
+        component.Render(parameters => parameters.Add(instance => instance.screen, screen));
+        Assert.Equal("false", component.Find(".gridfs").GetAttribute("data-clipboard-enabled"));
+    }
 }

@@ -11,7 +11,13 @@
         var button = new Button(
             "save", "Save", 2, 2, 8,
             System.Drawing.Color.White, System.Drawing.Color.DarkGreen);
+        var input = new TextBox(
+            "name", "Alex", 2, 1, 10,
+            System.Drawing.Color.White, System.Drawing.Color.Black);
+        IClipboardControl clipboard = input;
+        clipboard.SelectAll();
         button.Clicked += (_, _) => { };
+        terminal.TopContainer.AddControl(input);
         terminal.TopContainer.AddControl(button);
         return terminal;
     }

@@ -29,6 +29,9 @@ public class PackageTests
         string keyboardScript = ReadEntry(package, "staticwebassets/blazorTui.js");
         Assert.Contains("event.preventDefault()", keyboardScript);
         Assert.Contains("event.ctrlKey || event.metaKey", keyboardScript);
+        Assert.Contains("navigator.clipboard.readText()", keyboardScript);
+        Assert.Contains("BlazorTUICopySelection", keyboardScript);
+        Assert.Contains("BlazorTUIPaste", keyboardScript);
 
         ZipArchiveEntry scopedCssEntry = package.Entries.Single(entry =>
             entry.FullName.StartsWith("staticwebassets/BlazorTUI.", StringComparison.Ordinal) &&

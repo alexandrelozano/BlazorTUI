@@ -1,65 +1,129 @@
-using System;
-using System.Collections.Generic;
 using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BlazorTUI.TUI
 {
-    public class TextArea : Control
+    public class TextArea : Control, IClipboardControl
     {
         private List<string> text;
+        private bool blinkCursor;
+        private short cursorX;
+        private short cursorY;
+        private short scrollY;
+        private short scrollX;
+        private TextPosition? selectionAnchor;
 
         public short maxLines;
         public short MaxLines { get => maxLines; set => maxLines = value; }
         public short maxTextWidth;
         public short MaxTextWidth { get => maxTextWidth; set => maxTextWidth = value; }
 
-        private bool blinkCursor;
-        private short cursorX;
-        private short cursorY;
-        private short scrollY;
-        private short scrollX;
-
         public string value
         {
-            get { 
-                return String.Join(Environment.NewLine, text);
-            }
-            set {
-                text = new List<string>(value.Split(Environment.NewLine));
+            get => string.Join(Environment.NewLine, text);
+            set
+            {
+                ArgumentNullException.ThrowIfNull(value);
+                text = SplitLines(value);
                 cursorX = 0;
                 cursorY = 0;
+                scrollX = 0;
+                scrollY = 0;
+                selectionAnchor = null;
             }
         }
 
         public string Value { get => value; set => this.value = value; }
 
+        public bool HasSelection => selectionAnchor.HasValue && selectionAnchor.Value != CursorPosition;
+
+        public int SelectionStart => GetSelectionRange().Start;
+
+        public int SelectionLength
+        {
+            get
+            {
+                (int start, int end) = GetSelectionRange();
+                return end - start;
+            }
+        }
+
+        public string SelectedText
+        {
+            get
+            {
+                if (!HasSelection)
+                    return "";
+
+                string selectedText = CanonicalText.Substring(SelectionStart, SelectionLength);
+                return selectedText.Replace("\n", Environment.NewLine, StringComparison.Ordinal);
+            }
+        }
+
+        private TextPosition CursorPosition => new(cursorY, cursorX);
+
+        private string CanonicalText => string.Join('\n', text);
+
         public TextArea(string name, string text, short X, short Y, short width, short height, short maxTextWidth, short maxLines, Color forecolor, Color backgroundcolor)
         {
-            this.Name = name;
+            ArgumentNullException.ThrowIfNull(text);
+
+            Name = name;
             this.X = X;
             this.Y = Y;
             this.width = width;
             this.height = height;
             this.maxLines = maxLines;
             this.maxTextWidth = maxTextWidth;
-
-            if (text != null)
-                this.text = new List<string>(text.Split(Environment.NewLine));
-            else
-                this.text = new List<string>();
-
-            this.foreColor = forecolor;
-            this.backgroundColor = backgroundcolor;
+            this.text = SplitLines(text);
+            foreColor = forecolor;
+            backgroundColor = backgroundcolor;
 
             Focus = false;
             TabStop = true;
-            cursorX = 0;
-            cursorY = 0;
-            scrollX = 0;
-            scrollY = 0;
+        }
+
+        public void SelectAll()
+        {
+            selectionAnchor = new TextPosition(0, 0);
+            cursorY = (short)(text.Count - 1);
+            cursorX = (short)Math.Min(text[^1].Length, short.MaxValue);
+            EnsureCursorVisible();
+        }
+
+        public string CutSelection()
+        {
+            string selectedText = SelectedText;
+            DeleteSelection();
+            return selectedText;
+        }
+
+        public void Paste(string value)
+        {
+            ArgumentNullException.ThrowIfNull(value);
+
+            string normalizedValue = NormalizeLineBreaks(value);
+            if (normalizedValue.Length == 0)
+                return;
+
+            DeleteSelection();
+            string currentText = CanonicalText;
+            int cursorOffset = GetOffset(CursorPosition);
+            string candidate = currentText.Insert(cursorOffset, normalizedValue);
+            int candidateCursorOffset = cursorOffset + normalizedValue.Length;
+            List<string> candidateLines = candidate.Split('\n').ToList();
+            TextPosition candidateCursor = PositionFromOffset(candidateLines, candidateCursorOffset);
+
+            int lineLimit = Math.Max(1, (int)maxLines);
+            int widthLimit = Math.Max(0, (int)maxTextWidth);
+            text = candidateLines
+                .Take(lineLimit)
+                .Select(line => line[..Math.Min(line.Length, widthLimit)])
+                .ToList();
+
+            cursorY = (short)Math.Min(candidateCursor.Line, text.Count - 1);
+            cursorX = (short)Math.Min(candidateCursor.Column, text[cursorY].Length);
+            selectionAnchor = null;
+            EnsureCursorVisible();
         }
 
         public override bool Click(short X, short Y)
@@ -68,67 +132,28 @@ namespace BlazorTUI.TUI
 
             if (Visible)
             {
+                selectionAnchor = null;
                 if (X == width - 1)
                 {
-                    if (Y == 0)
-                    {
-                        if (scrollY > 0)
-                        {
-                            scrollY--;
-
-                            if (cursorY > scrollY + height)
-                                cursorY--;
-
-                            if (text[cursorY].Length < cursorX)
-                                cursorX = (short)text[cursorY].Length;
-                        }
-                    }
-                    else if (Y == height - 1)
-                    {
-                        if (text.Count - scrollY > 1)
-                        {
-                            scrollY++;
-
-                            if (cursorY < scrollY)
-                                cursorY++;
-
-                            if (text[cursorY].Length < cursorX)
-                                cursorX = (short)text[cursorY].Length;
-                        }
-                    }
+                    if (Y == 0 && scrollY > 0)
+                        scrollY--;
+                    else if (Y == height - 1 && scrollY < Math.Max(0, text.Count - (height - 1)))
+                        scrollY++;
                 }
-                else
+                else if (Y == height - 1)
                 {
-                    if (Y == height - 1)
-                    {
-                        if (X == 0)
-                        {
-                            if (scrollX > 0)
-                                scrollX--;
-                        }else if (X == width - 2)
-                        {
-                            if (scrollX < maxTextWidth)
-                                scrollX++;
-                        }
-                    }
-                    else
-                    {
-                        if (Y + scrollY < text.Count)
-                        {
-                            cursorY = (short)(Y + scrollY);
-                            if (X < text[Y + scrollY].Length)
-                                cursorX = X;
-                            else
-                                cursorX = (short)text[Y + scrollY].Length;
-                        }
-                        else
-                        {
-                            cursorX = 0;
-                            cursorY = 0;
-                        }
-                    }
+                    if (X == 0 && scrollX > 0)
+                        scrollX--;
+                    else if (X == width - 2 && scrollX < maxTextWidth)
+                        scrollX++;
+                }
+                else if (Y + scrollY < text.Count)
+                {
+                    cursorY = (short)(Y + scrollY);
+                    cursorX = (short)Math.Min(X + scrollX, text[cursorY].Length);
                 }
 
+                EnsureCursorVisible();
                 container.TopContainer().SetFocus(name);
                 handled = true;
             }
@@ -141,212 +166,290 @@ namespace BlazorTUI.TUI
 
         public override bool KeyDown(string key, bool shiftKey)
         {
-            bool handled = false;
+            if (!Visible)
+                return false;
 
-            if (Visible)
+            bool handled = true;
+            switch (key)
             {
-                switch (key)
-                {
-                    case "Home":
-                        cursorX = 0;
-                        scrollX = 0;
-                        break;
-                    case "End":
-                        cursorX = (short)(text[cursorY].Length);
-                        scrollX = (short)(cursorX - width + 2);
-                        if (scrollX < 0)
-                            scrollX = 0;
-                        break;
-                    case "Tab":
-                        break;
-                    case "Enter":
-                        if (text.Count < maxLines)
-                        {
-                            if (cursorY == text.Count - 1)
-                            {
-                                text.Add("");
-                                cursorY++;
-                                cursorX = 0;
-
-                                scrollX = 0;
-                                if (cursorY - scrollY > height - 2)
-                                    scrollY++;
-                            }
-                            else
-                            {
-                                text.Insert(cursorY + 1, "");
-                                cursorY++;
-                                cursorX = 0;
-                                scrollX = 0;
-                            }
-                        }
-                        handled = true;
-                        break;
-                    case "Backspace":
-                        if (cursorX > 0)
-                        {
-                            text[cursorY] = text[cursorY].Remove(cursorX - 1, 1);
-                            cursorX--;
-                            if (scrollX > cursorX)
-                                scrollX--;
-                        }
-                        else
-                        {
-                            if (cursorY > 0)
-                            {
-                                cursorY--;
-                                cursorX = (short)text[cursorY].Length;
-                                if (string.IsNullOrEmpty(text[cursorY + 1]))
-                                {
-                                    text.RemoveAt(cursorY + 1);
-                                }
-
-                                if (scrollX + width - 3 < cursorX)
-                                    scrollX = (short)(cursorX - width + 2);
-
-                                if (cursorY < scrollY)
-                                    scrollY = cursorY;
-                            }
-                        }
-                        handled = true;
-                        break;
-                    case "ArrowRight":
-                        if (cursorX < (short)text[cursorY].Length)
-                            cursorX++;
-
-                        if (scrollX + width - 3 < cursorX)
-                            scrollX = (short)(cursorX - width + 2);
-                        handled = true;
-                        break;
-                    case "ArrowLeft":
-                        if (cursorX > 0)
-                            cursorX--;
-
-                        if (cursorX < scrollX)
-                            scrollX = cursorX;
-                        handled = true;
-                        break;
-                    case "ArrowUp":
-                        if (cursorY > 0)
-                        {
-                            cursorY--;
-                            if (text[cursorY].Length < cursorX)
-                                cursorX = (short)text[cursorY].Length;
-
-                            if (cursorX < scrollX)
-                                scrollX = (short)(cursorX - width - 2);
-
-                            if (scrollX < 0)
-                                scrollX = 0;
-
-                            if (cursorY < scrollY)
-                                scrollY = cursorY;
-                        }
-                        handled = true;
-                        break;
-                    case "ArrowDown":
-                        if (cursorY < text.Count - 1)
-                        {
-                            cursorY++;
-                            if (text[cursorY].Length < cursorX)
-                                cursorX = (short)text[cursorY].Length;
-
-                            if (cursorX < scrollX)
-                                scrollX = (short)(cursorX - width - 2);
-
-                            if (scrollX < 0)
-                                scrollX = 0;
-
-                            if (cursorY - scrollY > height - 2)
-                                scrollY++;
-                        }
-                        handled = true;
-                        break;
-                    default:
-                        if (key.Length == 1 && text[cursorY].Length < maxTextWidth)
-                        {
-                            if (cursorX != text[cursorY].Length)
-                                text[cursorY] = text[cursorY].Insert(cursorX, key);
-                            else
-                                text[cursorY] += key;
-
-                            cursorX++;
-
-                            if (scrollX + width - 3 < cursorX)
-                                scrollX = (short)(cursorX - width + 2);
-                        }
-                        handled = true;
-                        break;
-                }
+                case "Home":
+                    MoveCursor(new TextPosition(cursorY, 0), shiftKey);
+                    break;
+                case "End":
+                    MoveCursor(new TextPosition(cursorY, text[cursorY].Length), shiftKey);
+                    break;
+                case "Tab":
+                    handled = false;
+                    break;
+                case "Enter":
+                    if (HasSelection || text.Count < maxLines)
+                        Paste(Environment.NewLine);
+                    break;
+                case "Backspace":
+                    Backspace();
+                    break;
+                case "Delete":
+                    Delete();
+                    break;
+                case "ArrowRight":
+                    MoveHorizontally(1, shiftKey);
+                    break;
+                case "ArrowLeft":
+                    MoveHorizontally(-1, shiftKey);
+                    break;
+                case "ArrowUp":
+                    MoveVertically(-1, shiftKey);
+                    break;
+                case "ArrowDown":
+                    MoveVertically(1, shiftKey);
+                    break;
+                default:
+                    if (key.Length == 1)
+                        Paste(key);
+                    break;
             }
 
+            EnsureCursorVisible();
             return handled;
         }
 
         public override void Render(IList<Row> rows)
         {
-            if (Visible)
+            if (!Visible)
+                return;
+
+            for (short h = 0; h < height; h++)
             {
-                for (int h = 0; h < height; h++)
+                int textLineIndex = h + scrollY;
+                string line = textLineIndex < text.Count ? text[textLineIndex] : "";
+                int rowIndex = container.YOffset() + Y + h;
+                if (rowIndex < 0 || rowIndex >= rows.Count)
+                    continue;
+
+                for (short n = 0; n < width; n++)
                 {
-                    string line = "";
+                    int columnIndex = container.XOffset() + X + n;
+                    if (columnIndex < 0 || columnIndex >= rows[rowIndex].Cells.Count)
+                        continue;
 
-                    if ((h + scrollY) < text.Count)
-                        line = text[h + scrollY];
+                    Cell cell = rows[rowIndex].Cells[columnIndex];
+                    int textColumnIndex = n + scrollX;
+                    bool selected = h < height - 1 && n < width - 1 && textLineIndex < text.Count &&
+                        textColumnIndex < line.Length && IsSelected(new TextPosition(textLineIndex, textColumnIndex));
+                    cell.foreColor = selected ? backgroundColor : foreColor;
+                    cell.backgroundColor = selected ? foreColor : backgroundColor;
+                    cell.textDecoration = Cell.TextDecoration.None;
 
-                    for (short n = 0; n < width; n++)
+                    string character;
+                    if (h == height - 1)
                     {
-                        if (container.YOffset() + Y + h < container.YOffset() + container.height && container.YOffset() + Y + h < rows.Count)
+                        character = n switch
                         {
-                            if (container.XOffset() + X + n < container.XOffset() + container.width && container.XOffset() + X + n < rows[Y].Cells.Count)
-                            {
-                                rows[container.YOffset() + Y + h].Cells[container.XOffset() + X + n].foreColor = foreColor;
-                                rows[container.YOffset() + Y + h].Cells[container.XOffset() + X + n].backgroundColor = backgroundColor;
-                                rows[container.YOffset() + Y + h].Cells[container.XOffset() + X + n].textDecoration = Cell.TextDecoration.None;
-
-                                string ch = " ";
-
-                                if (h == height - 1)
-                                {
-                                    if (n == 0)
-                                        ch = "←";
-                                    else if (n == width - 2)
-                                        ch = "→";
-                                    else if (n == width - 1)
-                                        ch = "↓";
-                                    else
-                                        ch = "─";
-                                }
-                                else
-                                {
-                                    if (n == width - 1)
-                                    {
-                                        if (h == 0)
-                                            ch = "↑";
-                                        else
-                                            ch = "│";
-                                    }
-                                    else if (n + scrollX < line.Length)
-                                        ch = line.Substring(n + scrollX, 1);
-                                }
-                                
-                                if (Focus)
-                                {
-                                    if (h == cursorY - scrollY && n == cursorX - scrollX)
-                                    {
-                                        if (blinkCursor)
-                                            rows[container.YOffset() + Y + h].Cells[container.XOffset() + X + n].textDecoration = Cell.TextDecoration.UnderLine;
-
-                                        blinkCursor = !blinkCursor;
-                                    }
-                                }
-
-                                rows[container.YOffset() + Y + h].Cells[container.XOffset() + X + n].character = ch;
-                            }
-                        }
+                            0 => "←",
+                            _ when n == width - 2 => "→",
+                            _ when n == width - 1 => "↓",
+                            _ => "─"
+                        };
                     }
+                    else if (n == width - 1)
+                    {
+                        character = h == 0 ? "↑" : "│";
+                    }
+                    else
+                    {
+                        character = textColumnIndex < line.Length ? line.Substring(textColumnIndex, 1) : " ";
+                    }
+
+                    if (Focus && h == cursorY - scrollY && n == cursorX - scrollX)
+                    {
+                        if (blinkCursor)
+                            cell.textDecoration = Cell.TextDecoration.UnderLine;
+
+                        blinkCursor = !blinkCursor;
+                    }
+
+                    cell.character = character;
                 }
             }
         }
+
+        private void Backspace()
+        {
+            if (DeleteSelection())
+                return;
+
+            if (cursorX > 0)
+            {
+                text[cursorY] = text[cursorY].Remove(cursorX - 1, 1);
+                cursorX--;
+                return;
+            }
+
+            if (cursorY == 0)
+                return;
+
+            int previousLineLength = text[cursorY - 1].Length;
+            if (previousLineLength + text[cursorY].Length > maxTextWidth)
+                return;
+
+            text[cursorY - 1] += text[cursorY];
+            text.RemoveAt(cursorY);
+            cursorY--;
+            cursorX = (short)previousLineLength;
+        }
+
+        private void Delete()
+        {
+            if (DeleteSelection())
+                return;
+
+            if (cursorX < text[cursorY].Length)
+            {
+                text[cursorY] = text[cursorY].Remove(cursorX, 1);
+                return;
+            }
+
+            if (cursorY >= text.Count - 1 || text[cursorY].Length + text[cursorY + 1].Length > maxTextWidth)
+                return;
+
+            text[cursorY] += text[cursorY + 1];
+            text.RemoveAt(cursorY + 1);
+        }
+
+        private bool DeleteSelection()
+        {
+            if (!HasSelection)
+                return false;
+
+            (int start, int end) = GetSelectionRange();
+            string remainingText = CanonicalText.Remove(start, end - start);
+            text = remainingText.Split('\n').ToList();
+            TextPosition position = PositionFromOffset(text, start);
+            cursorY = (short)position.Line;
+            cursorX = (short)position.Column;
+            selectionAnchor = null;
+            EnsureCursorVisible();
+            return true;
+        }
+
+        private void MoveHorizontally(int direction, bool extendSelection)
+        {
+            if (!extendSelection && HasSelection)
+            {
+                int targetOffset = direction < 0 ? SelectionStart : SelectionStart + SelectionLength;
+                MoveCursor(PositionFromOffset(text, targetOffset), false);
+                return;
+            }
+
+            TextPosition target = CursorPosition;
+            if (direction < 0)
+            {
+                if (cursorX > 0)
+                    target = new TextPosition(cursorY, (short)(cursorX - 1));
+                else if (cursorY > 0)
+                    target = new TextPosition(cursorY - 1, text[cursorY - 1].Length);
+            }
+            else if (cursorX < text[cursorY].Length)
+            {
+                target = new TextPosition(cursorY, (short)(cursorX + 1));
+            }
+            else if (cursorY < text.Count - 1)
+            {
+                target = new TextPosition((short)(cursorY + 1), 0);
+            }
+
+            MoveCursor(target, extendSelection);
+        }
+
+        private void MoveVertically(int direction, bool extendSelection)
+        {
+            int targetLine = Math.Clamp(cursorY + direction, 0, text.Count - 1);
+            short targetColumn = (short)Math.Min(cursorX, text[targetLine].Length);
+            MoveCursor(new TextPosition((short)targetLine, targetColumn), extendSelection);
+        }
+
+        private void MoveCursor(TextPosition newPosition, bool extendSelection)
+        {
+            if (extendSelection)
+                selectionAnchor ??= CursorPosition;
+            else
+                selectionAnchor = null;
+
+            cursorY = (short)Math.Clamp(newPosition.Line, 0, text.Count - 1);
+            cursorX = (short)Math.Clamp(newPosition.Column, 0, text[cursorY].Length);
+            if (selectionAnchor == CursorPosition)
+                selectionAnchor = null;
+        }
+
+        private bool IsSelected(TextPosition position)
+        {
+            if (!HasSelection)
+                return false;
+
+            int offset = GetOffset(position);
+            (int start, int end) = GetSelectionRange();
+            return offset >= start && offset < end;
+        }
+
+        private (int Start, int End) GetSelectionRange()
+        {
+            int cursorOffset = GetOffset(CursorPosition);
+            if (!selectionAnchor.HasValue)
+                return (cursorOffset, cursorOffset);
+
+            int anchorOffset = GetOffset(selectionAnchor.Value);
+            return (Math.Min(anchorOffset, cursorOffset), Math.Max(anchorOffset, cursorOffset));
+        }
+
+        private int GetOffset(TextPosition position)
+        {
+            int offset = position.Column;
+            for (int line = 0; line < position.Line; line++)
+                offset += text[line].Length + 1;
+
+            return offset;
+        }
+
+        private void EnsureCursorVisible()
+        {
+            int visibleWidth = Math.Max(1, width - 1);
+            int visibleHeight = Math.Max(1, height - 1);
+
+            if (cursorX < scrollX)
+                scrollX = cursorX;
+            else if (cursorX >= scrollX + visibleWidth)
+                scrollX = (short)(cursorX - visibleWidth + 1);
+
+            if (cursorY < scrollY)
+                scrollY = cursorY;
+            else if (cursorY >= scrollY + visibleHeight)
+                scrollY = (short)(cursorY - visibleHeight + 1);
+
+            scrollX = (short)Math.Max(0, (int)scrollX);
+            scrollY = (short)Math.Max(0, (int)scrollY);
+        }
+
+        private static TextPosition PositionFromOffset(IReadOnlyList<string> lines, int offset)
+        {
+            int remaining = Math.Max(0, offset);
+            for (int line = 0; line < lines.Count; line++)
+            {
+                if (remaining <= lines[line].Length)
+                    return new TextPosition(line, remaining);
+
+                remaining -= lines[line].Length + 1;
+            }
+
+            int lastLine = lines.Count - 1;
+            return new TextPosition(lastLine, lines[lastLine].Length);
+        }
+
+        private static List<string> SplitLines(string value)
+            => NormalizeLineBreaks(value).Split('\n').ToList();
+
+        private static string NormalizeLineBreaks(string value)
+            => value.Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n');
+
+        private readonly record struct TextPosition(int Line, int Column);
     }
 }
