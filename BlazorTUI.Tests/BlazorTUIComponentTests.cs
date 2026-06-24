@@ -94,6 +94,7 @@ public class BlazorTUIComponentTests : BunitContext
         Assert.Equal("Order entry terminal", grid.GetAttribute("aria-label"));
         Assert.Contains("Tab", grid.GetAttribute("aria-keyshortcuts"));
         Assert.Contains("F4", grid.GetAttribute("aria-keyshortcuts"));
+        Assert.Contains("PageUp", grid.GetAttribute("aria-keyshortcuts"));
         Assert.Contains("Enter and submit an order.", component.Markup);
         Assert.Contains("OK", component.Find("pre.blazortui-visually-hidden").TextContent);
         Assert.All(component.FindAll(".tilefs"), tile => Assert.Equal("true", tile.GetAttribute("aria-hidden")));

@@ -33,6 +33,22 @@
         priority.SelectedIndexChanged += (_, _) => { };
         priority.SelectItem("High");
         terminal.TopContainer.AddControl(priority);
+        var slider = new Slider(
+            "volume",
+            minimum: 0,
+            maximum: 100,
+            value: 50,
+            step: 10,
+            X: 11,
+            Y: 3,
+            length: 9,
+            SliderOrientation.Horizontal,
+            System.Drawing.Color.White,
+            System.Drawing.Color.Black,
+            largeChange: 20);
+        slider.ValueChanged += (_, args) => _ = args.Value;
+        slider.Increase();
+        terminal.TopContainer.AddControl(slider);
         var tabs = new TabControl(
             "tabs", 0, 5, 20, 5,
             System.Drawing.Color.White, System.Drawing.Color.DarkBlue);

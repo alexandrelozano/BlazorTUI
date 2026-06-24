@@ -1,0 +1,70 @@
+@page "/examples/sliders"
+@using global::BlazorTUI.TUI
+@using Color = System.Drawing.Color
+
+<PageTitle>Slider example</PageTitle>
+
+<BlazorTUI.BlazorTUI
+    screen="@screen"
+    AriaLabel="Slider example"
+    AriaDescription="Adjust horizontal and vertical numeric sliders." />
+
+@code {
+    private Screen screen = null!;
+    private TextBox status = null!;
+
+    protected override void OnInitialized()
+    {
+        screen = new Screen(60, 30);
+
+        var frame = new Frame(
+            "sliderFrame", "SLIDERS", 5, 4, 50, 22,
+            Frame.BorderStyle.Line, Color.Yellow, Color.DarkBlue);
+        screen.TopContainer.AddContainer(frame);
+
+        frame.AddControl(new Label(
+            "sliderInstructions", "Arrows adjust; Home/End set limits; Page changes faster.",
+            3, 2, 44, Color.White, Color.DarkBlue));
+
+        frame.AddControl(new Label(
+            "volumeLabel", "Volume", 4, 5, 12,
+            Color.White, Color.DarkBlue));
+        var volume = new Slider(
+            "volumeSlider", 0, 100, 50, 5,
+            4, 7, 30, Color.Yellow, Color.Black);
+        frame.AddControl(volume);
+
+        frame.AddControl(new Label(
+            "temperatureLabel", "Temperature", 36, 5, 12,
+            Color.White, Color.DarkBlue));
+        var temperature = new Slider(
+            "temperatureSlider", -20, 40, 10, 5,
+            40, 7, 10, SliderOrientation.Vertical,
+            Color.Cyan, Color.Black,
+            largeChange: 15);
+        frame.AddControl(temperature);
+
+        frame.AddControl(new Label(
+            "maximumTemperature", "40", 42, 7, 4,
+            Color.White, Color.DarkBlue));
+        frame.AddControl(new Label(
+            "minimumTemperature", "-20", 42, 16, 4,
+            Color.White, Color.DarkBlue));
+
+        frame.AddControl(new Label(
+            "sliderStatusLabel", "Value:", 4, 18, 8,
+            Color.White, Color.DarkBlue));
+        status = new TextBox(
+            "sliderStatus", "Volume: 50", 12, 18, 22,
+            Color.Cyan, Color.Black)
+        {
+            TabStop = false
+        };
+        frame.AddControl(status);
+
+        volume.ValueChanged += (_, args) => status.Value = $"Volume: {args.Value}";
+        temperature.ValueChanged += (_, args) => status.Value = $"Temperature: {args.Value}";
+
+        screen.SetFocus("volumeSlider");
+    }
+}

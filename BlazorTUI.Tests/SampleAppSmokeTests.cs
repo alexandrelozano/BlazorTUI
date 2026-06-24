@@ -45,6 +45,7 @@ public class SampleAppSmokeTests : IClassFixture<WebApplicationFactory<Program>>
         Assert.Contains("examples/images", html);
         Assert.Contains("examples/tabs", html);
         Assert.Contains("examples/tree-view", html);
+        Assert.Contains("examples/sliders", html);
     }
 
     [Theory]
@@ -53,6 +54,7 @@ public class SampleAppSmokeTests : IClassFixture<WebApplicationFactory<Program>>
     [InlineData("/examples/images", "Images example")]
     [InlineData("/examples/tabs", "TabControl example")]
     [InlineData("/examples/tree-view", "TreeView example")]
+    [InlineData("/examples/sliders", "Slider example")]
     public async Task FocusedExampleStartsAndRendersTerminal(string route, string title)
     {
         using HttpClient client = factory.CreateClient();

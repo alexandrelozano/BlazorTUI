@@ -40,6 +40,8 @@ public class PackageTests
         Assert.Contains("event.key === \"PageDown\"", keyboardScript);
         Assert.Contains("event.key === \"PageUp\"", keyboardScript);
         Assert.Contains("\"F4\"", keyboardScript);
+        string normalizedKeyboardScript = keyboardScript.Replace("\r\n", "\n", StringComparison.Ordinal);
+        Assert.Contains("\"End\",\n    \"PageUp\",\n    \"PageDown\"", normalizedKeyboardScript);
 
         ZipArchiveEntry scopedCssEntry = package.Entries.Single(entry =>
             entry.FullName.StartsWith("staticwebassets/BlazorTUI.", StringComparison.Ordinal) &&

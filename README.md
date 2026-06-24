@@ -114,7 +114,7 @@ These methods initialize parent references, tab order, and z-order. Use `screen.
 | --- | --- |
 | Layout | `Frame`, `TabControl`, `TabPage` |
 | Text and input | `Label`, `TextBox`, `PasswordBox`, `TextArea`, `NumericBox`, `DateBox`, `TimeBox` |
-| Selection | `CheckBox`, `RadioButton`, `ComboBox`, `ListBox`, `TreeView`, `ColorPicker` |
+| Selection | `CheckBox`, `RadioButton`, `ComboBox`, `ListBox`, `TreeView`, `Slider`, `ColorPicker` |
 | Actions and navigation | `Button`, `MenuBar`, `Menu`, `MenuItem` |
 | Data and feedback | `GridView`, `ProgressBar`, `Spinner`, `PictureBox` |
 | Modal UI | `Dialog`, `MessageBox` |
@@ -142,6 +142,8 @@ Lowercase members from earlier releases remain available in the `0.8.x` line for
 - `Enter` or `Space`: activate buttons and selection controls, open or confirm a `ComboBox`, and toggle the selected `TreeView` node.
 - `F4`: open or close the focused `ComboBox`; `Escape` closes it without changing the selection.
 - Arrow keys: navigate text, combo boxes, trees, lists, grids, color pickers, and menus where applicable. In a `TreeView`, left and right collapse, expand, or move between parent and child nodes.
+- `Home` and `End`: move to the first or last item, or set a `Slider` to its minimum or maximum.
+- `PageUp` and `PageDown`: apply the configured `LargeChange` to a focused `Slider`.
 - `Shift` plus the arrow, `Home`, or `End` keys: select text in `TextBox` and `TextArea`.
 - `Ctrl+A`, `Ctrl+C`, `Ctrl+X`, and `Ctrl+V`: select all, copy, cut, and paste in text controls. Use `Command` instead of `Ctrl` on macOS.
 - `Ctrl+Z` and `Ctrl+Y`: undo and redo text edits. On macOS, use `Command+Z` and `Command+Shift+Z`.
@@ -215,6 +217,35 @@ frame.AddControl(tree);
 Node names must be unique within a tree. `Nodes` and `Children` expose read-only views; use `AddNode`, `RemoveNode`, and `ClearNodes` to change the hierarchy. Use `SelectNode`, `ToggleNode`, `ExpandAll`, and `CollapseAll` for programmatic control. `SelectedNodeChanged` exposes the previous and new selections through `TreeNodeSelectionChangedEventArgs`; `NodeExpanded`, `NodeCollapsed`, and `NodeActivated` identify the affected node through `TreeNodeEventArgs`.
 
 Users navigate visible nodes with `ArrowUp`, `ArrowDown`, `Home`, and `End`. `ArrowRight` expands a node or enters its first child; `ArrowLeft` collapses it or selects its parent. `Enter` and `Space` toggle and activate the selected node.
+
+## Numeric sliders
+
+`Slider` provides horizontal and vertical numeric selection with configurable small and large changes:
+
+```csharp
+var volume = new Slider(
+    "volumeSlider",
+    minimum: 0,
+    maximum: 100,
+    value: 50,
+    step: 5,
+    X: 4,
+    Y: 7,
+    length: 30,
+    SliderOrientation.Horizontal,
+    Color.Yellow,
+    Color.Black,
+    largeChange: 20);
+
+volume.ValueChanged += (_, args) =>
+    status.Value = $"Volume: {args.Value}";
+
+frame.AddControl(volume);
+```
+
+Omit the orientation argument to create a horizontal slider. For a vertical slider, maximum is at the top and minimum at the bottom. `Value`, `Minimum`, and `Maximum` always preserve a valid range; invalid assignments throw `ArgumentOutOfRangeException`. Use `Increase`, `Decrease`, or `SetValue` for programmatic changes. `Percentage` exposes the current position from 0 to 100.
+
+Users can click directly on the track. Arrow keys apply `Step`, `PageUp` and `PageDown` apply `LargeChange`, and `Home` and `End` select the limits. `ValueChanged` receives both the previous and current values through `SliderValueChangedEventArgs`.
 
 ## Password input
 
@@ -307,6 +338,7 @@ The repository contains focused pages that can be run directly:
 | [Images](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/Images.razor) | Loading encoded image bytes into a `PictureBox` |
 | [TabControl](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/Tabs.razor) | Tab pages, nested controls, focus changes, mouse selection, and keyboard navigation |
 | [TreeView](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/TreeViewExample.razor) | Hierarchical nodes, dynamic expansion, selection events, mouse input, and keyboard navigation |
+| [Slider](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/Sliders.razor) | Horizontal and vertical ranges, direct mouse selection, small and large keyboard changes, and value events |
 | [Complete showcase](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Index.razor) | All controls, nested frames, z-order, callbacks, and animation |
 
 Run `dotnet run --project SampleApp` from the repository root and open `/examples` to browse them. The example routes are exercised by the automated test suite so API changes cannot silently leave the documentation out of date.
@@ -315,6 +347,8 @@ Run `dotnet run --project SampleApp` from the repository root and open `/example
 
 ### 0.8.6 — 2026-06-24
 
+- Added horizontal and vertical `Slider` controls with configurable ranges, steps, large changes, direct mouse selection, and typed value-change events.
+- Added conventional arrow, `Home`, `End`, `PageUp`, and `PageDown` slider navigation plus an executable example.
 - Added `TreeView`, `TreeNode`, typed node and selection event arguments, nested read-only collections, and unique node names.
 - Added mouse selection, expand/collapse markers, automatic scrolling, and conventional tree keyboard navigation.
 - Added selection, expansion, collapse, and activation events plus programmatic selection and bulk expand/collapse APIs.
