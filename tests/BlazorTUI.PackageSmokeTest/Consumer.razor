@@ -7,7 +7,7 @@
 
     private static Screen CreateTerminal()
     {
-        var terminal = new Screen(20, 10);
+        var terminal = new Screen(24, 12);
         var button = new Button(
             "save", "Save", 2, 2, 8,
             System.Drawing.Color.White, System.Drawing.Color.DarkGreen);
@@ -55,8 +55,20 @@
         status.AddItem("help", "F1 Help");
         status.Value = "Saved";
         terminal.TopContainer.AddControl(status);
+        var split = new SplitPanel(
+            "split", 0, 5, 20, 2,
+            SplitPanelOrientation.Vertical, 9,
+            System.Drawing.Color.White, System.Drawing.Color.DarkBlue);
+        split.FirstPanel.AddControl(new Label(
+            "splitLeft", "Left", 0, 0, 4,
+            System.Drawing.Color.White, System.Drawing.Color.DarkBlue));
+        split.SecondPanel.AddControl(new Label(
+            "splitRight", "Right", 0, 0, 5,
+            System.Drawing.Color.White, System.Drawing.Color.DarkBlue));
+        split.MoveSplitter(1);
+        terminal.TopContainer.AddContainer(split);
         var tabs = new TabControl(
-            "tabs", 0, 5, 20, 5,
+            "tabs", 0, 7, 20, 5,
             System.Drawing.Color.White, System.Drawing.Color.DarkBlue);
         terminal.TopContainer.AddContainer(tabs);
         TabPage page = tabs.AddTab("generalTab", "General");

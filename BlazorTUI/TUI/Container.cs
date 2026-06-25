@@ -329,53 +329,52 @@ namespace BlazorTUI.TUI
 
         public void FocusNextControl()
         {
-            if (controls != null && (from c in controls where c.TabStop==true select c).Count() > 0)
+            List<Control> focusableControls = GetFocusScopeControls();
+            if (focusableControls.Count > 0)
             {
-                Control? currentFocusControl = GetCurrentFocusControl();
-                short currentTabIndex = 0;
-                string currentName = "";
+                Container focusScope = GetFocusScopeContainer();
+                Control? currentFocusControl = focusScope.GetCurrentFocusControl();
+                int currentIndex = currentFocusControl is null
+                    ? -1
+                    : focusableControls.FindIndex(control => control.name == currentFocusControl.name);
 
-                if (currentFocusControl != null)
-                {
-                    currentTabIndex = currentFocusControl.TabIndex;
-                    currentName = currentFocusControl.name;
-                }
+                Control nextControl = focusableControls[(currentIndex + 1) % focusableControls.Count];
 
-                Control? nextControl = (from c in controls where c.TabStop == true && c.TabIndex >= currentTabIndex && c.name != currentName orderby c.TabIndex, c.name select c).FirstOrDefault();
-
-                if (nextControl == null)
-                {
-                    nextControl = (from c in controls where c.TabStop == true orderby c.TabIndex, c.name select c).First();
-                }
-
-                SetFocus(nextControl.name);
+                focusScope.SetFocus(nextControl.name);
             }
         }
 
         public void FocusPreviousControl()
         {
-            if (controls != null && (from c in controls where c.TabStop == true select c).Count() > 0)
+            List<Control> focusableControls = GetFocusScopeControls();
+            if (focusableControls.Count > 0)
             {
-                Control? currentFocusControl = GetCurrentFocusControl();
-                short currentTabIndex = 0;
-                string currentName = "";
+                Container focusScope = GetFocusScopeContainer();
+                Control? currentFocusControl = focusScope.GetCurrentFocusControl();
+                int currentIndex = currentFocusControl is null
+                    ? 0
+                    : focusableControls.FindIndex(control => control.name == currentFocusControl.name);
 
-                if (currentFocusControl != null)
-                {
-                    currentTabIndex = currentFocusControl.TabIndex;
-                    currentName = currentFocusControl.name;
-                }
+                if (currentIndex < 0)
+                    currentIndex = 0;
 
-                Control? nextControl = (from c in controls where c.TabStop == true && c.TabIndex <= currentTabIndex && c.name != currentName orderby c.TabIndex descending, c.name descending select c).FirstOrDefault();
+                Control previousControl = focusableControls[(currentIndex - 1 + focusableControls.Count) % focusableControls.Count];
 
-                if (nextControl == null)
-                {
-                    nextControl = (from c in controls where c.TabStop == true orderby c.TabIndex, c.name select c).Last();
-                }
-
-                SetFocus(nextControl.name);
+                focusScope.SetFocus(previousControl.name);
             }
         }
+
+        private Container GetFocusScopeContainer()
+            => parent is SplitPanel splitPanel ? splitPanel : this;
+
+        private List<Control> GetFocusScopeControls()
+            => parent is SplitPanel splitPanel
+                ? splitPanel.GetFocusableControlsInTabOrder().ToList()
+                : controls
+                    .Where(control => control.TabStop)
+                    .OrderBy(control => control.TabIndex)
+                    .ThenBy(control => control.name)
+                    .ToList();
 
         public short YOffset()
         {
@@ -399,6 +398,9 @@ namespace BlazorTUI.TUI
 
         public virtual void Render(IList<Row> rows) {
             ArgumentNullException.ThrowIfNull(rows);
+
+            CellSnapshot[][]? snapshots = parent is null ? null : CaptureCellSnapshots(rows);
+            ClipBounds clipBounds = GetEffectiveClipBounds(rows);
         
             foreach (Control control in (from c in controls orderby c.ZOrder select c))
             {
@@ -411,6 +413,127 @@ namespace BlazorTUI.TUI
                 {
                     container.Render(rows);
                 }
+            }
+
+            if (snapshots is not null)
+                RestoreCellsOutsideClip(rows, snapshots, clipBounds);
+        }
+
+        private ClipBounds GetEffectiveClipBounds(IList<Row> rows)
+        {
+            int left = XOffset();
+            int top = YOffset();
+            int right = left + width;
+            int bottom = top + height;
+
+            for (Container? current = parent; current is not null; current = current.parent)
+            {
+                int currentLeft = current.XOffset();
+                int currentTop = current.YOffset();
+
+                left = Math.Max(left, currentLeft);
+                top = Math.Max(top, currentTop);
+                right = Math.Min(right, currentLeft + current.width);
+                bottom = Math.Min(bottom, currentTop + current.height);
+            }
+
+            int screenWidth = rows.Count == 0 ? 0 : rows.Max(row => row.Cells.Count);
+            left = Math.Clamp(left, 0, screenWidth);
+            right = Math.Clamp(right, 0, screenWidth);
+            top = Math.Clamp(top, 0, rows.Count);
+            bottom = Math.Clamp(bottom, 0, rows.Count);
+
+            if (right < left)
+                right = left;
+            if (bottom < top)
+                bottom = top;
+
+            return new ClipBounds(left, top, right, bottom);
+        }
+
+        private static CellSnapshot[][] CaptureCellSnapshots(IList<Row> rows)
+        {
+            var snapshots = new CellSnapshot[rows.Count][];
+            for (int rowIndex = 0; rowIndex < rows.Count; rowIndex++)
+            {
+                IList<Cell> cells = rows[rowIndex].Cells;
+                snapshots[rowIndex] = new CellSnapshot[cells.Count];
+                for (int cellIndex = 0; cellIndex < cells.Count; cellIndex++)
+                    snapshots[rowIndex][cellIndex] = new CellSnapshot(cells[cellIndex]);
+            }
+
+            return snapshots;
+        }
+
+        private static void RestoreCellsOutsideClip(IList<Row> rows, CellSnapshot[][] snapshots, ClipBounds clipBounds)
+        {
+            for (int rowIndex = 0; rowIndex < rows.Count && rowIndex < snapshots.Length; rowIndex++)
+            {
+                IList<Cell> cells = rows[rowIndex].Cells;
+                CellSnapshot[] rowSnapshots = snapshots[rowIndex];
+                for (int cellIndex = 0; cellIndex < cells.Count && cellIndex < rowSnapshots.Length; cellIndex++)
+                {
+                    if (!clipBounds.Contains(cellIndex, rowIndex))
+                        rowSnapshots[cellIndex].Restore(cells[cellIndex]);
+                }
+            }
+        }
+
+        private readonly struct ClipBounds
+        {
+            public ClipBounds(int left, int top, int right, int bottom)
+            {
+                Left = left;
+                Top = top;
+                Right = right;
+                Bottom = bottom;
+            }
+
+            private int Left { get; }
+
+            private int Top { get; }
+
+            private int Right { get; }
+
+            private int Bottom { get; }
+
+            public bool Contains(int x, int y)
+                => x >= Left && x < Right && y >= Top && y < Bottom;
+        }
+
+        private readonly struct CellSnapshot
+        {
+            private readonly System.Drawing.Color foreColor;
+            private readonly System.Drawing.Color backgroundColor;
+            private readonly Cell.TextDecoration textDecoration;
+            private readonly string character;
+            private readonly bool visible;
+            private readonly string backgroundImage;
+            private readonly double scaleX;
+            private readonly double scaleY;
+
+            public CellSnapshot(Cell cell)
+            {
+                foreColor = cell.ForeColor;
+                backgroundColor = cell.BackgroundColor;
+                textDecoration = cell.Decoration;
+                character = cell.Character;
+                visible = cell.IsVisible;
+                backgroundImage = cell.BackgroundImage;
+                scaleX = cell.ScaleX;
+                scaleY = cell.ScaleY;
+            }
+
+            public void Restore(Cell cell)
+            {
+                cell.ForeColor = foreColor;
+                cell.BackgroundColor = backgroundColor;
+                cell.Decoration = textDecoration;
+                cell.Character = character;
+                cell.IsVisible = visible;
+                cell.BackgroundImage = backgroundImage;
+                cell.ScaleX = scaleX;
+                cell.ScaleY = scaleY;
             }
         }
     }

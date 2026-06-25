@@ -10,7 +10,7 @@ BlazorTUI is a Razor Class Library for building retro text user interfaces in Bl
 ## Features
 
 - Character-cell rendering with foreground and background colors.
-- Nested frames with relative coordinates and z-order.
+- Nested frames and split panels with relative coordinates and z-order.
 - Keyboard focus, `Tab`/`Shift+Tab` navigation, and mouse interaction.
 - Menu bars with shortcuts and keyboard navigation.
 - Modal dialogs and configurable message boxes.
@@ -109,11 +109,42 @@ Every control must have a non-empty, unique name. Add elements through:
 
 These methods initialize parent references, tab order, and z-order. Use `screen.SetFocus("controlName")` to select the initial control.
 
+## Split panels
+
+`SplitPanel` divides a rectangular area into two child containers separated by one splitter cell. A vertical split creates left and right panes; a horizontal split creates top and bottom panes:
+
+```csharp
+var split = new SplitPanel(
+    "mainSplit",
+    2,
+    3,
+    46,
+    15,
+    SplitPanelOrientation.Vertical,
+    splitterPosition: 18,
+    Color.Yellow,
+    Color.DarkBlue);
+
+frame.AddContainer(split);
+
+split.FirstPanel.AddControl(new Label(
+    "navigationLabel", "Navigation", 1, 1, 12,
+    Color.White, Color.DarkBlue));
+
+split.SecondPanel.AddControl(new TextArea(
+    "detailsText", "Details", 1, 1, 24, 5, 24, 5,
+    Color.Yellow, Color.Black));
+
+split.MoveSplitter(2);
+```
+
+Use `FirstPanel` and `SecondPanel` as normal containers for controls or nested containers. `SplitterPosition` is the size of the first pane, measured in columns for vertical splits and rows for horizontal splits. `MoveSplitter` clamps movement to the configured pane minimums, while direct `SplitterPosition` assignment validates the requested position. `SplitterMoved` reports previous and current splitter positions through `SplitPanelResizedEventArgs`.
+
 ## Available controls
 
 | Category | Controls |
 | --- | --- |
-| Layout | `Frame`, `TabControl`, `TabPage` |
+| Layout | `Frame`, `SplitPanel`, `TabControl`, `TabPage` |
 | Text and input | `Label`, `TextBox`, `PasswordBox`, `TextArea`, `NumericBox`, `DateBox`, `TimeBox` |
 | Selection | `CheckBox`, `RadioButton`, `ComboBox`, `ListBox`, `TreeView`, `Slider`, `ColorPicker` |
 | Actions and navigation | `Button`, `MenuBar`, `Menu`, `MenuItem` |
@@ -366,6 +397,7 @@ The repository contains focused pages that can be run directly:
 | [TabControl](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/Tabs.razor) | Tab pages, nested controls, focus changes, mouse selection, and keyboard navigation |
 | [TreeView](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/TreeViewExample.razor) | Hierarchical nodes, dynamic expansion, selection events, mouse input, and keyboard navigation |
 | [Slider](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/Sliders.razor) | Horizontal and vertical ranges, direct mouse selection, small and large keyboard changes, and value events |
+| [SplitPanel](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/SplitPanels.razor) | Vertical and horizontal panes, nested layouts, shared focus navigation, and programmatic resizing |
 | [Complete showcase](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Index.razor) | All controls, nested frames, z-order, callbacks, and animation |
 
 Run `dotnet run --project SampleApp` from the repository root and open `/examples` to browse them. The example routes are exercised by the automated test suite so API changes cannot silently leave the documentation out of date.
@@ -376,6 +408,8 @@ Run `dotnet run --project SampleApp` from the repository root and open `/example
 
 - Added `StatusBar`, `StatusBarItem`, item alignment options, and typed message-change events.
 - Added left and right status segments for persistent messages, shortcuts, and contextual hints.
+- Added `SplitPanel` with vertical and horizontal pane layouts, nested containers, configurable splitter position, pane minimums, and resize events.
+- Ensured content rendered through nested containers is clipped by every ancestor frame or pane.
 - Added focused sample coverage and NuGet consumer validation for the new public API.
 
 ### 0.8.6 — 2026-06-24

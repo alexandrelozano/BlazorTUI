@@ -1,0 +1,104 @@
+@page "/examples/split-panels"
+@using global::BlazorTUI.TUI
+@using Color = System.Drawing.Color
+
+<PageTitle>SplitPanel example</PageTitle>
+
+<BlazorTUI.BlazorTUI
+    screen="@screen"
+    AriaLabel="SplitPanel example"
+    AriaDescription="Example with vertical and horizontal split panels." />
+
+@code {
+    private Screen screen = null!;
+    private SplitPanel mainSplit = null!;
+    private StatusBar status = null!;
+
+    protected override void OnInitialized()
+    {
+        screen = new Screen(60, 30);
+
+        var frame = new Frame(
+            "splitFrame", "SPLIT PANELS", 5, 3, 50, 24,
+            Frame.BorderStyle.Line, Color.Yellow, Color.DarkBlue);
+        screen.TopContainer.AddContainer(frame);
+
+        frame.AddControl(new Label(
+            "splitInstructions", "Nested panes with shared focus navigation.",
+            3, 2, 42, Color.White, Color.DarkBlue));
+
+        mainSplit = new SplitPanel(
+            "mainSplit", 2, 4, 46, 15,
+            SplitPanelOrientation.Vertical, 18,
+            Color.Yellow, Color.DarkBlue);
+        frame.AddContainer(mainSplit);
+
+        mainSplit.FirstPanel.AddControl(new Label(
+            "navigationLabel", "Navigation", 1, 1, 12,
+            Color.White, Color.DarkBlue));
+
+        var tree = new TreeView(
+            "sectionTree", 1, 3, 16, 10,
+            Color.Yellow, Color.Black);
+        TreeNode project = tree.AddNode("projectNode", "Project", true);
+        project.AddNode("overviewNode", "Overview");
+        project.AddNode("ordersNode", "Orders");
+        TreeNode settings = tree.AddNode("settingsNode", "Settings", true);
+        settings.AddNode("usersNode", "Users");
+        settings.AddNode("themesNode", "Themes");
+        tree.SelectedNodeChanged += (_, args) =>
+            status.Value = $"Selected: {args.SelectedNode?.Text ?? "none"}";
+        mainSplit.FirstPanel.AddControl(tree);
+
+        var detailSplit = new SplitPanel(
+            "detailSplit", 0, 0, 27, 15,
+            SplitPanelOrientation.Horizontal, 8,
+            Color.Cyan, Color.DarkBlue);
+        mainSplit.SecondPanel.AddContainer(detailSplit);
+
+        detailSplit.FirstPanel.AddControl(new Label(
+            "detailsLabel", "Details", 1, 1, 10,
+            Color.White, Color.DarkBlue));
+        detailSplit.FirstPanel.AddControl(new TextArea(
+            "detailsText",
+            "Use Move left/right to resize the main split.",
+            1, 3, 24, 4, 24, 4,
+            Color.Yellow, Color.Black));
+
+        detailSplit.SecondPanel.AddControl(new Label(
+            "actionsLabel", "Actions", 1, 1, 10,
+            Color.White, Color.DarkBlue));
+
+        var narrowButton = new Button(
+            "narrowButton", "Move left", 1, 3, 12,
+            Color.White, Color.DarkGreen);
+        narrowButton.Clicked += (_, _) =>
+        {
+            mainSplit.MoveSplitter(-2);
+            status.Value = $"Left pane: {mainSplit.FirstPaneSize}";
+        };
+        detailSplit.SecondPanel.AddControl(narrowButton);
+
+        var widenButton = new Button(
+            "widenButton", "Move right", 14, 3, 12,
+            Color.White, Color.DarkGreen);
+        widenButton.Clicked += (_, _) =>
+        {
+            mainSplit.MoveSplitter(2);
+            status.Value = $"Left pane: {mainSplit.FirstPaneSize}";
+        };
+        detailSplit.SecondPanel.AddControl(widenButton);
+
+        status = new StatusBar(
+            "splitStatus", "Ready", 2, 21, 46,
+            Color.Black, Color.Cyan)
+        {
+            Separator = "  "
+        };
+        status.AddItem("tabHint", "Tab focus");
+        status.AddItem("enterHint", "Enter action");
+        frame.AddControl(status);
+
+        screen.SetFocus("sectionTree");
+    }
+}

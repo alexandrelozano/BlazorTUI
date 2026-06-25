@@ -52,6 +52,7 @@ public class SampleAppSmokeTests : IClassFixture<WebApplicationFactory<Program>>
     [InlineData("/examples/tabs", "TabControl example")]
     [InlineData("/examples/tree-view", "TreeView example")]
     [InlineData("/examples/sliders", "Slider example")]
+    [InlineData("/examples/split-panels", "SplitPanel example")]
     public async Task FocusedExampleStartsAndRendersTerminal(string route, string title)
     {
         using HttpClient client = factory.CreateClient();
