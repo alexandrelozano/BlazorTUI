@@ -147,7 +147,7 @@ Use `FirstPanel` and `SecondPanel` as normal containers for controls or nested c
 | Layout | `Frame`, `SplitPanel`, `TabControl`, `TabPage` |
 | Text and input | `Label`, `TextBox`, `PasswordBox`, `TextArea`, `NumericBox`, `DateBox`, `TimeBox` |
 | Selection | `CheckBox`, `RadioButton`, `RadioGroup`, `ComboBox`, `ListBox`, `TreeView`, `Slider`, `ColorPicker` |
-| Actions and navigation | `Button`, `MenuBar`, `Menu`, `MenuItem` |
+| Actions and navigation | `Button`, `CommandPalette`, `CommandPaletteItem`, `MenuBar`, `Menu`, `MenuItem` |
 | Data and feedback | `GridView`, `ProgressBar`, `Spinner`, `StatusBar`, `PictureBox` |
 | Modal UI | `Dialog`, `MessageBox` |
 
@@ -170,6 +170,8 @@ Lowercase members from earlier releases remain available in the `0.8.x` line for
 
 - `Tab`: move to the next focusable control.
 - `Shift+Tab`: move to the previous focusable control.
+- `F2`: open the first available `CommandPalette`.
+- `Ctrl+K` or `Command+K`: alternative command-palette shortcut when the browser does not reserve it.
 - `Alt+PageDown` or `Alt+PageUp`: move to the next or previous page of the focused `TabControl`. `Ctrl+Tab` is also supported when the browser does not reserve it for browser-tab navigation.
 - `Enter` or `Space`: activate buttons and selection controls, open or confirm a `ComboBox`, and toggle the selected `TreeView` node.
 - `F4`: open or close the focused `ComboBox`; `Escape` closes it without changing the selection.
@@ -198,6 +200,37 @@ Clipboard and edit-history shortcuts are intercepted only while a compatible `Te
 Each text control retains its latest 100 text-changing operations. Undo and redo restore the text, cursor, selection, and `TextArea` scroll position. Assigning `Value` or calling `ClearHistory()` starts a new history.
 
 Pasting into a `TextBox` converts line breaks to spaces and respects the control width. `TextArea` preserves line breaks and applies its `MaxTextWidth` and `MaxLines` limits.
+
+## Command palettes
+
+`CommandPalette` provides a searchable list of actions that users can open with `F2`. `Ctrl+K` and `Command+K` are also supported when the browser does not reserve those shortcuts:
+
+```csharp
+var commands = new CommandPalette(
+    "commands",
+    new[]
+    {
+        new CommandPaletteItem("focusName", "Focus name", "Move focus", _ =>
+            screen.SetFocus("nameInput")),
+        new CommandPaletteItem("save", "Save", "Submit form", _ =>
+            status.Value = "Saved")
+    },
+    28,
+    17,
+    28,
+    Color.Yellow,
+    Color.Black)
+{
+    Title = "Commands"
+};
+
+commands.CommandExecuted += (_, args) =>
+    status.Value = $"Executed: {args.Command.Title}";
+
+frame.AddControl(commands);
+```
+
+Use `OpenPalette`, `ClosePalette`, `TogglePalette`, `AddCommand`, `RemoveCommand`, `ClearCommands`, and `GetCommand` to control the palette and command list. `SearchText` filters by command name, title, or description. Users type to filter, use arrows, `Home`, and `End` to move through results, press `Enter` to execute the highlighted command, or press `Escape` to close the palette.
 
 ## Radio groups
 
@@ -419,7 +452,7 @@ The repository contains focused pages that can be run directly:
 
 | Example | Demonstrates |
 | --- | --- |
-| [Controls and events](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/ControlsAndEvents.razor) | Text and password input, combo-box and radio-group selection, checkbox state, callbacks, focus order, and status messages |
+| [Controls and events](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/ControlsAndEvents.razor) | Text and password input, combo-box and radio-group selection, command palette actions, checkbox state, callbacks, focus order, and status messages |
 | [Dialogs and menus](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/DialogsAndMenus.razor) | Menu shortcuts, custom modal dialogs, and message boxes |
 | [Images](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/Images.razor) | Loading encoded image bytes into a `PictureBox` |
 | [TabControl](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/Tabs.razor) | Tab pages, nested controls, focus changes, mouse selection, and keyboard navigation |
@@ -439,6 +472,7 @@ Run `dotnet run --project SampleApp` from the repository root and open `/example
 - Added `SplitPanel` with vertical and horizontal pane layouts, nested containers, configurable splitter position, pane minimums, and resize events.
 - Ensured content rendered through nested containers is clipped by every ancestor frame or pane.
 - Added `RadioGroup`, named options, typed selection-change events, horizontal and vertical layouts, and keyboard/mouse selection.
+- Added `CommandPalette`, searchable commands, typed execution events, keyboard/mouse execution, global `F2` routing, and browser-dependent `Ctrl+K`/`Command+K` routing.
 - Added focused sample coverage and NuGet consumer validation for the new public API.
 
 ### 0.8.6 — 2026-06-24

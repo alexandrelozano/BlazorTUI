@@ -21,12 +21,13 @@
          aria-label="@AriaLabel"
          aria-roledescription="text user interface"
          aria-describedby="@DescriptionIds"
-         aria-keyshortcuts="Alt Tab Shift+Tab Control+Tab Control+Shift+Tab Alt+PageDown Alt+PageUp ArrowUp ArrowDown ArrowLeft ArrowRight Enter Space Escape F4 Backspace Home End PageUp PageDown Control+A Control+C Control+X Control+V Control+Z Control+Y Meta+A Meta+C Meta+X Meta+V Meta+Z Meta+Shift+Z"
+         aria-keyshortcuts="Alt Tab Shift+Tab F2 Control+Tab Control+Shift+Tab Alt+PageDown Alt+PageUp Control+K Meta+K ArrowUp ArrowDown ArrowLeft ArrowRight Enter Space Escape F4 Backspace Home End PageUp PageDown Control+A Control+C Control+X Control+V Control+Z Control+Y Meta+A Meta+C Meta+X Meta+V Meta+Z Meta+Shift+Z"
          data-clipboard-enabled="@(ActiveClipboardControl is not null ? "true" : "false")"
          data-clipboard-copy-enabled="@(ClipboardCopyEnabled ? "true" : "false")"
          data-clipboard-paste-enabled="@(ClipboardPasteEnabled ? "true" : "false")"
          data-edit-history-enabled="@(ActiveUndoableControl is not null ? "true" : "false")"
          data-tab-navigation-enabled="@(ActiveTabControl is not null ? "true" : "false")"
+         data-command-palette-enabled="@(ActiveCommandPalette is not null ? "true" : "false")"
          @onkeydown="HandleKeyDown">
         @foreach (Row row in screen.rows)
         {
@@ -46,7 +47,7 @@
     public string? AriaDescription { get; set; }
 
     [Parameter]
-    public string KeyboardInstructions { get; set; } = "Use Tab and Shift+Tab to move between controls, Alt+PageDown and Alt+PageUp to change tab pages, the arrow keys to navigate and adjust controls, PageUp and PageDown for large slider changes, Enter or Space to activate controls, F4 to toggle combo boxes, and standard clipboard, undo, and redo shortcuts in text controls.";
+    public string KeyboardInstructions { get; set; } = "Use Tab and Shift+Tab to move between controls, F2 to open a command palette when available, Ctrl+K or Command+K as a browser-dependent command palette alternative, Alt+PageDown and Alt+PageUp to change tab pages, the arrow keys to navigate and adjust controls, PageUp and PageDown for large slider changes, Enter or Space to activate controls, F4 to toggle combo boxes, and standard clipboard, undo, and redo shortcuts in text controls.";
 
     private readonly System.Timers.Timer _timer = new(250);
     private readonly string _accessibilityId = $"blazortui-{Guid.NewGuid():N}";
@@ -58,6 +59,7 @@
     private bool _renderedClipboardPasteEnabled;
     private IUndoableControl? _renderedUndoableControl;
     private TabControl? _renderedTabControl;
+    private CommandPalette? _renderedCommandPalette;
     private long _renderedRevision = -1;
     private Screen? _accessibleScreen;
     private long _accessibleRevision = -1;
@@ -103,6 +105,9 @@
             Menu? openMenu = screen.MenuBar?.OpenMenu;
             if (openMenu is not null)
                 return $"Menu opened: {openMenu.Text}";
+
+            if (ActiveCommandPalette is { IsOpen: true } commandPalette)
+                return $"Command palette opened: {commandPalette.Title}";
 
             return ActiveTabControl?.SelectedTab is { } selectedTab
                 ? $"Tab selected: {selectedTab.Title}"
@@ -154,6 +159,42 @@
         }
     }
 
+    private CommandPalette? ActiveCommandPalette
+    {
+        get
+        {
+            Container activeContainer = screen.Dialogs.Count == 0 ? screen.TopContainer : screen.Dialogs[^1];
+            return FindCommandPalette(activeContainer);
+        }
+    }
+
+    private static CommandPalette? FindCommandPalette(Container container)
+    {
+        CommandPalette? firstVisible = null;
+
+        foreach (Control control in container.Controls.Where(control => control.Visible))
+        {
+            if (control is not CommandPalette commandPalette)
+                continue;
+
+            if (commandPalette.IsOpen)
+                return commandPalette;
+
+            firstVisible ??= commandPalette;
+        }
+
+        foreach (Container child in container.Containers.Where(child => child.Visible))
+        {
+            CommandPalette? commandPalette = FindCommandPalette(child);
+            if (commandPalette?.IsOpen == true)
+                return commandPalette;
+
+            firstVisible ??= commandPalette;
+        }
+
+        return firstVisible;
+    }
+
     private static TabControl? FindKeyboardActiveTabControl(Container container)
     {
         if (container is TabControl { IsKeyboardActive: true } tabControl)
@@ -199,7 +240,8 @@
             _renderedClipboardCopyEnabled != ClipboardCopyEnabled ||
             _renderedClipboardPasteEnabled != ClipboardPasteEnabled ||
             !ReferenceEquals(_renderedUndoableControl, ActiveUndoableControl) ||
-            !ReferenceEquals(_renderedTabControl, ActiveTabControl);
+            !ReferenceEquals(_renderedTabControl, ActiveTabControl) ||
+            !ReferenceEquals(_renderedCommandPalette, ActiveCommandPalette);
 
     protected override void OnAfterRender(bool firstRender)
     {
@@ -210,6 +252,7 @@
         _renderedClipboardPasteEnabled = ClipboardPasteEnabled;
         _renderedUndoableControl = ActiveUndoableControl;
         _renderedTabControl = ActiveTabControl;
+        _renderedCommandPalette = ActiveCommandPalette;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -290,6 +333,16 @@
         RenderAfterControlChange();
     }
 
+    [JSInvokable("BlazorTUIToggleCommandPalette")]
+    public void ToggleCommandPalette()
+    {
+        if (ActiveCommandPalette is not { } commandPalette)
+            return;
+
+        commandPalette.Toggle();
+        RenderAfterControlChange();
+    }
+
     private void TimeElapsed(object? sender, System.Timers.ElapsedEventArgs e)
         => _ = InvokeAsync(RefreshFromTimer);
 
@@ -309,6 +362,12 @@
     {
         if (e.CtrlKey || e.MetaKey || (e.AltKey && e.Key != "Alt"))
             return;
+
+        if (e.Key == "F2" && ActiveCommandPalette is not null)
+        {
+            ToggleCommandPalette();
+            return;
+        }
 
         screen.KeyDown(e.Key, e.ShiftKey);
         screen.Render();

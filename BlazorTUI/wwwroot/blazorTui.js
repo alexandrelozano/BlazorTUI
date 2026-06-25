@@ -11,6 +11,7 @@ const handledKeys = new Set([
     "Backspace",
     "Delete",
     "Escape",
+    "F2",
     "F4",
     "Home",
     "End",
@@ -23,6 +24,13 @@ const editHistoryKeys = new Set(["y", "z"]);
 
 export function attachKeyboardHandling(element, dotNetReference) {
     let pasteHandledByShortcut = false;
+    const focusTerminal = () => {
+        if (document.activeElement !== element) {
+            element.focus({ preventScroll: true });
+        }
+    };
+
+    element.addEventListener("pointerdown", focusTerminal, { capture: true });
 
     element.addEventListener("keydown", async event => {
         const acceleratorPressed = event.ctrlKey || event.metaKey;
@@ -35,6 +43,18 @@ export function attachKeyboardHandling(element, dotNetReference) {
             const previousTab = controlTab ? event.shiftKey : event.key === "PageUp";
             try {
                 await dotNetReference.invokeMethodAsync("BlazorTUIMoveTab", previousTab);
+            }
+            catch {
+                // The component may have been disposed while the browser event was pending.
+            }
+            return;
+        }
+
+        if (acceleratorPressed && !event.altKey && shortcutKey === "k" &&
+            element.dataset.commandPaletteEnabled === "true") {
+            event.preventDefault();
+            try {
+                await dotNetReference.invokeMethodAsync("BlazorTUIToggleCommandPalette");
             }
             catch {
                 // The component may have been disposed while the browser event was pending.

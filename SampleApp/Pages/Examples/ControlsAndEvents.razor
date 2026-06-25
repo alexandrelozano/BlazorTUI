@@ -17,7 +17,7 @@
         screen = new Screen(60, 30);
 
         var frame = new Frame(
-            "formFrame", "CONTROLS AND EVENTS", 8, 4, 44, 22,
+            "formFrame", "CONTROLS AND EVENTS", 5, 4, 50, 22,
             Frame.BorderStyle.Line, Color.Yellow, Color.DarkBlue);
         screen.TopContainer.AddContainer(frame);
 
@@ -74,16 +74,36 @@
         frame.AddControl(includeDetails);
 
         var greetButton = new Button(
-            "greetButton", "Greet", 14, 17, 12, Color.White, Color.DarkGreen);
+            "greetButton", "Greet", 3, 17, 12, Color.White, Color.DarkGreen);
         greetButton.Clicked += (_, _) => ShowGreeting();
         frame.AddControl(greetButton);
 
+        var commands = new CommandPalette(
+            "commands",
+            new[]
+            {
+                new CommandPaletteItem("focusName", "Focus name", "Move focus", _ =>
+                {
+                    screen.SetFocus("nameInput");
+                    eventStatus.Value = "Name focused";
+                }),
+                new CommandPaletteItem("greet", "Greet", "Show message", _ => ShowGreeting())
+            },
+            20, 17, 27,
+            Color.Yellow, Color.Black,
+            maxVisibleCommands: 2)
+        {
+            Title = "Commands"
+        };
+        frame.AddControl(commands);
+
         eventStatus = new StatusBar(
-            "eventStatus", "Ready", 2, 20, 40, Color.Black, Color.Cyan)
+            "eventStatus", "Ready", 2, 20, 46, Color.Black, Color.Cyan)
         {
             Separator = "  "
         };
         eventStatus.AddItem("tabHint", "Tab focus");
+        eventStatus.AddItem("commandHint", "F2 commands");
         eventStatus.AddItem("enterHint", "Enter action");
         frame.AddControl(eventStatus);
 

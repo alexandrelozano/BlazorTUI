@@ -7,7 +7,7 @@
 
     private static Screen CreateTerminal()
     {
-        var terminal = new Screen(24, 12);
+        var terminal = new Screen(30, 14);
         var button = new Button(
             "save", "Save", 2, 2, 8,
             System.Drawing.Color.White, System.Drawing.Color.DarkGreen);
@@ -93,6 +93,16 @@
         root.AddNode("childNode", "Child");
         tree.SelectedNodeChanged += (_, args) => _ = args.SelectedNode?.Name;
         page.AddControl(tree);
+        var commands = new CommandPalette(
+            "commands",
+            new[] { new CommandPaletteItem("build", "Build", action: command => _ = command.Name) },
+            0, 12, 20,
+            System.Drawing.Color.White, System.Drawing.Color.Black);
+        commands.CommandExecuted += (_, args) => _ = args.CommandName;
+        commands.Open();
+        commands.SearchText = "build";
+        commands.ExecuteCommand("build");
+        terminal.TopContainer.AddControl(commands);
         return terminal;
     }
 }

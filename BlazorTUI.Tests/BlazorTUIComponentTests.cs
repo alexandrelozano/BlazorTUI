@@ -293,4 +293,48 @@ public class BlazorTUIComponentTests : BunitContext
         Assert.Equal(0, tabs.SelectedIndex);
         Assert.True(firstInput.Focus);
     }
+
+    [Fact]
+    public void ComponentExposesAndTogglesCommandPalette()
+    {
+        var screen = new Screen(30, 8);
+        var palette = new CommandPalette(
+            "commands",
+            new[] { new CommandPaletteItem("build", "Build") },
+            1, 1, 20,
+            Color.White, Color.Black);
+        screen.TopContainer.AddControl(palette);
+
+        var component = Render<global::BlazorTUI.BlazorTUI>(parameters =>
+            parameters.Add(instance => instance.screen, screen));
+
+        var grid = component.Find(".gridfs");
+        Assert.Equal("true", grid.GetAttribute("data-command-palette-enabled"));
+        Assert.Contains("F2", grid.GetAttribute("aria-keyshortcuts"));
+        Assert.Contains("Control+K", grid.GetAttribute("aria-keyshortcuts"));
+        Assert.Contains("Meta+K", grid.GetAttribute("aria-keyshortcuts"));
+        Assert.Contains("F2 to open a command palette", component.Markup);
+        Assert.Contains("Command+K", component.Markup);
+
+        grid.KeyDown(new KeyboardEventArgs { Key = "F2" });
+
+        Assert.True(palette.IsOpen);
+        Assert.Contains("Command palette opened: Command", component.Find("[role=status]").TextContent);
+        Assert.Contains("Build", component.Find("pre.blazortui-visually-hidden").TextContent);
+    }
+
+    [Fact]
+    public async Task ControlsExampleCommandPaletteHasRoomForVisibleText()
+    {
+        var page = Render<global::SampleApp.Pages.Examples.ControlsAndEvents>();
+        IRenderedComponent<global::BlazorTUI.BlazorTUI> terminal =
+            page.FindComponent<global::BlazorTUI.BlazorTUI>();
+
+        await terminal.InvokeAsync(terminal.Instance.ToggleCommandPalette);
+
+        string accessibleText = terminal.Find("pre.blazortui-visually-hidden").TextContent;
+        Assert.Contains("Type a command", accessibleText);
+        Assert.Contains("Focus name - Move focus", accessibleText);
+        Assert.Contains("Greet - Show message", accessibleText);
+    }
 }
