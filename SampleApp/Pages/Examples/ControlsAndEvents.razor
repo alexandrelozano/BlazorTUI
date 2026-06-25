@@ -50,14 +50,31 @@
             eventStatus.Value = $"Priority: {priorityInput.SelectedItem}";
         frame.AddControl(priorityInput);
 
+        frame.AddControl(new Label(
+            "contactLabel", "Contact:", 3, 12, 10, Color.White, Color.DarkBlue));
+
+        var contactMethod = new RadioGroup(
+            "contactMethod",
+            new[]
+            {
+                new RadioGroupOption("emailContact", "Email", "email"),
+                new RadioGroupOption("phoneContact", "Phone", "phone")
+            },
+            14, 12, 24, Color.Yellow, Color.DarkBlue,
+            selectedIndex: 0,
+            RadioGroupOrientation.Horizontal);
+        contactMethod.SelectionChanged += (_, args) =>
+            eventStatus.Value = $"Contact: {args.SelectedOption?.Text}";
+        frame.AddControl(contactMethod);
+
         includeDetails = new CheckBox(
-            "includeDetails", "Include details", 14, 14, 22,
+            "includeDetails", "Include details", 14, 15, 22,
             Color.Yellow, Color.DarkBlue);
         includeDetails.Clicked += (_, _) => eventStatus.Value = "Checkbox changed";
         frame.AddControl(includeDetails);
 
         var greetButton = new Button(
-            "greetButton", "Greet", 14, 16, 12, Color.White, Color.DarkGreen);
+            "greetButton", "Greet", 14, 17, 12, Color.White, Color.DarkGreen);
         greetButton.Clicked += (_, _) => ShowGreeting();
         frame.AddControl(greetButton);
 

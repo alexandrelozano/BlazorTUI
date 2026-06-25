@@ -33,6 +33,20 @@
         priority.SelectedIndexChanged += (_, _) => { };
         priority.SelectItem("High");
         terminal.TopContainer.AddControl(priority);
+        var contact = new RadioGroup(
+            "contact",
+            new[]
+            {
+                new RadioGroupOption("emailContact", "Email", "email"),
+                new RadioGroupOption("phoneContact", "Phone", "phone")
+            },
+            0, 4, 20,
+            System.Drawing.Color.White, System.Drawing.Color.Black,
+            selectedIndex: 0,
+            RadioGroupOrientation.Horizontal);
+        contact.SelectionChanged += (_, args) => _ = args.SelectedOption?.Value;
+        contact.SelectValue("phone");
+        terminal.TopContainer.AddControl(contact);
         var slider = new Slider(
             "volume",
             minimum: 0,
@@ -50,13 +64,13 @@
         slider.Increase();
         terminal.TopContainer.AddControl(slider);
         var status = new StatusBar(
-            "status", "Ready", 0, 4, 20,
+            "status", "Ready", 0, 5, 20,
             System.Drawing.Color.Black, System.Drawing.Color.Gray);
         status.AddItem("help", "F1 Help");
         status.Value = "Saved";
         terminal.TopContainer.AddControl(status);
         var split = new SplitPanel(
-            "split", 0, 5, 20, 2,
+            "split", 0, 6, 20, 2,
             SplitPanelOrientation.Vertical, 9,
             System.Drawing.Color.White, System.Drawing.Color.DarkBlue);
         split.FirstPanel.AddControl(new Label(
@@ -68,7 +82,7 @@
         split.MoveSplitter(1);
         terminal.TopContainer.AddContainer(split);
         var tabs = new TabControl(
-            "tabs", 0, 7, 20, 5,
+            "tabs", 0, 8, 20, 4,
             System.Drawing.Color.White, System.Drawing.Color.DarkBlue);
         terminal.TopContainer.AddContainer(tabs);
         TabPage page = tabs.AddTab("generalTab", "General");

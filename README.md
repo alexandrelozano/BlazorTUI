@@ -146,7 +146,7 @@ Use `FirstPanel` and `SecondPanel` as normal containers for controls or nested c
 | --- | --- |
 | Layout | `Frame`, `SplitPanel`, `TabControl`, `TabPage` |
 | Text and input | `Label`, `TextBox`, `PasswordBox`, `TextArea`, `NumericBox`, `DateBox`, `TimeBox` |
-| Selection | `CheckBox`, `RadioButton`, `ComboBox`, `ListBox`, `TreeView`, `Slider`, `ColorPicker` |
+| Selection | `CheckBox`, `RadioButton`, `RadioGroup`, `ComboBox`, `ListBox`, `TreeView`, `Slider`, `ColorPicker` |
 | Actions and navigation | `Button`, `MenuBar`, `Menu`, `MenuItem` |
 | Data and feedback | `GridView`, `ProgressBar`, `Spinner`, `StatusBar`, `PictureBox` |
 | Modal UI | `Dialog`, `MessageBox` |
@@ -198,6 +198,34 @@ Clipboard and edit-history shortcuts are intercepted only while a compatible `Te
 Each text control retains its latest 100 text-changing operations. Undo and redo restore the text, cursor, selection, and `TextArea` scroll position. Assigning `Value` or calling `ClearHistory()` starts a new history.
 
 Pasting into a `TextBox` converts line breaks to spaces and respects the control width. `TextArea` preserves line breaks and applies its `MaxTextWidth` and `MaxLines` limits.
+
+## Radio groups
+
+`RadioGroup` provides one selected value from a named list of options:
+
+```csharp
+var contactMethod = new RadioGroup(
+    "contactMethod",
+    new[]
+    {
+        new RadioGroupOption("emailContact", "Email", "email"),
+        new RadioGroupOption("phoneContact", "Phone", "phone")
+    },
+    14,
+    12,
+    24,
+    Color.Yellow,
+    Color.DarkBlue,
+    selectedIndex: 0,
+    RadioGroupOrientation.Horizontal);
+
+contactMethod.SelectionChanged += (_, args) =>
+    status.Value = $"Contact: {args.SelectedOption?.Text}";
+
+frame.AddControl(contactMethod);
+```
+
+Use `SelectedIndex`, `SelectedOption`, `SelectedItem`, or `SelectedValue` to inspect the current choice. `SelectIndex`, `SelectOption`, `SelectItem`, and `SelectValue` change it programmatically. `Options` is read-only; update it through `AddOption`, `RemoveOption`, and `ClearOptions`. Users can change the selected option with arrow keys, `Home`, `End`, or mouse clicks.
 
 ## Combo box
 
@@ -391,7 +419,7 @@ The repository contains focused pages that can be run directly:
 
 | Example | Demonstrates |
 | --- | --- |
-| [Controls and events](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/ControlsAndEvents.razor) | Text and password input, combo-box selection, checkbox state, callbacks, focus order, and status messages |
+| [Controls and events](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/ControlsAndEvents.razor) | Text and password input, combo-box and radio-group selection, checkbox state, callbacks, focus order, and status messages |
 | [Dialogs and menus](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/DialogsAndMenus.razor) | Menu shortcuts, custom modal dialogs, and message boxes |
 | [Images](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/Images.razor) | Loading encoded image bytes into a `PictureBox` |
 | [TabControl](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/Tabs.razor) | Tab pages, nested controls, focus changes, mouse selection, and keyboard navigation |
@@ -410,6 +438,7 @@ Run `dotnet run --project SampleApp` from the repository root and open `/example
 - Added left and right status segments for persistent messages, shortcuts, and contextual hints.
 - Added `SplitPanel` with vertical and horizontal pane layouts, nested containers, configurable splitter position, pane minimums, and resize events.
 - Ensured content rendered through nested containers is clipped by every ancestor frame or pane.
+- Added `RadioGroup`, named options, typed selection-change events, horizontal and vertical layouts, and keyboard/mouse selection.
 - Added focused sample coverage and NuGet consumer validation for the new public API.
 
 ### 0.8.6 — 2026-06-24
