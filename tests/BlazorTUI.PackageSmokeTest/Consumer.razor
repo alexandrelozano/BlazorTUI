@@ -49,6 +49,12 @@
         slider.ValueChanged += (_, args) => _ = args.Value;
         slider.Increase();
         terminal.TopContainer.AddControl(slider);
+        var status = new StatusBar(
+            "status", "Ready", 0, 4, 20,
+            System.Drawing.Color.Black, System.Drawing.Color.Gray);
+        status.AddItem("help", "F1 Help");
+        status.Value = "Saved";
+        terminal.TopContainer.AddControl(status);
         var tabs = new TabControl(
             "tabs", 0, 5, 20, 5,
             System.Drawing.Color.White, System.Drawing.Color.DarkBlue);

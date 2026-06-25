@@ -14,6 +14,7 @@ BlazorTUI is a Razor Class Library for building retro text user interfaces in Bl
 - Keyboard focus, `Tab`/`Shift+Tab` navigation, and mouse interaction.
 - Menu bars with shortcuts and keyboard navigation.
 - Modal dialogs and configurable message boxes.
+- Status bars for persistent messages, shortcuts, and context.
 - Responsive terminal scaling.
 
 ## Requirements
@@ -116,7 +117,7 @@ These methods initialize parent references, tab order, and z-order. Use `screen.
 | Text and input | `Label`, `TextBox`, `PasswordBox`, `TextArea`, `NumericBox`, `DateBox`, `TimeBox` |
 | Selection | `CheckBox`, `RadioButton`, `ComboBox`, `ListBox`, `TreeView`, `Slider`, `ColorPicker` |
 | Actions and navigation | `Button`, `MenuBar`, `Menu`, `MenuItem` |
-| Data and feedback | `GridView`, `ProgressBar`, `Spinner`, `PictureBox` |
+| Data and feedback | `GridView`, `ProgressBar`, `Spinner`, `StatusBar`, `PictureBox` |
 | Modal UI | `Dialog`, `MessageBox` |
 
 Control constructors accept `System.Drawing.Color` values for foreground and background colors.
@@ -247,6 +248,32 @@ Omit the orientation argument to create a horizontal slider. For a vertical slid
 
 Users can click directly on the track. Arrow keys apply `Step`, `PageUp` and `PageDown` apply `LargeChange`, and `Home` and `End` select the limits. `ValueChanged` receives both the previous and current values through `SliderValueChangedEventArgs`.
 
+## Status bars
+
+`StatusBar` renders a one-line, non-focusable bar for persistent application state, hints, and shortcuts:
+
+```csharp
+var status = new StatusBar(
+    "statusBar",
+    "Ready",
+    0,
+    19,
+    60,
+    Color.Black,
+    Color.Cyan)
+{
+    Separator = "  "
+};
+
+status.AddItem("helpHint", "F1 Help");
+status.AddItem("saveHint", "Ctrl+S Save");
+frame.AddControl(status);
+
+status.Value = "Order saved";
+```
+
+Use `Text`, `Message`, or `Value` to update the main message. `MessageChanged` reports previous and current text through `StatusBarMessageChangedEventArgs`. `AddItem`, `RemoveItem`, `GetItem`, and `ClearItems` manage optional `StatusBarItem` entries. Items are right-aligned by default; pass `StatusBarItemAlignment.Left` for contextual left-side entries.
+
 ## Password input
 
 `PasswordBox` provides the selection, paste, and undo/redo behavior of `TextBox` while rendering a mask instead of the stored value:
@@ -333,7 +360,7 @@ The repository contains focused pages that can be run directly:
 
 | Example | Demonstrates |
 | --- | --- |
-| [Controls and events](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/ControlsAndEvents.razor) | Text and password input, combo-box selection, checkbox state, callbacks, and focus order |
+| [Controls and events](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/ControlsAndEvents.razor) | Text and password input, combo-box selection, checkbox state, callbacks, focus order, and status messages |
 | [Dialogs and menus](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/DialogsAndMenus.razor) | Menu shortcuts, custom modal dialogs, and message boxes |
 | [Images](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/Images.razor) | Loading encoded image bytes into a `PictureBox` |
 | [TabControl](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/Tabs.razor) | Tab pages, nested controls, focus changes, mouse selection, and keyboard navigation |
@@ -344,6 +371,12 @@ The repository contains focused pages that can be run directly:
 Run `dotnet run --project SampleApp` from the repository root and open `/examples` to browse them. The example routes are exercised by the automated test suite so API changes cannot silently leave the documentation out of date.
 
 ## Changelog
+
+### 0.8.7 — 2026-06-25
+
+- Added `StatusBar`, `StatusBarItem`, item alignment options, and typed message-change events.
+- Added left and right status segments for persistent messages, shortcuts, and contextual hints.
+- Added focused sample coverage and NuGet consumer validation for the new public API.
 
 ### 0.8.6 — 2026-06-24
 

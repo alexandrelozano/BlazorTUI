@@ -10,7 +10,7 @@
     private Screen screen = null!;
     private TextBox nameInput = null!;
     private CheckBox includeDetails = null!;
-    private TextBox eventStatus = null!;
+    private StatusBar eventStatus = null!;
 
     protected override void OnInitialized()
     {
@@ -61,14 +61,13 @@
         greetButton.Clicked += (_, _) => ShowGreeting();
         frame.AddControl(greetButton);
 
-        frame.AddControl(new Label(
-            "eventLabel", "Event:", 3, 18, 10, Color.White, Color.DarkBlue));
-
-        eventStatus = new TextBox(
-            "eventStatus", "Ready", 14, 18, 22, Color.Cyan, Color.Black)
+        eventStatus = new StatusBar(
+            "eventStatus", "Ready", 2, 20, 40, Color.Black, Color.Cyan)
         {
-            TabStop = false
+            Separator = "  "
         };
+        eventStatus.AddItem("tabHint", "Tab focus");
+        eventStatus.AddItem("enterHint", "Enter action");
         frame.AddControl(eventStatus);
 
         screen.SetFocus("nameInput");
