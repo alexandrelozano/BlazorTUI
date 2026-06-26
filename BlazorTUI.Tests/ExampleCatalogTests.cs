@@ -1,4 +1,5 @@
 using Bunit;
+using BlazorTUI.TUI;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.DependencyInjection;
@@ -33,25 +34,25 @@ public class ExampleCatalogTests : BunitContext
     }
 
     [Theory]
-    [InlineData(0, "/examples/controls-events")]
-    [InlineData(1, "/examples/dialogs-menus")]
-    [InlineData(2, "/examples/images")]
-    [InlineData(3, "/examples/tabs")]
-    [InlineData(4, "/examples/tree-view")]
-    [InlineData(5, "/examples/sliders")]
-    [InlineData(6, "/examples/split-panels")]
-    [InlineData(7, "/examples/breadcrumbs")]
-    [InlineData(8, "/examples/themes")]
-    [InlineData(9, "/")]
-    public void CatalogButtonsNavigateToTheirExample(int buttonIndex, string expectedPath)
+    [InlineData("controlsExample", "/examples/controls-events")]
+    [InlineData("dialogsExample", "/examples/dialogs-menus")]
+    [InlineData("imagesExample", "/examples/images")]
+    [InlineData("tabsExample", "/examples/tabs")]
+    [InlineData("treeExample", "/examples/tree-view")]
+    [InlineData("sliderExample", "/examples/sliders")]
+    [InlineData("splitExample", "/examples/split-panels")]
+    [InlineData("breadcrumbExample", "/examples/breadcrumbs")]
+    [InlineData("themesExample", "/examples/themes")]
+    [InlineData("showcaseExample", "/")]
+    public void CatalogButtonsNavigateToTheirExample(string controlName, string expectedPath)
     {
         var component = Render<global::SampleApp.Pages.Examples.Index>();
         NavigationManager navigation = Services.GetRequiredService<NavigationManager>();
-        int x = 9;
-        int y = 8 + buttonIndex * 2;
-        int cellIndex = y * 60 + x;
+        IRenderedComponent<global::BlazorTUI.BlazorTUI> terminal =
+            component.FindComponent<global::BlazorTUI.BlazorTUI>();
+        Button button = Assert.IsType<Button>(terminal.Instance.screen.TopContainer.GetControl(controlName));
 
-        component.FindAll(".tilefs")[cellIndex].Click();
+        button.Click(0, 0);
 
         Assert.Equal(expectedPath, new Uri(navigation.Uri).AbsolutePath);
     }
