@@ -474,6 +474,7 @@ Run `dotnet run --project SampleApp` from the repository root and open `/example
 - Added `RadioGroup`, named options, typed selection-change events, horizontal and vertical layouts, and keyboard/mouse selection.
 - Added `CommandPalette`, searchable commands, typed execution events, keyboard/mouse execution, global `F2` routing, and browser-dependent `Ctrl+K`/`Command+K` routing.
 - Added focused sample coverage and NuGet consumer validation for the new public API.
+- Added deterministic package builds, Source Link metadata, `.snupkg` symbol packages, package validation, and a tagged release workflow that verifies version/tag consistency and generates release notes from this changelog.
 
 ### 0.8.6 — 2026-06-24
 

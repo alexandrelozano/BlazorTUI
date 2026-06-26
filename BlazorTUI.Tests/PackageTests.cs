@@ -18,7 +18,21 @@ public class PackageTests
         const string configuration = "Release";
 #endif
         string packagePath = Path.Combine(root, "BlazorTUI", "bin", configuration, $"BlazorTUI.{version}.nupkg");
+        string symbolsPackagePath = Path.Combine(root, "BlazorTUI", "bin", configuration, $"BlazorTUI.{version}.snupkg");
         Assert.True(File.Exists(packagePath), $"Package was not found at {packagePath}.");
+        Assert.True(File.Exists(symbolsPackagePath), $"Symbols package was not found at {symbolsPackagePath}.");
+
+        Assert.Equal("true", ReadProjectProperty(project, "Deterministic"));
+        Assert.Equal("true", ReadProjectProperty(project, "ContinuousIntegrationBuild"));
+        Assert.Equal("portable", ReadProjectProperty(project, "DebugType"));
+        Assert.Equal("true", ReadProjectProperty(project, "PublishRepositoryUrl"));
+        Assert.Equal("true", ReadProjectProperty(project, "EmbedUntrackedSources"));
+        Assert.Equal("true", ReadProjectProperty(project, "IncludeSymbols"));
+        Assert.Equal("snupkg", ReadProjectProperty(project, "SymbolPackageFormat"));
+        Assert.Equal("true", ReadProjectProperty(project, "EnablePackageValidation"));
+        Assert.Contains(project.Descendants("PackageReference"), packageReference =>
+            packageReference.Attribute("Include")?.Value == "Microsoft.SourceLink.GitHub" &&
+            packageReference.Attribute("PrivateAssets")?.Value == "All");
 
         using ZipArchive package = ZipFile.OpenRead(packagePath);
         Assert.Contains(package.Entries, entry => entry.FullName == "README.md");
@@ -61,10 +75,37 @@ public class PackageTests
         XDocument manifest = XDocument.Parse(nuspec);
         XElement metadata = manifest.Descendants().Single(element => element.Name.LocalName == "metadata");
         Assert.Equal(version, metadata.Elements().Single(element => element.Name.LocalName == "version").Value);
+        XElement repository = metadata.Elements().Single(element => element.Name.LocalName == "repository");
+        Assert.Equal("git", repository.Attribute("type")?.Value);
+        Assert.Equal("https://github.com/alexandrelozano/BlazorTUI", repository.Attribute("url")?.Value);
         Assert.DoesNotContain("System.Drawing.Common", nuspec, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Microsoft.SourceLink.GitHub", nuspec, StringComparison.OrdinalIgnoreCase);
+
+        using ZipArchive symbolsPackage = ZipFile.OpenRead(symbolsPackagePath);
+        Assert.Contains(symbolsPackage.Entries, entry => entry.FullName == "lib/net10.0/BlazorTUI.pdb");
 
         string packedReadme = ReadEntry(package, "README.md");
         Assert.Equal(File.ReadAllText(Path.Combine(root, "README.md")), packedReadme);
+    }
+
+    [Fact]
+    public void ReleaseWorkflowVerifiesVersionGeneratesNotesAndPublishesArtifacts()
+    {
+        string root = FindRepositoryRoot();
+        string workflow = File.ReadAllText(Path.Combine(root, ".github", "workflows", "release.yml"));
+
+        Assert.Contains("tags:", workflow);
+        Assert.Contains("\"v*.*.*\"", workflow);
+        Assert.Contains("BlazorTUI/BlazorTUI.csproj", workflow);
+        Assert.Contains("GITHUB_REF_NAME", workflow);
+        Assert.Contains("README.md", workflow);
+        Assert.Contains("release-notes.md", workflow);
+        Assert.Contains("*.nupkg", workflow);
+        Assert.Contains("*.snupkg", workflow);
+        Assert.Contains("gh release create", workflow);
+        Assert.Contains("dotnet nuget push", workflow);
+        Assert.Contains("Publish symbols to NuGet", workflow);
+        Assert.Contains("NUGET_API_KEY", workflow);
     }
 
     private static string ReadEntry(ZipArchive package, string name)
@@ -79,6 +120,12 @@ public class PackageTests
         using var reader = new StreamReader(entry.Open());
         return reader.ReadToEnd();
     }
+
+    private static string ReadProjectProperty(XDocument project, string propertyName)
+        => project
+            .Descendants(propertyName)
+            .Select(element => element.Value)
+            .Single();
 
     private static string FindRepositoryRoot()
     {

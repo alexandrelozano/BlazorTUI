@@ -1,0 +1,92 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build, validate, and publish
+    runs-on: ubuntu-latest
+    env:
+      NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Verify project version matches tag
+        shell: pwsh
+        run: |
+          [xml]$project = Get-Content BlazorTUI/BlazorTUI.csproj -Raw
+          $version = $project.Project.PropertyGroup.Version | Select-Object -First 1
+          if ([string]::IsNullOrWhiteSpace($version)) {
+            throw "Could not find the package version in BlazorTUI.csproj."
+          }
+
+          $expectedTag = "v$version"
+          if ($env:GITHUB_REF_NAME -ne $expectedTag) {
+            throw "Tag '$env:GITHUB_REF_NAME' does not match package version '$version'. Expected '$expectedTag'."
+          }
+
+          "PACKAGE_VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "RELEASE_TAG=$expectedTag" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Restore
+        run: dotnet restore BlazorTUI.sln
+
+      - name: Build
+        run: dotnet build BlazorTUI.sln --configuration Release --no-restore --warnaserror
+
+      - name: Test
+        run: dotnet test BlazorTUI.Tests/BlazorTUI.Tests.csproj --configuration Release --no-build --no-restore
+
+      - name: Restore package consumer
+        run: dotnet restore tests/BlazorTUI.PackageSmokeTest/BlazorTUI.PackageSmokeTest.csproj --configfile tests/BlazorTUI.PackageSmokeTest/NuGet.Config --packages "./artifacts/package-smoke" --force --no-cache
+
+      - name: Build package consumer
+        run: dotnet build tests/BlazorTUI.PackageSmokeTest/BlazorTUI.PackageSmokeTest.csproj --configuration Release --no-restore --warnaserror
+
+      - name: Generate release notes from changelog
+        shell: pwsh
+        run: |
+          $content = Get-Content README.md -Raw
+          $escapedVersion = [regex]::Escape($env:PACKAGE_VERSION)
+          $match = [regex]::Match($content, "(?ms)^### $escapedVersion\b.*?(?=^### |\z)")
+          if (-not $match.Success) {
+            throw "Could not find a changelog section for version '$env:PACKAGE_VERSION' in README.md."
+          }
+
+          Set-Content -Path release-notes.md -Value $match.Value.Trim()
+
+      - name: Upload package artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: BlazorTUI-release-${{ env.PACKAGE_VERSION }}
+          path: |
+            BlazorTUI/bin/Release/*.nupkg
+            BlazorTUI/bin/Release/*.snupkg
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$RELEASE_TAG" BlazorTUI/bin/Release/*.nupkg BlazorTUI/bin/Release/*.snupkg --verify-tag --title "BlazorTUI $PACKAGE_VERSION" --notes-file release-notes.md
+
+      - name: Publish to NuGet
+        if: env.NUGET_API_KEY != ''
+        run: dotnet nuget push BlazorTUI/bin/Release/*.nupkg --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate
+
+      - name: Publish symbols to NuGet
+        if: env.NUGET_API_KEY != ''
+        run: dotnet nuget push BlazorTUI/bin/Release/*.snupkg --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate

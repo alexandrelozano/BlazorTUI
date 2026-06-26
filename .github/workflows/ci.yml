@@ -44,7 +44,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: BlazorTUI-package-${{ runner.os }}
-          path: BlazorTUI/bin/Release/*.nupkg
+          path: |
+            BlazorTUI/bin/Release/*.nupkg
+            BlazorTUI/bin/Release/*.snupkg
 
       - name: Upload coverage
         uses: actions/upload-artifact@v4
