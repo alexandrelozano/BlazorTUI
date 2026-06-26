@@ -1,0 +1,93 @@
+@page "/examples/breadcrumbs"
+@using global::BlazorTUI.TUI
+@using Color = System.Drawing.Color
+
+<PageTitle>Breadcrumb example</PageTitle>
+
+<BlazorTUI.BlazorTUI
+    screen="@screen"
+    AriaLabel="Breadcrumb example"
+    AriaDescription="Use arrow keys to choose a breadcrumb segment and Enter or Space to activate it." />
+
+@code {
+    private Screen screen = null!;
+    private StatusBar status = null!;
+    private Breadcrumb breadcrumb = null!;
+
+    protected override void OnInitialized()
+    {
+        screen = new Screen(60, 30);
+
+        var frame = new Frame(
+            "breadcrumbFrame", "BREADCRUMB", 4, 4, 52, 20,
+            Frame.BorderStyle.Line, Color.Yellow, Color.DarkBlue);
+        screen.TopContainer.AddContainer(frame);
+
+        frame.AddControl(new Label(
+            "description",
+            "Navigate a hierarchical path with keyboard or mouse.",
+            3, 2, 46, Color.White, Color.DarkBlue));
+
+        breadcrumb = new Breadcrumb(
+            "mainBreadcrumb",
+            new[]
+            {
+                new BreadcrumbItem("home", "Home", "/"),
+                new BreadcrumbItem("docs", "Docs", "/docs"),
+                new BreadcrumbItem("controls", "Controls", "/docs/controls"),
+                new BreadcrumbItem("breadcrumb", "Breadcrumb", "/docs/controls/breadcrumb")
+            },
+            3, 5, 44,
+            Color.Yellow, Color.Black)
+        {
+            Separator = " > "
+        };
+        breadcrumb.SelectionChanged += (_, args) =>
+            status.Value = $"Selected: {args.SelectedItem?.Text ?? "none"}";
+        breadcrumb.ItemActivated += (_, args) =>
+            status.Value = $"Activated: {args.Item.Text} ({args.Item.Value})";
+        frame.AddControl(breadcrumb);
+
+        var addReports = new Button(
+            "addReports", "Add reports", 3, 9, 15,
+            Color.White, Color.DarkGreen);
+        addReports.Clicked += (_, _) =>
+        {
+            if (breadcrumb.Items.All(item => item.Name != "reports"))
+                breadcrumb.AddItem("reports", "Reports", "/docs/controls/breadcrumb/reports");
+
+            breadcrumb.SelectItem("reports");
+            status.Value = "Added Reports";
+        };
+        frame.AddControl(addReports);
+
+        var removeReports = new Button(
+            "removeReports", "Remove reports", 21, 9, 17,
+            Color.White, Color.DarkGreen);
+        removeReports.Clicked += (_, _) =>
+        {
+            if (breadcrumb.RemoveItem("reports"))
+                status.Value = "Removed Reports";
+            else
+                status.Value = "Reports was not present";
+        };
+        frame.AddControl(removeReports);
+
+        frame.AddControl(new Label(
+            "keyboardHelp",
+            "Left/Right select  Home/End jump  Enter activates",
+            3, 13, 46, Color.Cyan, Color.DarkBlue));
+
+        status = new StatusBar(
+            "breadcrumbStatus", "Ready", 3, 17, 44,
+            Color.Black, Color.Cyan)
+        {
+            Separator = "  "
+        };
+        status.AddItem("tabHint", "Tab focus");
+        status.AddItem("enterHint", "Enter activate");
+        frame.AddControl(status);
+
+        screen.SetFocus("mainBreadcrumb");
+    }
+}

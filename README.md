@@ -147,7 +147,7 @@ Use `FirstPanel` and `SecondPanel` as normal containers for controls or nested c
 | Layout | `Frame`, `SplitPanel`, `TabControl`, `TabPage` |
 | Text and input | `Label`, `TextBox`, `PasswordBox`, `TextArea`, `NumericBox`, `DateBox`, `TimeBox` |
 | Selection | `CheckBox`, `RadioButton`, `RadioGroup`, `ComboBox`, `ListBox`, `TreeView`, `Slider`, `ColorPicker` |
-| Actions and navigation | `Button`, `CommandPalette`, `CommandPaletteItem`, `MenuBar`, `Menu`, `MenuItem` |
+| Actions and navigation | `Breadcrumb`, `BreadcrumbItem`, `Button`, `CommandPalette`, `CommandPaletteItem`, `MenuBar`, `Menu`, `MenuItem` |
 | Data and feedback | `GridView`, `ProgressBar`, `Spinner`, `StatusBar`, `PictureBox` |
 | Modal UI | `Dialog`, `MessageBox` |
 
@@ -175,7 +175,7 @@ Lowercase members from earlier releases remain available in the `0.8.x` line for
 - `Alt+PageDown` or `Alt+PageUp`: move to the next or previous page of the focused `TabControl`. `Ctrl+Tab` is also supported when the browser does not reserve it for browser-tab navigation.
 - `Enter` or `Space`: activate buttons and selection controls, open or confirm a `ComboBox`, and toggle the selected `TreeView` node.
 - `F4`: open or close the focused `ComboBox`; `Escape` closes it without changing the selection.
-- Arrow keys: navigate text, combo boxes, trees, lists, grids, color pickers, and menus where applicable. In a `TreeView`, left and right collapse, expand, or move between parent and child nodes.
+- Arrow keys: navigate text, breadcrumbs, combo boxes, trees, lists, grids, color pickers, and menus where applicable. In a `TreeView`, left and right collapse, expand, or move between parent and child nodes.
 - `Home` and `End`: move to the first or last item, or set a `Slider` to its minimum or maximum.
 - `PageUp` and `PageDown`: apply the configured `LargeChange` to a focused `Slider`.
 - `Shift` plus the arrow, `Home`, or `End` keys: select text in `TextBox` and `TextArea`.
@@ -231,6 +231,40 @@ frame.AddControl(commands);
 ```
 
 Use `OpenPalette`, `ClosePalette`, `TogglePalette`, `AddCommand`, `RemoveCommand`, `ClearCommands`, and `GetCommand` to control the palette and command list. `SearchText` filters by command name, title, or description. Users type to filter, use arrows, `Home`, and `End` to move through results, press `Enter` to execute the highlighted command, or press `Escape` to close the palette.
+
+## Breadcrumbs
+
+`Breadcrumb` displays a hierarchical path as one focusable navigation control. Users move between segments with the left and right arrows, jump with `Home` and `End`, and activate the selected segment with `Enter`, `Space`, or a mouse click:
+
+```csharp
+var path = new Breadcrumb(
+    "path",
+    new[]
+    {
+        new BreadcrumbItem("home", "Home", "/"),
+        new BreadcrumbItem("docs", "Docs", "/docs"),
+        new BreadcrumbItem("controls", "Controls", "/docs/controls"),
+        new BreadcrumbItem("breadcrumb", "Breadcrumb", "/docs/controls/breadcrumb")
+    },
+    3,
+    5,
+    44,
+    Color.Yellow,
+    Color.Black)
+{
+    Separator = " > "
+};
+
+path.SelectionChanged += (_, args) =>
+    status.Value = $"Selected: {args.SelectedItem?.Text}";
+
+path.ItemActivated += (_, args) =>
+    Navigation.NavigateTo(args.Item.Value);
+
+frame.AddControl(path);
+```
+
+Use `AddItem`, `RemoveItem`, `ClearItems`, `GetItem`, `SelectIndex`, `SelectItem`, `SelectValue`, `ActivateSelectedItem`, and `ActivateItem` to manage the path. `Items` exposes a read-only view. If the path is wider than the control, it is clipped from the left and prefixed with `OverflowText`, keeping the latest segments visible.
 
 ## Radio groups
 
@@ -459,11 +493,19 @@ The repository contains focused pages that can be run directly:
 | [TreeView](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/TreeViewExample.razor) | Hierarchical nodes, dynamic expansion, selection events, mouse input, and keyboard navigation |
 | [Slider](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/Sliders.razor) | Horizontal and vertical ranges, direct mouse selection, small and large keyboard changes, and value events |
 | [SplitPanel](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/SplitPanels.razor) | Vertical and horizontal panes, nested layouts, shared focus navigation, and programmatic resizing |
+| [Breadcrumb](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/Breadcrumbs.razor) | Hierarchical path navigation, keyboard selection, mouse activation, item mutation, and activation events |
 | [Complete showcase](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Index.razor) | All controls, nested frames, z-order, callbacks, and animation |
 
 Run `dotnet run --project SampleApp` from the repository root and open `/examples` to browse them. The example routes are exercised by the automated test suite so API changes cannot silently leave the documentation out of date.
 
 ## Changelog
+
+### 0.8.8 — 2026-06-26
+
+- Added `Breadcrumb`, `BreadcrumbItem`, typed selection-change events, and typed item-activation events.
+- Added keyboard navigation with arrows, `Home`, `End`, `Enter`, and `Space`, plus mouse activation and focus-visible selected segment rendering.
+- Added left-side overflow clipping so the latest path segments remain visible in narrow layouts.
+- Added a focused executable Breadcrumb example and NuGet consumer coverage for the new public API.
 
 ### 0.8.7 — 2026-06-25
 
