@@ -108,6 +108,29 @@ public class PackageTests
         Assert.Contains("NUGET_API_KEY", workflow);
     }
 
+    [Fact]
+    public void WorkflowsUseNode24CompatibleGitHubActions()
+    {
+        string root = FindRepositoryRoot();
+        string workflowsPath = Path.Combine(root, ".github", "workflows");
+        string[] workflowFiles = Directory.GetFiles(workflowsPath, "*.yml");
+
+        Assert.NotEmpty(workflowFiles);
+        foreach (string workflowFile in workflowFiles)
+        {
+            string workflow = File.ReadAllText(workflowFile);
+
+            Assert.DoesNotContain("actions/checkout@v4", workflow);
+            Assert.DoesNotContain("actions/setup-dotnet@v4", workflow);
+            Assert.DoesNotContain("actions/upload-artifact@v4", workflow);
+        }
+
+        string combinedWorkflows = string.Join(Environment.NewLine, workflowFiles.Select(File.ReadAllText));
+        Assert.Contains("actions/checkout@v5", combinedWorkflows);
+        Assert.Contains("actions/setup-dotnet@v5", combinedWorkflows);
+        Assert.Contains("actions/upload-artifact@v6", combinedWorkflows);
+    }
+
     private static string ReadEntry(ZipArchive package, string name)
     {
         ZipArchiveEntry entry = package.GetEntry(name) ?? throw new InvalidOperationException($"Missing package entry {name}.");
