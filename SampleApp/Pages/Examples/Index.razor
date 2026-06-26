@@ -21,6 +21,7 @@
         new("sliderExample", "Slider", "Numeric ranges", "/examples/sliders"),
         new("splitExample", "SplitPanel", "Resizable panes", "/examples/split-panels"),
         new("breadcrumbExample", "Breadcrumb", "Hierarchical navigation", "/examples/breadcrumbs"),
+        new("themesExample", "Themes", "Runtime palettes", "/examples/themes"),
         new("showcaseExample", "Complete showcase", "All controls", "/")
     };
 
@@ -31,7 +32,7 @@
         screen = new Screen(60, 30);
 
         var frame = new Frame(
-            "examplesFrame", "BLAZORTUI EXAMPLES", 3, 3, 54, 24,
+            "examplesFrame", "BLAZORTUI EXAMPLES", 3, 3, 54, 26,
             Frame.BorderStyle.Line, Color.Yellow, Color.DarkBlue);
         screen.TopContainer.AddContainer(frame);
 
@@ -56,7 +57,7 @@
 
         frame.AddControl(new Label(
             "catalogFooter", "Mouse clicks are also supported.",
-            3, 22, 36, Color.White, Color.DarkBlue));
+            3, 24, 36, Color.White, Color.DarkBlue));
 
         screen.SetFocus(Destinations[0].ControlName);
     }

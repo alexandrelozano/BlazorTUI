@@ -1,0 +1,116 @@
+@page "/examples/themes"
+@using global::BlazorTUI.TUI
+@using Color = System.Drawing.Color
+
+<PageTitle>Themes example</PageTitle>
+
+<BlazorTUI.BlazorTUI
+    screen="@screen"
+    AriaLabel="Themes example"
+    AriaDescription="Choose a predefined theme and see how roles and states are applied to controls." />
+
+@code {
+    private Screen screen = null!;
+    private RadioGroup themeSelector = null!;
+    private StatusBar status = null!;
+
+    protected override void OnInitialized()
+    {
+        screen = new Screen(60, 30);
+
+        var frame = new Frame(
+            "themesFrame", "THEMES", 4, 4, 52, 21,
+            Frame.BorderStyle.Line, Color.Yellow, Color.DarkBlue);
+        screen.TopContainer.AddContainer(frame);
+
+        frame.AddControl(new Label(
+            "description",
+            "Apply a reusable theme to existing controls.",
+            3, 2, 44, Color.White, Color.DarkBlue));
+
+        themeSelector = new RadioGroup(
+            "themeSelector",
+            new[]
+            {
+                new RadioGroupOption("classicTheme", "Classic", "classic"),
+                new RadioGroupOption("darkTheme", "Dark", "dark"),
+                new RadioGroupOption("lightTheme", "Light", "light"),
+                new RadioGroupOption("highContrastTheme", "High contrast", "highContrast")
+            },
+            3, 5, 22,
+            Color.Yellow, Color.DarkBlue,
+            selectedIndex: 1,
+            RadioGroupOrientation.Vertical);
+        themeSelector.SelectionChanged += (_, _) => ApplySelectedTheme();
+        frame.AddControl(themeSelector);
+
+        frame.AddControl(new Label(
+            "inputLabel", "Input role:", 28, 5, 14,
+            Color.White, Color.DarkBlue));
+
+        var input = new TextBox(
+            "inputPreview", "Normal input", 28, 6, 18,
+            Color.Yellow, Color.Black)
+        {
+            ThemeRole = TuiThemeRole.Input
+        };
+        frame.AddControl(input);
+
+        frame.AddControl(new Label(
+            "errorLabel", "Error state:", 28, 8, 14,
+            Color.White, Color.DarkBlue));
+
+        var errorInput = new TextBox(
+            "errorPreview", "Invalid value", 28, 9, 18,
+            Color.White, Color.DarkRed)
+        {
+            ThemeRole = TuiThemeRole.Input,
+            ThemeState = TuiThemeState.Error
+        };
+        frame.AddControl(errorInput);
+
+        var action = new Button(
+            "actionButton", "Action", 28, 12, 12,
+            Color.White, Color.DarkGreen)
+        {
+            ThemeRole = TuiThemeRole.Action
+        };
+        action.Clicked += (_, _) => status.Value = $"Action using {screen.Theme.Name}";
+        frame.AddControl(action);
+
+        var disabledHint = new Label(
+            "disabledHint", "Disabled state sample", 28, 15, 22,
+            Color.Gray, Color.DarkBlue)
+        {
+            ThemeState = TuiThemeState.Disabled
+        };
+        frame.AddControl(disabledHint);
+
+        status = new StatusBar(
+            "themeStatus", "Theme: Dark", 3, 18, 44,
+            Color.Black, Color.Cyan)
+        {
+            Separator = "  "
+        };
+        status.AddItem("tabHint", "Tab focus");
+        status.AddItem("selectHint", "Arrows change");
+        frame.AddControl(status);
+
+        ApplySelectedTheme();
+        screen.SetFocus("themeSelector");
+    }
+
+    private void ApplySelectedTheme()
+    {
+        TuiTheme theme = themeSelector.SelectedValue switch
+        {
+            "classic" => TuiTheme.Classic,
+            "light" => TuiTheme.Light,
+            "highContrast" => TuiTheme.HighContrast,
+            _ => TuiTheme.Dark
+        };
+
+        screen.ApplyTheme(theme);
+        status.Value = $"Theme: {theme.Name}";
+    }
+}

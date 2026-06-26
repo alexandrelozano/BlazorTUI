@@ -28,6 +28,7 @@ public class ExampleCatalogTests : BunitContext
         Assert.Contains("Slider", accessibleText);
         Assert.Contains("SplitPanel", accessibleText);
         Assert.Contains("Breadcrumb", accessibleText);
+        Assert.Contains("Themes", accessibleText);
         Assert.Contains("Complete showcase", accessibleText);
     }
 
@@ -40,7 +41,8 @@ public class ExampleCatalogTests : BunitContext
     [InlineData(5, "/examples/sliders")]
     [InlineData(6, "/examples/split-panels")]
     [InlineData(7, "/examples/breadcrumbs")]
-    [InlineData(8, "/")]
+    [InlineData(8, "/examples/themes")]
+    [InlineData(9, "/")]
     public void CatalogButtonsNavigateToTheirExample(int buttonIndex, string expectedPath)
     {
         var component = Render<global::SampleApp.Pages.Examples.Index>();

@@ -13,7 +13,10 @@
             System.Drawing.Color.White, System.Drawing.Color.DarkGreen);
         var input = new TextBox(
             "name", "Alex", 2, 1, 10,
-            System.Drawing.Color.White, System.Drawing.Color.Black);
+            System.Drawing.Color.White, System.Drawing.Color.Black)
+        {
+            ThemeState = TuiThemeState.Error
+        };
         var password = new PasswordBox(
             "password", "secret", 2, 3, 10,
             System.Drawing.Color.White, System.Drawing.Color.Black);
@@ -142,6 +145,8 @@
         commands.SearchText = "build";
         commands.ExecuteCommand("build");
         terminal.TopContainer.AddControl(commands);
+        terminal.ApplyTheme(TuiTheme.Dark);
+        _ = terminal.Theme.Resolve(TuiThemeRole.Input, TuiThemeState.Error);
         return terminal;
     }
 }

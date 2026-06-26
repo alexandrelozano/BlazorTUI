@@ -166,6 +166,43 @@ The recommended API follows standard .NET naming and event conventions:
 
 Lowercase members from earlier releases remain available in the `0.8.x` line for source and binary compatibility. New code should use the recommended members above.
 
+## Themes
+
+Use `Screen.ApplyTheme` to apply a reusable color palette to all current containers, controls, dialogs, and the menu bar. Built-in themes are available through `TuiTheme.Classic`, `TuiTheme.Dark`, `TuiTheme.Light`, and `TuiTheme.HighContrast`:
+
+```csharp
+screen.ApplyTheme(TuiTheme.Dark);
+```
+
+Controls can opt into a specific role or state before the theme is applied:
+
+```csharp
+nameInput.ThemeRole = TuiThemeRole.Input;
+nameInput.ThemeState = TuiThemeState.Error;
+
+saveButton.ThemeRole = TuiThemeRole.Action;
+
+screen.ApplyTheme(TuiTheme.HighContrast);
+```
+
+Available roles include `Surface`, `Border`, `Input`, `Action`, `Selection`, `Status`, `Dialog`, and `Accent`. Available states include `Normal`, `Focus`, `Disabled`, `Error`, and `Selected`.
+
+Create custom palettes with `TuiTheme` and `TuiColorPair`:
+
+```csharp
+var corporateTheme = new TuiTheme(
+    "Corporate",
+    normal: new TuiColorPair(Color.White, Color.DarkBlue),
+    input: new TuiColorPair(Color.Yellow, Color.Black),
+    action: new TuiColorPair(Color.White, Color.DarkGreen),
+    error: new TuiColorPair(Color.White, Color.DarkRed),
+    status: new TuiColorPair(Color.Black, Color.Cyan));
+
+screen.ApplyTheme(corporateTheme);
+```
+
+Call `ApplyTheme` again to switch themes at runtime. Explicit colors assigned after applying a theme remain under application control until the next theme application.
+
 ## Keyboard and mouse interaction
 
 - `Tab`: move to the next focusable control.
@@ -535,6 +572,7 @@ The repository contains focused pages that can be run directly:
 | [Slider](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/Sliders.razor) | Horizontal and vertical ranges, direct mouse selection, small and large keyboard changes, and value events |
 | [SplitPanel](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/SplitPanels.razor) | Vertical and horizontal panes, nested layouts, shared focus navigation, and programmatic resizing |
 | [Breadcrumb](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/Breadcrumbs.razor) | Hierarchical path navigation, keyboard selection, mouse activation, item mutation, and activation events |
+| [Themes](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/Themes.razor) | Runtime theme switching, predefined palettes, control roles, and visual states |
 | [Complete showcase](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Index.razor) | All controls, nested frames, z-order, callbacks, and animation |
 
 Run `dotnet run --project SampleApp` from the repository root and open `/examples` to browse them. The example routes are exercised by the automated test suite so API changes cannot silently leave the documentation out of date.
@@ -548,6 +586,7 @@ Run `dotnet run --project SampleApp` from the repository root and open `/example
 - Added left-side overflow clipping so the latest path segments remain visible in narrow layouts.
 - Added a focused executable Breadcrumb example and NuGet consumer coverage for the new public API.
 - Added `GridView` column sorting, logical pagination, row selection helpers, typed sorting/page/selection events, and NuGet consumer coverage for the advanced grid API.
+- Added reusable themes, predefined `Classic`, `Dark`, `Light`, and `HighContrast` palettes, runtime theme switching through `Screen.ApplyTheme`, and role/state color mapping for existing controls.
 
 ### 0.8.7 — 2026-06-25
 

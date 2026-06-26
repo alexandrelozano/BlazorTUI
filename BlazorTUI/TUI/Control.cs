@@ -70,6 +70,10 @@ namespace BlazorTUI.TUI
 
         public short ZOrder { get; set; }
 
+        public TuiThemeRole ThemeRole { get; set; } = TuiThemeRole.Default;
+
+        public TuiThemeState ThemeState { get; set; } = TuiThemeState.Normal;
+
         public Action<Control>? OnClick;
 
         public Action? OnFocus;

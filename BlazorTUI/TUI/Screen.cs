@@ -31,6 +31,8 @@ namespace BlazorTUI.TUI
 
         public MenuBar? MenuBar { get => menuBar; set => menuBar = value; }
 
+        public TuiTheme Theme { get; private set; }
+
         public long Revision { get; private set; }
 
         public Screen(short width, short height)
@@ -67,11 +69,21 @@ namespace BlazorTUI.TUI
                 rows.Add(row);
             }
 
-            topContainer = new Frame("TopContainer", "", 0, 0, width, height, Frame.BorderStyle.none, System.Drawing.Color.Yellow, System.Drawing.Color.Blue);
+            Theme = TuiTheme.Classic;
+
+            topContainer = new Frame("TopContainer", "", 0, 0, width, height, Frame.BorderStyle.none, Theme.Border.ForeColor, Theme.Surface.BackgroundColor);
 
             this.topContainer = topContainer;
 
             CaptureRenderedRows(incrementRevision: false);
+        }
+
+        public void ApplyTheme(TuiTheme theme)
+        {
+            ArgumentNullException.ThrowIfNull(theme);
+
+            Theme = theme.Clone();
+            TuiThemeApplicator.ApplyToScreen(this, Theme);
         }
 
         public void SetFocus(string name)
