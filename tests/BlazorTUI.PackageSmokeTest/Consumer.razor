@@ -7,7 +7,7 @@
 
     private static Screen CreateTerminal()
     {
-        var terminal = new Screen(30, 17);
+        var terminal = new Screen(30, 22);
         var button = new Button(
             "save", "Save", 2, 2, 8,
             System.Drawing.Color.White, System.Drawing.Color.DarkGreen);
@@ -108,10 +108,34 @@
         path.SelectValue("/docs");
         path.ActivateSelectedItem();
         terminal.TopContainer.AddControl(path);
+        var ordersGrid = new GridView(
+            "ordersGrid",
+            new[]
+            {
+                new GridView.GridColumn { Title = "Order", Width = 7 },
+                new GridView.GridColumn { Title = "Pizza", Width = 9 }
+            },
+            new[]
+            {
+                new GridView.GridRow { Cells = new[] { "1", "Pepperoni" } },
+                new GridView.GridRow { Cells = new[] { "2", "Calzone" } },
+                new GridView.GridRow { Cells = new[] { "3", "Veggie" } }
+            },
+            0, 14, 20, 4,
+            System.Drawing.Color.White,
+            System.Drawing.Color.Black,
+            pageSize: 2);
+        ordersGrid.Sorted += (_, args) => _ = args.Direction;
+        ordersGrid.PageChanged += (_, args) => _ = args.PageIndex;
+        ordersGrid.SelectionChanged += (_, args) => _ = args.Row?.Cells[0];
+        ordersGrid.SortByColumn(1);
+        ordersGrid.NextPage();
+        ordersGrid.SelectRow(2);
+        terminal.TopContainer.AddControl(ordersGrid);
         var commands = new CommandPalette(
             "commands",
             new[] { new CommandPaletteItem("build", "Build", action: command => _ = command.Name) },
-            0, 14, 20,
+            0, 19, 20,
             System.Drawing.Color.White, System.Drawing.Color.Black);
         commands.CommandExecuted += (_, args) => _ = args.CommandName;
         commands.Open();

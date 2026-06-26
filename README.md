@@ -177,7 +177,7 @@ Lowercase members from earlier releases remain available in the `0.8.x` line for
 - `F4`: open or close the focused `ComboBox`; `Escape` closes it without changing the selection.
 - Arrow keys: navigate text, breadcrumbs, combo boxes, trees, lists, grids, color pickers, and menus where applicable. In a `TreeView`, left and right collapse, expand, or move between parent and child nodes.
 - `Home` and `End`: move to the first or last item, or set a `Slider` to its minimum or maximum.
-- `PageUp` and `PageDown`: apply the configured `LargeChange` to a focused `Slider`.
+- `PageUp` and `PageDown`: move between pages in a focused `GridView`, or apply the configured `LargeChange` to a focused `Slider`.
 - `Shift` plus the arrow, `Home`, or `End` keys: select text in `TextBox` and `TextArea`.
 - `Ctrl+A`, `Ctrl+C`, `Ctrl+X`, and `Ctrl+V`: select all, copy, cut, and paste in text controls. Use `Command` instead of `Ctrl` on macOS.
 - `Ctrl+Z` and `Ctrl+Y`: undo and redo text edits. On macOS, use `Command+Z` and `Command+Shift+Z`.
@@ -265,6 +265,47 @@ frame.AddControl(path);
 ```
 
 Use `AddItem`, `RemoveItem`, `ClearItems`, `GetItem`, `SelectIndex`, `SelectItem`, `SelectValue`, `ActivateSelectedItem`, and `ActivateItem` to manage the path. `Items` exposes a read-only view. If the path is wider than the control, it is clipped from the left and prefixed with `OverflowText`, keeping the latest segments visible.
+
+## Grid views
+
+`GridView` displays tabular data and supports column sorting, row selection, and pagination:
+
+```csharp
+var orders = new GridView(
+    "ordersGrid",
+    new[]
+    {
+        new GridView.GridColumn { Title = "Order", Width = 8 },
+        new GridView.GridColumn { Title = "Pizza", Width = 12 },
+        new GridView.GridColumn { Title = "Status", Width = 10 }
+    },
+    new[]
+    {
+        new GridView.GridRow { Cells = new[] { "1", "Pepperoni", "Cooking" } },
+        new GridView.GridRow { Cells = new[] { "2", "Calzone", "Ready" } },
+        new GridView.GridRow { Cells = new[] { "3", "Veggie", "Hold" } }
+    },
+    2,
+    17,
+    32,
+    6,
+    Color.Yellow,
+    Color.Black,
+    pageSize: 4);
+
+orders.Sorted += (_, args) =>
+    status.Value = $"Sorted: {args.Column?.Title} {args.Direction}";
+
+orders.PageChanged += (_, args) =>
+    status.Value = $"Page {args.PageIndex + 1} of {args.PageCount}";
+
+orders.SelectionChanged += (_, args) =>
+    status.Value = $"Selected order: {args.Row?.Cells[0]}";
+
+frame.AddControl(orders);
+```
+
+Use `SortByColumn(columnIndex)` to toggle ascending/descending sorting, or `SortByColumn(columnIndex, direction)` for an explicit `GridSortDirection`. `ClearSort` restores the original row order. `NextPage`, `PreviousPage`, `GoToPage`, `PageIndex`, `PageSize`, and `PageCount` manage pagination. `SelectedRow`, `SelectedRowIndex`, `SelectedSourceRowIndex`, `SelectRow`, and `SelectSourceRow` manage row selection. Clicking a column header sorts it, clicking the up/down glyphs changes pages, and `PageUp`/`PageDown` work from the keyboard.
 
 ## Radio groups
 
@@ -506,6 +547,7 @@ Run `dotnet run --project SampleApp` from the repository root and open `/example
 - Added keyboard navigation with arrows, `Home`, `End`, `Enter`, and `Space`, plus mouse activation and focus-visible selected segment rendering.
 - Added left-side overflow clipping so the latest path segments remain visible in narrow layouts.
 - Added a focused executable Breadcrumb example and NuGet consumer coverage for the new public API.
+- Added `GridView` column sorting, logical pagination, row selection helpers, typed sorting/page/selection events, and NuGet consumer coverage for the advanced grid API.
 
 ### 0.8.7 — 2026-06-25
 
