@@ -1,5 +1,6 @@
 using System.Drawing;
 using System.Text;
+using BlazorTUI.Utils;
 
 namespace BlazorTUI.TUI
 {
@@ -516,13 +517,13 @@ namespace BlazorTUI.TUI
                 return "│";
 
             int contentWidth = width - 1;
-            int textWidth = Math.Max(0, contentWidth - indicator.Length);
-            string content = text.Length > textWidth ? text[..textWidth] : text.PadRight(textWidth);
+            int textWidth = Math.Max(0, contentWidth - TuiText.VisualWidth(indicator));
+            string content = TuiText.PadRightToVisualWidth(text, textWidth);
             return $"{content}{indicator}│";
         }
 
         private static string GetCharacterAt(string text, int index)
-            => index >= 0 && index < text.Length ? text.Substring(index, 1) : " ";
+            => TuiText.CellAt(text, index);
 
         private int GetColumnIndexAt(short localX)
         {

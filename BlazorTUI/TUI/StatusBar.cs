@@ -1,4 +1,5 @@
 using System.Drawing;
+using BlazorTUI.Utils;
 
 namespace BlazorTUI.TUI
 {
@@ -149,13 +150,13 @@ namespace BlazorTUI.TUI
             {
                 StatusBarItem item = rightItems[index];
                 string text = FormatItemText(item);
-                int start = cursor - text.Length;
+                int start = cursor - TuiText.VisualWidth(text);
                 RenderText(rows, absoluteY, start, width, text, ItemForeColor(item), ItemBackgroundColor(item));
                 cursor = start;
 
-                if (index > 0 && separator.Length > 0)
+                if (index > 0 && TuiText.VisualWidth(separator) > 0)
                 {
-                    start = cursor - separator.Length;
+                    start = cursor - TuiText.VisualWidth(separator);
                     RenderText(rows, absoluteY, start, width, separator, foreColor, backgroundColor);
                     cursor = start;
                 }
@@ -170,7 +171,7 @@ namespace BlazorTUI.TUI
 
             foreach (StatusBarItem item in items.Where(item => item.Alignment == StatusBarItemAlignment.Left))
             {
-                if (cursor > 0 && separator.Length > 0)
+                if (cursor > 0 && TuiText.VisualWidth(separator) > 0)
                     cursor = RenderText(rows, absoluteY, cursor, rightLimit, separator, foreColor, backgroundColor);
 
                 cursor = RenderText(
@@ -193,7 +194,8 @@ namespace BlazorTUI.TUI
             Color textForeColor,
             Color textBackgroundColor)
         {
-            for (int index = 0; index < text.Length; index++)
+            int textWidth = TuiText.VisualWidth(text);
+            for (int index = 0; index < textWidth; index++)
             {
                 int localX = localStartX + index;
                 if (localX >= 0 && localX < localEndX)
@@ -202,13 +204,13 @@ namespace BlazorTUI.TUI
                         rows,
                         absoluteY,
                         localX,
-                        text.Substring(index, 1),
+                        TuiText.CellAt(text, index),
                         textForeColor,
                         textBackgroundColor);
                 }
             }
 
-            return localStartX + text.Length;
+            return localStartX + textWidth;
         }
 
         private void WriteCell(
@@ -240,9 +242,7 @@ namespace BlazorTUI.TUI
             if (item.Width == 0)
                 return item.Text;
 
-            return item.Text.Length > item.Width
-                ? item.Text[..item.Width]
-                : item.Text.PadRight(item.Width);
+            return TuiText.PadRightToVisualWidth(item.Text, item.Width);
         }
 
         private Color ItemForeColor(StatusBarItem item) => item.ForeColor ?? foreColor;

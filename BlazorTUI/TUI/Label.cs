@@ -1,4 +1,5 @@
 using System.Drawing;
+using BlazorTUI.Utils;
 
 namespace BlazorTUI.TUI
 {
@@ -24,7 +25,7 @@ namespace BlazorTUI.TUI
         {
             if (Visible)
             {
-                for (short n = 0; n < text.Length && n < width; n++)
+                for (short n = 0; n < TuiText.VisualWidth(text) && n < width; n++)
                 {
                     if (container.YOffset() + Y < container.YOffset() + container.height && container.YOffset() + Y < rows.Count)
                     {
@@ -32,7 +33,7 @@ namespace BlazorTUI.TUI
                         {
                             rows[container.YOffset() + Y].Cells[container.XOffset() + X + n].foreColor = foreColor;
                             rows[container.YOffset() + Y].Cells[container.XOffset() + X + n].backgroundColor = backgroundColor;
-                            rows[container.YOffset() + Y].Cells[container.XOffset() + X + n].character = text.Substring(n, 1);
+                            rows[container.YOffset() + Y].Cells[container.XOffset() + X + n].character = TuiText.CellAt(text, n);
                         }
                     }
                 }

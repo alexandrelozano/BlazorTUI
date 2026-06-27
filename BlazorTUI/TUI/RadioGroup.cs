@@ -1,4 +1,5 @@
 using System.Drawing;
+using BlazorTUI.Utils;
 
 namespace BlazorTUI.TUI
 {
@@ -329,7 +330,7 @@ namespace BlazorTUI.TUI
             int cursor = 0;
             for (int index = 0; index < options.Count && cursor < Width; index++)
             {
-                int optionWidth = GetRenderedOptionText(options[index]).Length;
+                int optionWidth = TuiText.VisualWidth(GetRenderedOptionText(options[index]));
                 RenderOption(rows, options[index], index, cursor, 0, optionWidth);
                 cursor += optionWidth + 1;
             }
@@ -348,14 +349,15 @@ namespace BlazorTUI.TUI
             Color textForeColor = focusedSelection ? BackgroundColor : ForeColor;
             Color textBackgroundColor = focusedSelection ? ForeColor : BackgroundColor;
 
-            for (int characterIndex = 0; characterIndex < text.Length && characterIndex < maximumWidth; characterIndex++)
+            int textWidth = TuiText.VisualWidth(text);
+            for (int characterIndex = 0; characterIndex < textWidth && characterIndex < maximumWidth; characterIndex++)
             {
                 int x = localX + characterIndex;
                 if (x >= Width || !TryGetCell(rows, x, localY, out Cell cell))
                     continue;
 
                 PrepareCell(cell, textForeColor, textBackgroundColor);
-                cell.Character = text.Substring(characterIndex, 1);
+                cell.Character = TuiText.CellAt(text, characterIndex);
             }
         }
 
@@ -367,7 +369,7 @@ namespace BlazorTUI.TUI
             int cursor = 0;
             for (int index = 0; index < options.Count; index++)
             {
-                int optionWidth = GetRenderedOptionText(options[index]).Length;
+                int optionWidth = TuiText.VisualWidth(GetRenderedOptionText(options[index]));
                 if (x >= cursor && x < cursor + optionWidth)
                     return index;
 

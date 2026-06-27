@@ -1,4 +1,5 @@
 using System.Drawing;
+using BlazorTUI.Utils;
 
 namespace BlazorTUI.TUI
 {
@@ -201,7 +202,7 @@ namespace BlazorTUI.TUI
             int headerX = 1;
             for (int index = 0; index < tabs.Count; index++)
             {
-                int headerWidth = tabs[index].Title.Length + 2;
+                int headerWidth = TuiText.VisualWidth(tabs[index].Title) + 2;
                 if (x >= headerX && x < headerX + headerWidth)
                     return index;
 
@@ -244,7 +245,8 @@ namespace BlazorTUI.TUI
             for (int index = 0; index < tabs.Count && headerX < Width - 1; index++)
             {
                 string header = $"[{tabs[index].Title}]";
-                for (int characterIndex = 0; characterIndex < header.Length && headerX + characterIndex < Width - 1; characterIndex++)
+                int headerWidth = TuiText.VisualWidth(header);
+                for (int characterIndex = 0; characterIndex < headerWidth && headerX + characterIndex < Width - 1; characterIndex++)
                 {
                     if (!TryGetCell(rows, originX + headerX + characterIndex, originY, out Cell cell))
                         continue;
@@ -252,10 +254,10 @@ namespace BlazorTUI.TUI
                     bool selected = index == selectedIndex;
                     cell.ForeColor = selected ? BackgroundColor : ForeColor;
                     cell.BackgroundColor = selected ? ForeColor : BackgroundColor;
-                    cell.Character = header.Substring(characterIndex, 1);
+                    cell.Character = TuiText.CellAt(header, characterIndex);
                 }
 
-                headerX += header.Length + 1;
+                headerX += headerWidth + 1;
             }
         }
 

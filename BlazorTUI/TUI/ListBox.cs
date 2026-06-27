@@ -1,10 +1,5 @@
-using System;
-using System.Collections.Generic;
 using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static System.Net.Mime.MediaTypeNames;
+using BlazorTUI.Utils;
 
 namespace BlazorTUI.TUI
 {
@@ -201,8 +196,7 @@ namespace BlazorTUI.TUI
                                 }
                                 else
                                 {
-                                    if ((n - 1) < item.Length)
-                                        ch = item.Substring((n - 1), 1);
+                                    ch = TuiText.CellAt(item, n - 1);
 
                                     if (Focus && (Yn + scrollY) == cursorY)
                                     {

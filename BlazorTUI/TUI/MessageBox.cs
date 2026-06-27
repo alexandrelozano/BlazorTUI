@@ -1,5 +1,7 @@
 ﻿using System.Drawing;
 
+using BlazorTUI.Utils;
+
 namespace BlazorTUI.TUI
 {
     public class MessageBox
@@ -45,7 +47,7 @@ namespace BlazorTUI.TUI
         {
             this.screen = screen;
 
-            short width = (short)(message.Length + 4);
+            short width = (short)(TuiText.VisualWidth(message) + 4);
             short heigth = 6;
 
             while (width > (screen.width - 2))
@@ -68,8 +70,9 @@ namespace BlazorTUI.TUI
             foreach (string m in messages)
             {
                 y++;
-                short x = (short)((width / 2) - (m.Length / 2)); 
-                Label lbl = new Label($"lbl{internalId}", m, x, y, (short)m.Length, foreColor, backgroundColor );
+                int messageWidth = TuiText.VisualWidth(m);
+                short x = (short)((width / 2) - (messageWidth / 2));
+                Label lbl = new Label($"lbl{internalId}", m, x, y, (short)messageWidth, foreColor, backgroundColor );
                 dialog.AddControl(lbl);
             }
 

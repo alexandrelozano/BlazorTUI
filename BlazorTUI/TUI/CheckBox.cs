@@ -1,5 +1,4 @@
 using System.Drawing;
-using System.Reflection.Metadata;
 using BlazorTUI.Utils;
 
 namespace BlazorTUI.TUI
@@ -111,7 +110,7 @@ namespace BlazorTUI.TUI
                     {
                         if (container.XOffset() + X + n < container.XOffset() + container.width && container.XOffset() + X + n < rows[Y].Cells.Count)
                         {
-                            string ch = (n < text.Length) ? text.Substring(n, 1) : " ";
+                            string ch = TuiText.CellAt(text, n);
 
                             if (Focus)
                             {

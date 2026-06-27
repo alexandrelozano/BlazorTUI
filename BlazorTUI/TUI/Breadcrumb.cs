@@ -1,4 +1,5 @@
 using System.Drawing;
+using BlazorTUI.Utils;
 
 namespace BlazorTUI.TUI
 {
@@ -337,13 +338,12 @@ namespace BlazorTUI.TUI
             if (allCells.Count <= Width)
                 return allCells;
 
-            string effectiveOverflowText = overflowText.Length >= Width
-                ? overflowText[..Width]
+            string effectiveOverflowText = TuiText.VisualWidth(overflowText) >= Width
+                ? TuiText.TruncateByVisualWidth(overflowText, Width)
                 : overflowText;
-            int tailLength = Width - effectiveOverflowText.Length;
+            int tailLength = Width - TuiText.VisualWidth(effectiveOverflowText);
             var renderedCells = new List<RenderedBreadcrumbCell>(Width);
-            foreach (char character in effectiveOverflowText)
-                renderedCells.Add(new RenderedBreadcrumbCell(character.ToString(), null));
+            AddText(renderedCells, effectiveOverflowText, null);
 
             if (tailLength > 0)
                 renderedCells.AddRange(allCells.Skip(allCells.Count - tailLength));
@@ -412,8 +412,9 @@ namespace BlazorTUI.TUI
 
         private static void AddText(List<RenderedBreadcrumbCell> cells, string text, int? itemIndex)
         {
-            foreach (char character in text)
-                cells.Add(new RenderedBreadcrumbCell(character.ToString(), itemIndex));
+            int width = TuiText.VisualWidth(text);
+            for (int index = 0; index < width; index++)
+                cells.Add(new RenderedBreadcrumbCell(TuiText.CellAt(text, index), itemIndex));
         }
 
         private static BreadcrumbItem CloneItem(BreadcrumbItem item)

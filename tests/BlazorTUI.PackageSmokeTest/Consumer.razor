@@ -145,6 +145,9 @@
         commands.SearchText = "build";
         commands.ExecuteCommand("build");
         terminal.TopContainer.AddControl(commands);
+        terminal.TopContainer.AddControl(new Label(
+            "unicodeLabel", "Café 🙂 漢", 0, 21, 12,
+            System.Drawing.Color.White, System.Drawing.Color.Black));
         terminal.ApplyTheme(TuiTheme.Dark);
         _ = terminal.Theme.Resolve(TuiThemeRole.Input, TuiThemeState.Error);
         return terminal;

@@ -1,4 +1,5 @@
 using System.Drawing;
+using BlazorTUI.Utils;
 
 namespace BlazorTUI.TUI
 {
@@ -43,10 +44,14 @@ namespace BlazorTUI.TUI
 
         protected override string GetDisplayCharacter(short position)
         {
-            if (position >= Value.Length)
+            TuiText.TextCell cell = TuiText.CellInfoAt(Value, position);
+            if (!cell.TextElementIndex.HasValue)
                 return " ";
 
-            return IsRevealed ? Value.Substring(position, 1) : MaskCharacter.ToString();
+            if (cell.IsContinuation)
+                return " ";
+
+            return IsRevealed ? cell.Character : MaskCharacter.ToString();
         }
     }
 }

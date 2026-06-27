@@ -1,4 +1,5 @@
 using System.Drawing;
+using BlazorTUI.Utils;
 
 namespace BlazorTUI.TUI
 {
@@ -18,7 +19,7 @@ namespace BlazorTUI.TUI
             {
                 ArgumentNullException.ThrowIfNull(value);
                 text = value;
-                cursor = (short)Math.Min(value.Length, short.MaxValue);
+                cursor = ToShortTextElementCount(value);
                 selectionAnchor = null;
                 editHistory.Clear();
             }
@@ -32,7 +33,7 @@ namespace BlazorTUI.TUI
 
         public short SelectionLength => HasSelection ? (short)Math.Abs(selectionAnchor!.Value - cursor) : (short)0;
 
-        public string SelectedText => HasSelection ? text.Substring(SelectionStart, SelectionLength) : "";
+        public string SelectedText => HasSelection ? TuiText.SubstringByTextElements(text, SelectionStart, SelectionLength) : "";
 
         public virtual bool AllowCopy { get; set; } = true;
 
@@ -63,7 +64,7 @@ namespace BlazorTUI.TUI
         public void SelectAll()
         {
             selectionAnchor = 0;
-            cursor = (short)Math.Min(text.Length, short.MaxValue);
+            cursor = ToShortTextElementCount(text);
         }
 
         public string CutSelection()
@@ -85,16 +86,22 @@ namespace BlazorTUI.TUI
 
             TextBoxState previousState = CaptureState();
             DeleteSelection();
-            int capacity = Math.Max(0, width - 1 - text.Length);
+            int capacity = Math.Max(0, width - 1 - TuiText.VisualWidth(text));
             if (capacity == 0)
             {
                 RecordEdit(previousState);
                 return;
             }
 
-            string insertedText = singleLineValue[..Math.Min(singleLineValue.Length, capacity)];
-            text = text.Insert(cursor, insertedText);
-            cursor += (short)insertedText.Length;
+            string insertedText = TuiText.TruncateByVisualWidth(singleLineValue, capacity);
+            if (insertedText.Length == 0)
+            {
+                RecordEdit(previousState);
+                return;
+            }
+
+            text = TuiText.InsertAtTextElement(text, cursor, insertedText);
+            cursor += ToShortTextElementCount(insertedText);
             RecordEdit(previousState);
         }
 
@@ -127,7 +134,7 @@ namespace BlazorTUI.TUI
 
             if (Visible)
             {
-                cursor = X < text.Length ? X : (short)Math.Min(text.Length, short.MaxValue);
+                cursor = (short)TuiText.TextElementIndexFromVisualColumn(text, X);
                 selectionAnchor = null;
                 container.TopContainer().SetFocus(name);
                 handled = true;
@@ -155,14 +162,14 @@ namespace BlazorTUI.TUI
                         handled = true;
                         break;
                     case "End":
-                        MoveCursor((short)Math.Min(text.Length, short.MaxValue), shiftKey);
+                        MoveCursor(ToShortTextElementCount(text), shiftKey);
                         handled = true;
                         break;
                     case "Backspace":
                         TextBoxState stateBeforeBackspace = CaptureState();
                         if (!DeleteSelection() && cursor > 0)
                         {
-                            text = text.Remove(cursor - 1, 1);
+                            text = TuiText.RemoveTextElements(text, cursor - 1, 1);
                             cursor--;
                         }
                         RecordEdit(stateBeforeBackspace);
@@ -170,8 +177,8 @@ namespace BlazorTUI.TUI
                         break;
                     case "Delete":
                         TextBoxState stateBeforeDelete = CaptureState();
-                        if (!DeleteSelection() && cursor < text.Length)
-                            text = text.Remove(cursor, 1);
+                        if (!DeleteSelection() && cursor < TuiText.TextElementCount(text))
+                            text = TuiText.RemoveTextElements(text, cursor, 1);
                         RecordEdit(stateBeforeDelete);
                         handled = true;
                         break;
@@ -179,24 +186,24 @@ namespace BlazorTUI.TUI
                         if (!shiftKey && HasSelection)
                             MoveCursor((short)(SelectionStart + SelectionLength), false);
                         else
-                            MoveCursor((short)Math.Min(cursor + 1, text.Length), shiftKey);
+                            MoveCursor((short)TuiText.NextTextElementIndex(text, cursor), shiftKey);
                         handled = true;
                         break;
                     case "ArrowLeft":
                         if (!shiftKey && HasSelection)
                             MoveCursor(SelectionStart, false);
                         else
-                            MoveCursor((short)Math.Max(0, cursor - 1), shiftKey);
+                            MoveCursor((short)TuiText.PreviousTextElementIndex(text, cursor), shiftKey);
                         handled = true;
                         break;
                     default:
-                        if (key.Length == 1)
+                        if (TuiText.TextElementCount(key) == 1)
                         {
                             TextBoxState stateBeforeInput = CaptureState();
                             DeleteSelection();
-                            if (text.Length < width - 1)
+                            if (TuiText.VisualWidth(text) + TuiText.VisualWidth(key) <= width - 1)
                             {
-                                text = text.Insert(cursor, key);
+                                text = TuiText.InsertAtTextElement(text, cursor, key);
                                 cursor++;
                             }
                             RecordEdit(stateBeforeInput);
@@ -223,13 +230,14 @@ namespace BlazorTUI.TUI
                     continue;
 
                 Cell cell = rows[container.YOffset() + Y].Cells[container.XOffset() + X + n];
-                bool selected = n < text.Length && IsSelected(n);
+                TuiText.TextCell textCell = TuiText.CellInfoAt(text, n);
+                bool selected = textCell.TextElementIndex.HasValue && IsSelected(textCell.TextElementIndex.Value);
                 cell.foreColor = selected ? backgroundColor : foreColor;
                 cell.backgroundColor = selected ? foreColor : backgroundColor;
                 cell.textDecoration = Cell.TextDecoration.None;
                 cell.character = GetDisplayCharacter(n);
 
-                if (Focus && n == cursor)
+                if (Focus && n == TuiText.VisualWidth(text, cursor))
                 {
                     if (blinkCursor)
                         cell.textDecoration = Cell.TextDecoration.UnderLine;
@@ -245,16 +253,16 @@ namespace BlazorTUI.TUI
                 return false;
 
             short start = SelectionStart;
-            text = text.Remove(start, SelectionLength);
+            text = TuiText.RemoveTextElements(text, start, SelectionLength);
             cursor = start;
             selectionAnchor = null;
             return true;
         }
 
         protected virtual string GetDisplayCharacter(short position)
-            => position < text.Length ? text.Substring(position, 1) : " ";
+            => TuiText.CellAt(text, position);
 
-        private bool IsSelected(short position)
+        private bool IsSelected(int position)
             => HasSelection && position >= SelectionStart && position < SelectionStart + SelectionLength;
 
         private TextBoxState CaptureState()
@@ -280,7 +288,7 @@ namespace BlazorTUI.TUI
             else
                 selectionAnchor = null;
 
-            cursor = newPosition;
+            cursor = (short)Math.Clamp(newPosition, (short)0, ToShortTextElementCount(text));
             if (selectionAnchor == cursor)
                 selectionAnchor = null;
         }
@@ -289,6 +297,9 @@ namespace BlazorTUI.TUI
             => value.Replace("\r\n", " ", StringComparison.Ordinal)
                 .Replace('\r', ' ')
                 .Replace('\n', ' ');
+
+        private static short ToShortTextElementCount(string value)
+            => (short)Math.Min(TuiText.TextElementCount(value), short.MaxValue);
 
         private readonly record struct TextBoxState(string Text, short Cursor, short? SelectionAnchor);
     }

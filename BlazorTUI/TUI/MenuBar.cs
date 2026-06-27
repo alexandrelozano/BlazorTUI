@@ -1,12 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
 using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Linq;
-using static System.Net.Mime.MediaTypeNames;
+using BlazorTUI.Utils;
 
 namespace BlazorTUI.TUI
 {
@@ -25,8 +18,8 @@ namespace BlazorTUI.TUI
         public bool showShortCutkeys;
         public bool ShowShortcutKeys { get => showShortCutkeys; set => showShortCutkeys = value; }
 
-        public MenuBar(Color foreColor, Color backgroundColor, Screen screen) {
-
+        public MenuBar(Color foreColor, Color backgroundColor, Screen screen)
+        {
             ArgumentNullException.ThrowIfNull(screen);
 
             menus = new List<Menu>();
@@ -51,7 +44,7 @@ namespace BlazorTUI.TUI
 
             Menu? mnuOpen = OpenedMenu();
 
-            if (mnuOpen == null)
+            if (mnuOpen == null && menus.Count > 0)
             {
                 switch (key)
                 {
@@ -59,7 +52,7 @@ namespace BlazorTUI.TUI
                     case "ArrowRight":
                     case "ArrowDown":
                     case "ArrowUp":
-                        mnuOpen = this.menus[0];
+                        mnuOpen = menus[0];
                         mnuOpen.opended = true;
                         showShortCutkeys = true;
                         break;
@@ -69,8 +62,10 @@ namespace BlazorTUI.TUI
             if (mnuOpen == null)
             {
                 foreach (Menu menu in menus)
-                    if (menu.shortCutKey!=null && char.ToUpperInvariant(key[0]) == char.ToUpperInvariant(menu.shortCutKey.Value))
+                {
+                    if (menu.shortCutKey != null && char.ToUpperInvariant(key[0]) == char.ToUpperInvariant(menu.shortCutKey.Value))
                         menu.opended = true;
+                }
             }
             else if (mnuOpen.menuItems != null)
             {
@@ -79,9 +74,9 @@ namespace BlazorTUI.TUI
                 switch (key)
                 {
                     case "ArrowLeft":
-                        for (int i = 1; i < menus.Count;i++)
+                        for (int i = 1; i < menus.Count; i++)
                         {
-                            if (menus[i].text==mnuOpen.text)
+                            if (menus[i].text == mnuOpen.text)
                             {
                                 menus[i].opended = false;
                                 menus[i].selectedItem = 0;
@@ -89,7 +84,9 @@ namespace BlazorTUI.TUI
                                 break;
                             }
                             else
+                            {
                                 menus[i].opended = false;
+                            }
                         }
                         break;
                     case "ArrowRight":
@@ -124,6 +121,7 @@ namespace BlazorTUI.TUI
                         break;
                     default:
                         foreach (MenuItem menuItem in mnuOpen.menuItems)
+                        {
                             if (menuItem.shortCutKey != null && char.ToUpperInvariant(key[0]) == char.ToUpperInvariant(menuItem.shortCutKey.Value))
                             {
                                 menuItem.Invoke();
@@ -131,12 +129,14 @@ namespace BlazorTUI.TUI
                                 mnuOpen.opended = false;
                                 showShortCutkeys = false;
                             }
+                        }
                         break;
                 }
             }
 
             return handled;
         }
+
         public bool Click(short X, short Y)
         {
             if (!visible)
@@ -147,7 +147,8 @@ namespace BlazorTUI.TUI
                 int menuStartX = 0;
                 foreach (Menu menu in menus)
                 {
-                    if (X >= menuStartX && X < menuStartX + menu.text.Length)
+                    int menuWidth = TuiText.VisualWidth(menu.text);
+                    if (X >= menuStartX && X < menuStartX + menuWidth)
                     {
                         CloseMenus();
                         menu.opended = true;
@@ -155,7 +156,7 @@ namespace BlazorTUI.TUI
                         return true;
                     }
 
-                    menuStartX += menu.text.Length;
+                    menuStartX += menuWidth;
                 }
 
                 CloseMenus();
@@ -171,13 +172,13 @@ namespace BlazorTUI.TUI
             {
                 if (ReferenceEquals(menu, openMenu))
                     break;
-                openMenuStartX += menu.text.Length;
+                openMenuStartX += TuiText.VisualWidth(menu.text);
             }
 
             int itemIndex = Y - 1;
             int dropDownWidth = openMenu.menuItems.Count == 0
                 ? 0
-                : openMenu.menuItems.Max(item => item.text.Length);
+                : openMenu.menuItems.Max(item => TuiText.VisualWidth(item.text));
             bool itemClicked = itemIndex >= 0 && itemIndex < openMenu.menuItems.Count &&
                 X >= openMenuStartX && X < openMenuStartX + dropDownWidth;
 
@@ -204,86 +205,103 @@ namespace BlazorTUI.TUI
 
         public void Render(IList<Row> rows)
         {
-            if (visible == true && rows != null && rows.Count > 0)
+            if (visible != true || rows == null || rows.Count == 0)
+                return;
+
+            Menu? mnuOpened = OpenedMenu();
+
+            int c = 0;
+            int m = 0;
+            for (int x = 0; x < rows[0].Cells.Count; x++)
             {
-                Menu? mnuOpened = OpenedMenu();
+                Color fore = foreColor;
+                Color background = backgroundColor;
+                Cell.TextDecoration td = Cell.TextDecoration.None;
 
-                int c = 0;
-                int m = 0;
-                for (int x = 0; x < rows[0].Cells.Count; x++)
+                string ch = " ";
+
+                if (m < menus.Count)
                 {
-                    Color fore = foreColor;
-                    Color background = backgroundColor;
-                    Cell.TextDecoration td = Cell.TextDecoration.None;
-
-                    string ch = " ";
-
-                    if (m < menus.Count)
+                    int menuWidth = TuiText.VisualWidth(menus[m].text);
+                    if (c < menuWidth)
                     {
-                        if (c < menus[m].text.Length)
+                        ch = TuiText.CellAt(menus[m].text, c);
+
+                        if (showShortCutkeys &&
+                            mnuOpened == null &&
+                            menus[m].shortCutKey != null &&
+                            ch.Length > 0 &&
+                            char.ToUpperInvariant(menus[m].shortCutKey!.Value) == char.ToUpperInvariant(ch[0]))
                         {
-                            ch = menus[m].text.Substring(c,1);  
-                            
-                            if (showShortCutkeys && mnuOpened == null && menus[m].shortCutKey != null && char.ToUpperInvariant(menus[m].shortCutKey!.Value) == char.ToUpperInvariant(ch[0]))
-                                    td = Cell.TextDecoration.UnderLine;
-
-                            if (menus[m].opended == true)
-                            {
-                                fore = backgroundColor;
-                                background = foreColor;
-
-                                if (c == 0)
-                                {
-                                    int maxLenght = (from p in menus[m].menuItems select p.text.Length).Max();
-                                    for (int y = 1; y <= menus[m].menuItems.Count; y++)
-                                    {
-                                        bool shortCutKeyShowed = false;
-                                        for (int x2 = 0; x2 < maxLenght; x2++)
-                                        {
-                                            if (menus[m].selectedItem == y)
-                                            {
-                                                rows[y].Cells[x2 + x].foreColor = fore;
-                                                rows[y].Cells[x2 + x].backgroundColor = background;
-                                            }
-                                            else
-                                            {
-                                                rows[y].Cells[x2 + x].foreColor = background;
-                                                rows[y].Cells[x2 + x].backgroundColor = fore;
-                                            }
-
-                                            rows[y].Cells[x2 + x].textDecoration = Cell.TextDecoration.None;
-
-                                            if (menus[m].menuItems[y - 1].menuItemType == MenuItem.MenuItemType.Separator)
-                                                rows[y].Cells[x2 + x].character = "─";
-                                            else if (x2 < menus[m].menuItems[y - 1].text.Length)
-                                                rows[y].Cells[x2 + x].character = menus[m].menuItems[y - 1].text.Substring(x2, 1);
-                                            else
-                                                rows[y].Cells[x2 + x].character = " ";
-
-                                            if (!shortCutKeyShowed && showShortCutkeys && menus[m].menuItems[y - 1].shortCutKey != null && char.ToUpperInvariant(menus[m].menuItems[y - 1].shortCutKey!.Value) == char.ToUpperInvariant(rows[y].Cells[x2 + x].character[0]))
-                                            {
-                                                rows[y].Cells[x2 + x].textDecoration = Cell.TextDecoration.UnderLine;
-                                                shortCutKeyShowed = true;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
+                            td = Cell.TextDecoration.UnderLine;
                         }
 
-                        c++;
-
-                        if (c >= menus[m].text.Length)
+                        if (menus[m].opended == true)
                         {
-                            c = 0;
-                            m++;
+                            fore = backgroundColor;
+                            background = foreColor;
+
+                            if (c == 0)
+                                RenderOpenMenu(rows, menus[m], x, fore, background);
                         }
                     }
 
-                    rows[0].Cells[x].foreColor = fore;
-                    rows[0].Cells[x].backgroundColor = background;
-                    rows[0].Cells[x].character = ch;
-                    rows[0].Cells[x].textDecoration = td;
+                    c++;
+
+                    if (c >= TuiText.VisualWidth(menus[m].text))
+                    {
+                        c = 0;
+                        m++;
+                    }
+                }
+
+                rows[0].Cells[x].foreColor = fore;
+                rows[0].Cells[x].backgroundColor = background;
+                rows[0].Cells[x].character = ch;
+                rows[0].Cells[x].textDecoration = td;
+            }
+        }
+
+        private void RenderOpenMenu(IList<Row> rows, Menu menu, int startX, Color fore, Color background)
+        {
+            if (menu.menuItems.Count == 0)
+                return;
+
+            int maxLength = menu.menuItems.Max(item => TuiText.VisualWidth(item.text));
+            for (int y = 1; y <= menu.menuItems.Count && y < rows.Count; y++)
+            {
+                bool shortCutKeyShowed = false;
+                for (int x2 = 0; x2 < maxLength && x2 + startX < rows[y].Cells.Count; x2++)
+                {
+                    Cell cell = rows[y].Cells[x2 + startX];
+                    if (menu.selectedItem == y)
+                    {
+                        cell.foreColor = fore;
+                        cell.backgroundColor = background;
+                    }
+                    else
+                    {
+                        cell.foreColor = background;
+                        cell.backgroundColor = fore;
+                    }
+
+                    cell.textDecoration = Cell.TextDecoration.None;
+                    MenuItem menuItem = menu.menuItems[y - 1];
+
+                    if (menuItem.menuItemType == MenuItem.MenuItemType.Separator)
+                        cell.character = "─";
+                    else
+                        cell.character = TuiText.CellAt(menuItem.text, x2);
+
+                    if (!shortCutKeyShowed &&
+                        showShortCutkeys &&
+                        menuItem.shortCutKey != null &&
+                        cell.character.Length > 0 &&
+                        char.ToUpperInvariant(menuItem.shortCutKey!.Value) == char.ToUpperInvariant(cell.character[0]))
+                    {
+                        cell.textDecoration = Cell.TextDecoration.UnderLine;
+                        shortCutKeyShowed = true;
+                    }
                 }
             }
         }

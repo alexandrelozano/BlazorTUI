@@ -1,4 +1,5 @@
 using System.Drawing;
+using BlazorTUI.Utils;
 
 namespace BlazorTUI.TUI
 {
@@ -56,7 +57,8 @@ namespace BlazorTUI.TUI
                 if (!HasSelection)
                     return "";
 
-                string selectedText = CanonicalText.Substring(SelectionStart, SelectionLength);
+                (int start, int end) = GetSelectionStringRange();
+                string selectedText = CanonicalText.Substring(start, end - start);
                 return selectedText.Replace("\n", Environment.NewLine, StringComparison.Ordinal);
             }
         }
@@ -96,7 +98,7 @@ namespace BlazorTUI.TUI
         {
             selectionAnchor = new TextPosition(0, 0);
             cursorY = (short)(text.Count - 1);
-            cursorX = (short)Math.Min(text[^1].Length, short.MaxValue);
+            cursorX = ToShortTextElementCount(text[^1]);
             EnsureCursorVisible();
         }
 
@@ -120,21 +122,23 @@ namespace BlazorTUI.TUI
             TextAreaState previousState = CaptureState();
             DeleteSelection();
             string currentText = CanonicalText;
-            int cursorOffset = GetOffset(CursorPosition);
+            int cursorOffset = GetStringOffset(CursorPosition);
             string candidate = currentText.Insert(cursorOffset, normalizedValue);
             int candidateCursorOffset = cursorOffset + normalizedValue.Length;
             List<string> candidateLines = candidate.Split('\n').ToList();
-            TextPosition candidateCursor = PositionFromOffset(candidateLines, candidateCursorOffset);
+            TextPosition candidateCursor = PositionFromStringOffset(candidateLines, candidateCursorOffset);
 
             int lineLimit = Math.Max(1, (int)maxLines);
             int widthLimit = Math.Max(0, (int)maxTextWidth);
             text = candidateLines
                 .Take(lineLimit)
-                .Select(line => line[..Math.Min(line.Length, widthLimit)])
+                .Select(line => TuiText.TruncateByVisualWidth(line, widthLimit))
                 .ToList();
+            if (text.Count == 0)
+                text.Add("");
 
             cursorY = (short)Math.Min(candidateCursor.Line, text.Count - 1);
-            cursorX = (short)Math.Min(candidateCursor.Column, text[cursorY].Length);
+            cursorX = (short)Math.Min(candidateCursor.Column, TuiText.TextElementCount(text[cursorY]));
             selectionAnchor = null;
             EnsureCursorVisible();
             RecordEdit(previousState);
@@ -187,7 +191,7 @@ namespace BlazorTUI.TUI
                 else if (Y + scrollY < text.Count)
                 {
                     cursorY = (short)(Y + scrollY);
-                    cursorX = (short)Math.Min(X + scrollX, text[cursorY].Length);
+                    cursorX = (short)TuiText.TextElementIndexFromVisualColumn(text[cursorY], X + scrollX);
                 }
 
                 EnsureCursorVisible();
@@ -213,7 +217,7 @@ namespace BlazorTUI.TUI
                     MoveCursor(new TextPosition(cursorY, 0), shiftKey);
                     break;
                 case "End":
-                    MoveCursor(new TextPosition(cursorY, text[cursorY].Length), shiftKey);
+                    MoveCursor(new TextPosition(cursorY, TuiText.TextElementCount(text[cursorY])), shiftKey);
                     break;
                 case "Tab":
                     handled = false;
@@ -245,7 +249,7 @@ namespace BlazorTUI.TUI
                     MoveVertically(1, shiftKey);
                     break;
                 default:
-                    if (key.Length == 1)
+                    if (TuiText.TextElementCount(key) == 1)
                         Paste(key);
                     break;
             }
@@ -275,8 +279,10 @@ namespace BlazorTUI.TUI
 
                     Cell cell = rows[rowIndex].Cells[columnIndex];
                     int textColumnIndex = n + scrollX;
+                    TuiText.TextCell textCell = TuiText.CellInfoAt(line, textColumnIndex);
                     bool selected = h < height - 1 && n < width - 1 && textLineIndex < text.Count &&
-                        textColumnIndex < line.Length && IsSelected(new TextPosition(textLineIndex, textColumnIndex));
+                        textCell.TextElementIndex.HasValue &&
+                        IsSelected(new TextPosition(textLineIndex, textCell.TextElementIndex.Value));
                     cell.foreColor = selected ? backgroundColor : foreColor;
                     cell.backgroundColor = selected ? foreColor : backgroundColor;
                     cell.textDecoration = Cell.TextDecoration.None;
@@ -298,10 +304,12 @@ namespace BlazorTUI.TUI
                     }
                     else
                     {
-                        character = textColumnIndex < line.Length ? line.Substring(textColumnIndex, 1) : " ";
+                        character = textCell.Character;
                     }
 
-                    if (Focus && h == cursorY - scrollY && n == cursorX - scrollX)
+                    if (Focus &&
+                        h == cursorY - scrollY &&
+                        n == TuiText.VisualWidth(text[cursorY], cursorX) - scrollX)
                     {
                         if (blinkCursor)
                             cell.textDecoration = Cell.TextDecoration.UnderLine;
@@ -321,7 +329,7 @@ namespace BlazorTUI.TUI
 
             if (cursorX > 0)
             {
-                text[cursorY] = text[cursorY].Remove(cursorX - 1, 1);
+                text[cursorY] = TuiText.RemoveTextElements(text[cursorY], cursorX - 1, 1);
                 cursorX--;
                 return;
             }
@@ -329,8 +337,8 @@ namespace BlazorTUI.TUI
             if (cursorY == 0)
                 return;
 
-            int previousLineLength = text[cursorY - 1].Length;
-            if (previousLineLength + text[cursorY].Length > maxTextWidth)
+            int previousLineLength = TuiText.TextElementCount(text[cursorY - 1]);
+            if (TuiText.VisualWidth(text[cursorY - 1]) + TuiText.VisualWidth(text[cursorY]) > maxTextWidth)
                 return;
 
             text[cursorY - 1] += text[cursorY];
@@ -344,13 +352,13 @@ namespace BlazorTUI.TUI
             if (DeleteSelection())
                 return;
 
-            if (cursorX < text[cursorY].Length)
+            if (cursorX < TuiText.TextElementCount(text[cursorY]))
             {
-                text[cursorY] = text[cursorY].Remove(cursorX, 1);
+                text[cursorY] = TuiText.RemoveTextElements(text[cursorY], cursorX, 1);
                 return;
             }
 
-            if (cursorY >= text.Count - 1 || text[cursorY].Length + text[cursorY + 1].Length > maxTextWidth)
+            if (cursorY >= text.Count - 1 || TuiText.VisualWidth(text[cursorY]) + TuiText.VisualWidth(text[cursorY + 1]) > maxTextWidth)
                 return;
 
             text[cursorY] += text[cursorY + 1];
@@ -362,10 +370,10 @@ namespace BlazorTUI.TUI
             if (!HasSelection)
                 return false;
 
-            (int start, int end) = GetSelectionRange();
+            (int start, int end) = GetSelectionStringRange();
             string remainingText = CanonicalText.Remove(start, end - start);
             text = remainingText.Split('\n').ToList();
-            TextPosition position = PositionFromOffset(text, start);
+            TextPosition position = PositionFromStringOffset(text, start);
             cursorY = (short)position.Line;
             cursorX = (short)position.Column;
             selectionAnchor = null;
@@ -388,9 +396,9 @@ namespace BlazorTUI.TUI
                 if (cursorX > 0)
                     target = new TextPosition(cursorY, (short)(cursorX - 1));
                 else if (cursorY > 0)
-                    target = new TextPosition(cursorY - 1, text[cursorY - 1].Length);
+                    target = new TextPosition(cursorY - 1, TuiText.TextElementCount(text[cursorY - 1]));
             }
-            else if (cursorX < text[cursorY].Length)
+            else if (cursorX < TuiText.TextElementCount(text[cursorY]))
             {
                 target = new TextPosition(cursorY, (short)(cursorX + 1));
             }
@@ -404,8 +412,9 @@ namespace BlazorTUI.TUI
 
         private void MoveVertically(int direction, bool extendSelection)
         {
+            int cursorVisualColumn = TuiText.VisualWidth(text[cursorY], cursorX);
             int targetLine = Math.Clamp(cursorY + direction, 0, text.Count - 1);
-            short targetColumn = (short)Math.Min(cursorX, text[targetLine].Length);
+            short targetColumn = (short)TuiText.TextElementIndexFromVisualColumn(text[targetLine], cursorVisualColumn);
             MoveCursor(new TextPosition((short)targetLine, targetColumn), extendSelection);
         }
 
@@ -417,7 +426,7 @@ namespace BlazorTUI.TUI
                 selectionAnchor = null;
 
             cursorY = (short)Math.Clamp(newPosition.Line, 0, text.Count - 1);
-            cursorX = (short)Math.Clamp(newPosition.Column, 0, text[cursorY].Length);
+            cursorX = (short)Math.Clamp(newPosition.Column, 0, TuiText.TextElementCount(text[cursorY]));
             if (selectionAnchor == CursorPosition)
                 selectionAnchor = null;
         }
@@ -466,6 +475,25 @@ namespace BlazorTUI.TUI
         {
             int offset = position.Column;
             for (int line = 0; line < position.Line; line++)
+                offset += TuiText.TextElementCount(text[line]) + 1;
+
+            return offset;
+        }
+
+        private (int Start, int End) GetSelectionStringRange()
+        {
+            int cursorOffset = GetStringOffset(CursorPosition);
+            if (!selectionAnchor.HasValue)
+                return (cursorOffset, cursorOffset);
+
+            int anchorOffset = GetStringOffset(selectionAnchor.Value);
+            return (Math.Min(anchorOffset, cursorOffset), Math.Max(anchorOffset, cursorOffset));
+        }
+
+        private int GetStringOffset(TextPosition position)
+        {
+            int offset = TuiText.GetStringIndexFromTextElementIndex(text[position.Line], position.Column);
+            for (int line = 0; line < position.Line; line++)
                 offset += text[line].Length + 1;
 
             return offset;
@@ -476,10 +504,11 @@ namespace BlazorTUI.TUI
             int visibleWidth = Math.Max(1, width - 1);
             int visibleHeight = Math.Max(1, height - 1);
 
-            if (cursorX < scrollX)
-                scrollX = cursorX;
-            else if (cursorX >= scrollX + visibleWidth)
-                scrollX = (short)(cursorX - visibleWidth + 1);
+            int cursorVisualColumn = TuiText.VisualWidth(text[cursorY], cursorX);
+            if (cursorVisualColumn < scrollX)
+                scrollX = (short)cursorVisualColumn;
+            else if (cursorVisualColumn >= scrollX + visibleWidth)
+                scrollX = (short)(cursorVisualColumn - visibleWidth + 1);
 
             if (cursorY < scrollY)
                 scrollY = cursorY;
@@ -495,14 +524,30 @@ namespace BlazorTUI.TUI
             int remaining = Math.Max(0, offset);
             for (int line = 0; line < lines.Count; line++)
             {
-                if (remaining <= lines[line].Length)
+                int lineTextElementCount = TuiText.TextElementCount(lines[line]);
+                if (remaining <= lineTextElementCount)
                     return new TextPosition(line, remaining);
+
+                remaining -= lineTextElementCount + 1;
+            }
+
+            int lastLine = lines.Count - 1;
+            return new TextPosition(lastLine, TuiText.TextElementCount(lines[lastLine]));
+        }
+
+        private static TextPosition PositionFromStringOffset(IReadOnlyList<string> lines, int offset)
+        {
+            int remaining = Math.Max(0, offset);
+            for (int line = 0; line < lines.Count; line++)
+            {
+                if (remaining <= lines[line].Length)
+                    return new TextPosition(line, TuiText.TextElementIndexFromStringIndex(lines[line], remaining));
 
                 remaining -= lines[line].Length + 1;
             }
 
             int lastLine = lines.Count - 1;
-            return new TextPosition(lastLine, lines[lastLine].Length);
+            return new TextPosition(lastLine, TuiText.TextElementCount(lines[lastLine]));
         }
 
         private static List<string> SplitLines(string value)
@@ -510,6 +555,9 @@ namespace BlazorTUI.TUI
 
         private static string NormalizeLineBreaks(string value)
             => value.Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n');
+
+        private static short ToShortTextElementCount(string value)
+            => (short)Math.Min(TuiText.TextElementCount(value), short.MaxValue);
 
         private readonly record struct TextPosition(int Line, int Column);
 

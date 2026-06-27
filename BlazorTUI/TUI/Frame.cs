@@ -1,4 +1,5 @@
 using System.Drawing;
+using BlazorTUI.Utils;
 
 namespace BlazorTUI.TUI
 {
@@ -146,10 +147,12 @@ namespace BlazorTUI.TUI
 
             if (!string.IsNullOrEmpty(title))
             {
-                for (int c = 0; c < title.Length; c++)
+                int titleWidth = Math.Min(TuiText.VisualWidth(title), width);
+                int titleStart = XI + ((width / 2) - (titleWidth / 2));
+                for (int c = 0; c < titleWidth; c++)
                 {
-                    Cell cell = rows[YI].Cells[XI + c + ((width / 2) - (title.Length / 2))];
-                    cell.character = title.Substring(c, 1);
+                    Cell cell = rows[YI].Cells[titleStart + c];
+                    cell.character = TuiText.CellAt(title, c);
 
                     if (borderStyle == BorderStyle.solid)
                     {

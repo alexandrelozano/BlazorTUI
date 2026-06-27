@@ -1,4 +1,5 @@
 using System.Drawing;
+using BlazorTUI.Utils;
 
 namespace BlazorTUI.TUI
 {
@@ -256,7 +257,7 @@ namespace BlazorTUI.TUI
                     AppendSearchText(" ");
                     return true;
                 default:
-                    if (key.Length == 1)
+                    if (TuiText.TextElementCount(key) == 1)
                     {
                         AppendSearchText(shiftKey ? key.ToUpperInvariant() : key);
                         return true;
@@ -322,10 +323,10 @@ namespace BlazorTUI.TUI
                     continue;
 
                 PrepareCell(cell, Focus ? BackgroundColor : ForeColor, Focus ? ForeColor : BackgroundColor);
-                string character = x < text.Length ? text.Substring(x, 1) : " ";
-                if (IsOpen && searchText.Length == 0 && x > 1 && x - 2 < placeholder.Length)
+                string character = TuiText.CellAt(text, x);
+                if (IsOpen && searchText.Length == 0 && x > 1 && x - 2 < TuiText.VisualWidth(placeholder))
                 {
-                    character = placeholder.Substring(x - 2, 1);
+                    character = TuiText.CellAt(placeholder, x - 2);
                     cell.ForeColor = ForeColor;
                     cell.BackgroundColor = BackgroundColor;
                 }
@@ -367,7 +368,7 @@ namespace BlazorTUI.TUI
                     highlighted ? ForeColor : BackgroundColor);
                 cell.Character = x == Width - 1
                     ? GetScrollCharacter(localY - 1, commandIndex)
-                    : x < text.Length ? text.Substring(x, 1) : " ";
+                    : TuiText.CellAt(text, x);
             }
         }
 
@@ -426,7 +427,7 @@ namespace BlazorTUI.TUI
             if (searchText.Length == 0)
                 return;
 
-            SetSearchText(searchText[..^1]);
+            SetSearchText(TuiText.RemoveTextElements(searchText, TuiText.TextElementCount(searchText) - 1, 1));
         }
 
         private void SetSearchText(string? value)

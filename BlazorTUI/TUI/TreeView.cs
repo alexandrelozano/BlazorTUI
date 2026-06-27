@@ -1,4 +1,5 @@
 using System.Drawing;
+using BlazorTUI.Utils;
 
 namespace BlazorTUI.TUI
 {
@@ -239,7 +240,7 @@ namespace BlazorTUI.TUI
                         highlighted ? ForeColor : BackgroundColor);
                     cell.Character = x == Width - 1
                         ? GetScrollCharacter(row, visibleNodes.Count)
-                        : x < content.Length ? content.Substring(x, 1) : " ";
+                        : TuiText.CellAt(content, x);
                 }
             }
         }

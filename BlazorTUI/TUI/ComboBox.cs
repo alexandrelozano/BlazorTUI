@@ -1,4 +1,5 @@
 using System.Drawing;
+using BlazorTUI.Utils;
 
 namespace BlazorTUI.TUI
 {
@@ -264,7 +265,7 @@ namespace BlazorTUI.TUI
                     0 => "[",
                     _ when x == Width - 2 => IsDropDownOpen ? "▲" : "▼",
                     _ when x == Width - 1 => "]",
-                    _ => x - 1 < text.Length ? text.Substring(x - 1, 1) : " "
+                    _ => TuiText.CellAt(text, x - 1)
                 };
             }
         }
@@ -289,7 +290,7 @@ namespace BlazorTUI.TUI
                         highlighted ? ForeColor : BackgroundColor);
                     cell.Character = x == Width - 1
                         ? GetScrollCharacter(row, visibleItemCount)
-                        : x < item.Length ? item.Substring(x, 1) : " ";
+                        : TuiText.CellAt(item, x);
                 }
             }
         }

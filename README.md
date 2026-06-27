@@ -579,6 +579,13 @@ Run `dotnet run --project SampleApp` from the repository root and open `/example
 
 ## Changelog
 
+### 0.8.9 — 2026-06-27
+
+- Added Unicode-aware text handling for combining characters, accented text, emoji, and double-width characters.
+- Updated text editing in `TextBox`, `PasswordBox`, and `TextArea` so cursor movement, selection, delete/backspace, paste clipping, and undo/redo state operate on text elements instead of UTF-16 code units.
+- Updated text rendering in common controls, menus, frames, dialogs, grids, breadcrumbs, status bars, and list-style controls to clip and align by visual cell width.
+- Added regression coverage for Unicode editing, selection, paste clipping, and cell rendering.
+
 ### 0.8.8 — 2026-06-26
 
 - Added `Breadcrumb`, `BreadcrumbItem`, typed selection-change events, and typed item-activation events.
