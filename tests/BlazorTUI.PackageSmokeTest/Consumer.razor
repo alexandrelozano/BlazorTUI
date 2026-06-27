@@ -19,8 +19,14 @@
             "name", "Alex", 2, 1, 10,
             System.Drawing.Color.White, System.Drawing.Color.Black)
         {
-            ThemeState = TuiThemeState.Error
+            ThemeState = TuiThemeState.Error,
+            IsRequired = true,
+            RequiredMessage = "Name required"
         };
+        input.ValidationRules.Add(
+            value => value is string text && text.Length >= 2,
+            "Name must contain at least two characters");
+        input.ValidationChanged += (_, args) => _ = args.Message;
         var password = new PasswordBox(
             "password", "secret", 2, 3, 10,
             System.Drawing.Color.White, System.Drawing.Color.Black);
@@ -152,6 +158,8 @@
         terminal.TopContainer.AddControl(new Label(
             "unicodeLabel", "Café 🙂 漢", 0, 21, 12,
             System.Drawing.Color.White, System.Drawing.Color.Black));
+        _ = terminal.Validate(focusFirstInvalid: false);
+        _ = terminal.GetInvalidControls();
         terminal.ApplyTheme(TuiTheme.Dark);
         _ = terminal.Theme.Resolve(TuiThemeRole.Input, TuiThemeState.Error);
         return terminal;

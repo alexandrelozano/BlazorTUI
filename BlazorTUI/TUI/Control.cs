@@ -5,6 +5,12 @@ namespace BlazorTUI.TUI
     public abstract class Control
     {
         private bool focus;
+        private bool isValid = true;
+        private string validationMessage = "";
+        private bool validationAppliedErrorColors;
+        private Color validationPreviousForeColor;
+        private Color validationPreviousBackgroundColor;
+        private TuiThemeState validationPreviousThemeState;
 
         public string name { get; set; } = "";
 
@@ -74,6 +80,28 @@ namespace BlazorTUI.TUI
 
         public TuiThemeState ThemeState { get; set; } = TuiThemeState.Normal;
 
+        public bool IsRequired { get; set; }
+
+        public string RequiredMessage { get; set; } = "This field is required.";
+
+        public bool IsValid => isValid;
+
+        public string ValidationMessage => validationMessage;
+
+        public bool HasValidationError => !isValid;
+
+        public TuiValidationRuleCollection ValidationRules { get; } = new();
+
+        public bool ShowValidationMessage { get; set; } = true;
+
+        public Color ValidationErrorForeColor { get; set; } = Color.White;
+
+        public Color ValidationErrorBackgroundColor { get; set; } = Color.DarkRed;
+
+        public Color ValidationMessageForeColor { get; set; } = Color.White;
+
+        public Color ValidationMessageBackgroundColor { get; set; } = Color.DarkRed;
+
         public Action<Control>? OnClick;
 
         public Action? OnFocus;
@@ -86,11 +114,44 @@ namespace BlazorTUI.TUI
 
         public event EventHandler? LostFocus;
 
+        public event EventHandler<TuiValidationChangedEventArgs>? ValidationChanged;
+
         public abstract void Render(IList<Row> rows);
 
         public virtual bool KeyDown(string key, bool shiftKey) => false;
 
         public virtual bool Click(short X, short Y) => false;
+
+        public virtual bool Validate()
+        {
+            if (!Visible)
+            {
+                ClearValidation();
+                return true;
+            }
+
+            object? value = GetValidationValue();
+            if (IsRequired && IsEmptyValidationValue(value))
+            {
+                SetValidationResult(false, RequiredMessage);
+                return false;
+            }
+
+            foreach (TuiValidationRule rule in ValidationRules)
+            {
+                if (!rule.IsValid(value))
+                {
+                    SetValidationResult(false, rule.Message);
+                    return false;
+                }
+            }
+
+            SetValidationResult(true, "");
+            return true;
+        }
+
+        public void ClearValidation()
+            => SetValidationResult(true, "");
 
         internal void NotifyClicked()
         {
@@ -102,6 +163,61 @@ namespace BlazorTUI.TUI
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(value);
             return value;
+        }
+
+        protected virtual object? GetValidationValue() => null;
+
+        protected virtual bool IsEmptyValidationValue(object? value)
+            => value switch
+            {
+                null => true,
+                string stringValue => string.IsNullOrWhiteSpace(stringValue),
+                bool boolValue => !boolValue,
+                System.Collections.ICollection collection => collection.Count == 0,
+                System.Collections.IEnumerable enumerable => !enumerable.Cast<object?>().Any(),
+                _ => false
+            };
+
+        private void SetValidationResult(bool valid, string message)
+        {
+            ArgumentNullException.ThrowIfNull(message);
+
+            bool changed = isValid != valid || validationMessage != message;
+            isValid = valid;
+            validationMessage = message;
+
+            if (valid)
+                RestoreValidationColors();
+            else
+                ApplyValidationColors();
+
+            if (changed)
+                ValidationChanged?.Invoke(this, new TuiValidationChangedEventArgs(isValid, validationMessage));
+        }
+
+        private void ApplyValidationColors()
+        {
+            if (validationAppliedErrorColors)
+                return;
+
+            validationPreviousForeColor = foreColor;
+            validationPreviousBackgroundColor = backgroundColor;
+            validationPreviousThemeState = ThemeState;
+            foreColor = ValidationErrorForeColor;
+            backgroundColor = ValidationErrorBackgroundColor;
+            ThemeState = TuiThemeState.Error;
+            validationAppliedErrorColors = true;
+        }
+
+        private void RestoreValidationColors()
+        {
+            if (!validationAppliedErrorColors)
+                return;
+
+            foreColor = validationPreviousForeColor;
+            backgroundColor = validationPreviousBackgroundColor;
+            ThemeState = validationPreviousThemeState;
+            validationAppliedErrorColors = false;
         }
     }
 }

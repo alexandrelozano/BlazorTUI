@@ -101,6 +101,16 @@ namespace BlazorTUI.TUI
                 dialogs.ElementAt(dialogs.Count - 1).SetFocus(name);
         }
 
+        public bool Validate(bool focusFirstInvalid = true)
+            => dialogs.Count == 0
+                ? topContainer.Validate(focusFirstInvalid)
+                : dialogs.ElementAt(dialogs.Count - 1).Validate(focusFirstInvalid);
+
+        public IReadOnlyList<Control> GetInvalidControls()
+            => dialogs.Count == 0
+                ? topContainer.GetInvalidControls()
+                : dialogs.ElementAt(dialogs.Count - 1).GetInvalidControls();
+
         public void KeyDown(string key, bool shiftKey)
         {
             ArgumentException.ThrowIfNullOrEmpty(key);

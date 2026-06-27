@@ -22,6 +22,7 @@ public class ExampleCatalogTests : BunitContext
 
         Assert.Contains("BLAZORTUI EXAMPLES", accessibleText);
         Assert.Contains("Controls and events", accessibleText);
+        Assert.Contains("Form validation", accessibleText);
         Assert.Contains("Dialogs and menus", accessibleText);
         Assert.Contains("Images", accessibleText);
         Assert.Contains("TabControl", accessibleText);
@@ -35,6 +36,7 @@ public class ExampleCatalogTests : BunitContext
 
     [Theory]
     [InlineData("controlsExample", "/examples/controls-events")]
+    [InlineData("validationExample", "/examples/form-validation")]
     [InlineData("dialogsExample", "/examples/dialogs-menus")]
     [InlineData("imagesExample", "/examples/images")]
     [InlineData("tabsExample", "/examples/tabs")]

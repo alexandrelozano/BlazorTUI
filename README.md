@@ -12,6 +12,7 @@ BlazorTUI is a Razor Class Library for building retro text user interfaces in Bl
 - Character-cell rendering with foreground and background colors.
 - Nested frames and split panels with relative coordinates and z-order.
 - Keyboard focus, `Tab`/`Shift+Tab` navigation, and mouse interaction.
+- Required fields, custom validation rules, inline error messages, and first-invalid focus.
 - Menu bars with shortcuts and keyboard navigation.
 - Modal dialogs and configurable message boxes.
 - Status bars for persistent messages, shortcuts, and context.
@@ -165,6 +166,37 @@ The recommended API follows standard .NET naming and event conventions:
 - Use PascalCase enum members such as `BorderStyle.Line` and `Frame.BorderStyle.Solid`.
 
 Lowercase members from earlier releases remain available in the `0.8.x` line for source and binary compatibility. New code should use the recommended members above.
+
+## Form validation
+
+Controls can validate required values and custom rules. Call `screen.Validate()` before saving or submitting; it validates the active dialog when one is open, otherwise it validates the main screen. All invalid controls keep their validation message, and the first focusable invalid control receives focus:
+
+```csharp
+var nameInput = new TextBox(
+    "nameInput", "", 14, 2, 24,
+    Color.Yellow, Color.Black)
+{
+    IsRequired = true,
+    RequiredMessage = "Name is required."
+};
+
+nameInput.ValidationRules.Add(
+    value => value is string text && text.Length >= 2,
+    "Use at least two characters.");
+
+saveButton.Clicked += (_, _) =>
+{
+    if (!screen.Validate())
+        return;
+
+    string submittedName = nameInput.Value;
+    _ = submittedName;
+};
+```
+
+Validation messages are rendered inline beside the control when there is room, or below it when the right side is full. Use `ShowValidationMessage`, `ValidationMessageForeColor`, and `ValidationMessageBackgroundColor` to control that display. Use `GetInvalidControls()` when application code needs to inspect the current invalid controls after validation.
+
+`TextBox`, `PasswordBox`, `TextArea`, `DateBox`, `TimeBox`, `NumericBox`, `CheckBox`, `RadioButton`, `ComboBox`, `RadioGroup`, `ListBox`, `TreeView`, `Slider`, and `ColorPicker` expose their current value to validation rules. For checkboxes and radio buttons, a required field means the value must be selected.
 
 ## Themes
 
@@ -596,7 +628,8 @@ The repository contains focused pages that can be run directly:
 
 | Example | Demonstrates |
 | --- | --- |
-| [Controls and events](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/ControlsAndEvents.razor) | Text and password input, combo-box and radio-group selection, command palette actions, checkbox state, callbacks, focus order, and status messages |
+| [Controls and events](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/ControlsAndEvents.razor) | Text and password input, validation, combo-box and radio-group selection, command palette actions, checkbox state, callbacks, focus order, and status messages |
+| [Form validation](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/FormValidation.razor) | Required fields, custom validation rules, inline error messages, and first-invalid focus |
 | [Dialogs and menus](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/DialogsAndMenus.razor) | Menu shortcuts, custom modal dialogs, and message boxes |
 | [Images](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/Images.razor) | Loading encoded image bytes into a `PictureBox` |
 | [TabControl](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/Tabs.razor) | Tab pages, nested controls, focus changes, mouse selection, and keyboard navigation |
@@ -619,6 +652,8 @@ Run `dotnet run --project SampleApp` from the repository root and open `/example
 - Added regression coverage for Unicode editing, selection, paste clipping, and cell rendering.
 - Added configurable keyboard shortcuts through `Screen.Shortcuts`, `TuiShortcutAction`, `TuiKeyGesture`, and `TuiShortcutMap`, including dynamic Blazor and JavaScript routing plus dynamic `aria-keyshortcuts`.
 - Added `Screen.DialogService` with task-based `ShowMessageAsync` and `ConfirmAsync` APIs that preserve modal dialog input and support cancellation.
+- Added form validation with required fields, custom rules, inline error messages, invalid styling, validation-change events, invalid-control inspection, and first-invalid focus.
+- Added a focused form-validation example page and updated the controls-and-events example and NuGet consumer validation to exercise the public validation API.
 
 ### 0.8.8 — 2026-06-26
 

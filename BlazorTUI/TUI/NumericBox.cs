@@ -153,5 +153,7 @@ namespace BlazorTUI.TUI
                 }
             }
         }
+
+        protected override object? GetValidationValue() => value;
     }
 }

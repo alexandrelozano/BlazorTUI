@@ -17,7 +17,7 @@
         screen = new Screen(60, 30);
 
         var frame = new Frame(
-            "formFrame", "CONTROLS AND EVENTS", 5, 4, 50, 22,
+            "formFrame", "CONTROLS AND EVENTS", 5, 4, 51, 22,
             Frame.BorderStyle.Line, Color.Yellow, Color.DarkBlue);
         screen.TopContainer.AddContainer(frame);
 
@@ -25,7 +25,11 @@
             "nameLabel", "Name:", 3, 3, 10, Color.White, Color.DarkBlue));
 
         nameInput = new TextBox(
-            "nameInput", "", 14, 3, 22, Color.Yellow, Color.Black);
+            "nameInput", "", 14, 3, 22, Color.Yellow, Color.Black)
+        {
+            IsRequired = true,
+            RequiredMessage = "Name required"
+        };
         nameInput.GotFocus += (_, _) => eventStatus.Value = "Name focused";
         nameInput.LostFocus += (_, _) => eventStatus.Value = "Name lost focus";
         frame.AddControl(nameInput);
@@ -112,6 +116,12 @@
 
     private void ShowGreeting()
     {
+        if (!screen.Validate())
+        {
+            eventStatus.Value = "Fix validation errors";
+            return;
+        }
+
         string name = string.IsNullOrWhiteSpace(nameInput.Value) ? "guest" : nameInput.Value;
         string suffix = includeDetails.Value ? " Details enabled." : "";
 

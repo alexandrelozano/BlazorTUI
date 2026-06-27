@@ -14,6 +14,7 @@
     private static readonly ExampleDestination[] Destinations =
     {
         new("controlsExample", "Controls and events", "Inputs and callbacks", "/examples/controls-events"),
+        new("validationExample", "Form validation", "Required fields", "/examples/form-validation"),
         new("dialogsExample", "Dialogs and menus", "Modal interactions", "/examples/dialogs-menus"),
         new("imagesExample", "Images", "PictureBox rendering", "/examples/images"),
         new("tabsExample", "TabControl", "Tabbed layouts", "/examples/tabs"),
@@ -32,7 +33,7 @@
         screen = new Screen(60, 30);
 
         var frame = new Frame(
-            "examplesFrame", "BLAZORTUI EXAMPLES", 3, 3, 54, 26,
+            "examplesFrame", "BLAZORTUI EXAMPLES", 3, 3, 54, 27,
             Frame.BorderStyle.Line, Color.Yellow, Color.DarkBlue);
         screen.TopContainer.AddContainer(frame);
 
@@ -43,7 +44,7 @@
         for (int index = 0; index < Destinations.Length; index++)
         {
             ExampleDestination destination = Destinations[index];
-            short row = (short)(5 + index * 2);
+            short row = (short)(4 + index * 2);
             var button = new Button(
                 destination.ControlName, destination.Title,
                 3, row, 23, Color.Yellow, Color.Black);
@@ -57,7 +58,7 @@
 
         frame.AddControl(new Label(
             "catalogFooter", "Mouse clicks are also supported.",
-            3, 24, 36, Color.White, Color.DarkBlue));
+            3, 25, 36, Color.White, Color.DarkBlue));
 
         screen.SetFocus(Destinations[0].ControlName);
     }

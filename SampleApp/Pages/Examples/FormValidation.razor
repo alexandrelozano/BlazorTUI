@@ -1,0 +1,126 @@
+@page "/examples/form-validation"
+@using global::BlazorTUI.TUI
+@using Color = System.Drawing.Color
+
+<PageTitle>Form validation example</PageTitle>
+
+<BlazorTUI.BlazorTUI
+    screen="@screen"
+    AriaLabel="Form validation example"
+    AriaDescription="Submit the form to see required fields, custom rules, inline messages, and first invalid focus." />
+
+@code {
+    private Screen screen = null!;
+    private TextBox nameInput = null!;
+    private TextBox emailInput = null!;
+    private TextBox ageInput = null!;
+    private CheckBox termsInput = null!;
+    private StatusBar status = null!;
+
+    protected override void OnInitialized()
+    {
+        screen = new Screen(60, 30);
+
+        var frame = new Frame(
+            "validationFrame", "FORM VALIDATION", 4, 3, 51, 24,
+            Frame.BorderStyle.Line, Color.Yellow, Color.DarkBlue);
+        screen.TopContainer.AddContainer(frame);
+
+        frame.AddControl(new Label(
+            "instructions", "Submit to validate. Errors focus the first invalid field.",
+            3, 2, 45, Color.White, Color.DarkBlue));
+
+        frame.AddControl(new Label(
+            "nameLabel", "Name:", 3, 5, 11, Color.White, Color.DarkBlue));
+        nameInput = new TextBox(
+            "nameInput", "", 15, 5, 20, Color.Yellow, Color.Black)
+        {
+            IsRequired = true,
+            RequiredMessage = "Name required"
+        };
+        frame.AddControl(nameInput);
+
+        frame.AddControl(new Label(
+            "emailLabel", "Email:", 3, 8, 11, Color.White, Color.DarkBlue));
+        emailInput = new TextBox(
+            "emailInput", "", 15, 8, 20, Color.Yellow, Color.Black)
+        {
+            IsRequired = true,
+            RequiredMessage = "Email required"
+        };
+        emailInput.ValidationRules.Add(
+            value => value is string text && text.Contains('@', StringComparison.Ordinal),
+            "Invalid email");
+        frame.AddControl(emailInput);
+
+        frame.AddControl(new Label(
+            "ageLabel", "Age:", 3, 11, 11, Color.White, Color.DarkBlue));
+        ageInput = new TextBox(
+            "ageInput", "", 15, 11, 20, Color.Yellow, Color.Black)
+        {
+            IsRequired = true,
+            RequiredMessage = "Age required"
+        };
+        ageInput.ValidationRules.Add(
+            value => value is string text &&
+                int.TryParse(text, out int age) &&
+                age >= 18,
+            "Must be adult");
+        frame.AddControl(ageInput);
+
+        termsInput = new CheckBox(
+            "termsInput", "Accept terms", 15, 14, 20,
+            Color.Yellow, Color.DarkBlue)
+        {
+            IsRequired = true,
+            RequiredMessage = "Accept terms"
+        };
+        frame.AddControl(termsInput);
+
+        var submitButton = new Button(
+            "submitButton", "Submit", 15, 17, 12, Color.White, Color.DarkGreen);
+        submitButton.Clicked += (_, _) => SubmitForm();
+        frame.AddControl(submitButton);
+
+        var clearButton = new Button(
+            "clearButton", "Clear", 29, 17, 10, Color.White, Color.DarkGreen);
+        clearButton.Clicked += (_, _) => ClearForm();
+        frame.AddControl(clearButton);
+
+        status = new StatusBar(
+            "validationStatus", "Ready", 2, 21, 47, Color.Black, Color.Cyan)
+        {
+            Separator = "  "
+        };
+        status.AddItem("tabHint", "Tab focus");
+        status.AddItem("submitHint", "Enter submit");
+        frame.AddControl(status);
+
+        screen.SetFocus("nameInput");
+    }
+
+    private void SubmitForm()
+    {
+        if (!screen.Validate())
+        {
+            status.Value = "Fix validation errors";
+            return;
+        }
+
+        status.Value = $"Valid: {nameInput.Value}";
+    }
+
+    private void ClearForm()
+    {
+        nameInput.Value = "";
+        emailInput.Value = "";
+        ageInput.Value = "";
+        termsInput.Value = false;
+        nameInput.ClearValidation();
+        emailInput.ClearValidation();
+        ageInput.ClearValidation();
+        termsInput.ClearValidation();
+        status.Value = "Ready";
+        screen.SetFocus("nameInput");
+    }
+}

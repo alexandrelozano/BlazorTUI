@@ -12,6 +12,8 @@ namespace BlazorTUI.TUI
 
         public bool Value { get => value; set => this.value = value; }
 
+        protected override object? GetValidationValue() => value;
+
         public RadioButton(string name, string text, short X, short Y, short width, Color forecolor, Color backgroundcolor, Action OnClick, bool value)
         {
             this.Name = name;

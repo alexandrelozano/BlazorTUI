@@ -251,6 +251,8 @@ namespace BlazorTUI.TUI
         void IPopupControl.ClosePopup()
             => CloseDropDown();
 
+        protected override object? GetValidationValue() => SelectedItem;
+
         private void DrawClosedControl(IList<Row> rows)
         {
             string text = SelectedItem ?? string.Empty;

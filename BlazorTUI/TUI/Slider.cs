@@ -231,6 +231,8 @@ namespace BlazorTUI.TUI
             }
         }
 
+        protected override object? GetValidationValue() => value;
+
         private bool ChangeValueBy(int amount)
         {
             long candidate = (long)value + amount;

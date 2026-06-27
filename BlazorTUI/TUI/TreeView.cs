@@ -245,6 +245,8 @@ namespace BlazorTUI.TUI
             }
         }
 
+        protected override object? GetValidationValue() => selectedNode;
+
         internal void RegisterSubtree(TreeNode node)
         {
             TreeNode[] subtree = node.EnumerateSubtree().ToArray();

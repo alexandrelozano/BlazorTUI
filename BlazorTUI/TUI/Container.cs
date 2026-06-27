@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
+using BlazorTUI.Utils;
 
 namespace BlazorTUI.TUI
 {
@@ -228,6 +229,25 @@ namespace BlazorTUI.TUI
             }
         }
 
+        public virtual bool Validate(bool focusFirstInvalid = true)
+        {
+            List<Control> invalidControls = new();
+            ValidateInto(invalidControls);
+
+            Control? firstFocusableInvalidControl = invalidControls.FirstOrDefault(control => control.TabStop);
+            if (focusFirstInvalid && firstFocusableInvalidControl is not null)
+                TopContainer().SetFocus(firstFocusableInvalidControl.Name);
+
+            return invalidControls.Count == 0;
+        }
+
+        public IReadOnlyList<Control> GetInvalidControls()
+        {
+            List<Control> invalidControls = new();
+            AddInvalidControls(invalidControls);
+            return invalidControls;
+        }
+
         private bool TryClickOpenPopup(short X, short Y)
         {
             foreach (Control control in controls.OrderByDescending(control => control.ZOrder))
@@ -405,6 +425,7 @@ namespace BlazorTUI.TUI
             foreach (Control control in (from c in controls orderby c.ZOrder select c))
             {
                 control.Render(rows);
+                RenderValidationMessage(rows, control, clipBounds);
             }
 
             foreach (Container container in (from c in containers orderby c.ZOrder select c))
@@ -417,6 +438,83 @@ namespace BlazorTUI.TUI
 
             if (snapshots is not null)
                 RestoreCellsOutsideClip(rows, snapshots, clipBounds);
+        }
+
+        private void ValidateInto(List<Control> invalidControls)
+        {
+            foreach (Control control in controls)
+            {
+                if (control.Visible && !control.Validate())
+                    invalidControls.Add(control);
+            }
+
+            foreach (Container container in containers.Where(container => container.Visible))
+                container.ValidateInto(invalidControls);
+        }
+
+        private void AddInvalidControls(List<Control> invalidControls)
+        {
+            foreach (Control control in controls)
+            {
+                if (control.Visible && !control.IsValid)
+                    invalidControls.Add(control);
+            }
+
+            foreach (Container container in containers.Where(container => container.Visible))
+                container.AddInvalidControls(invalidControls);
+        }
+
+        private void RenderValidationMessage(IList<Row> rows, Control control, ClipBounds clipBounds)
+        {
+            if (!control.Visible ||
+                !control.ShowValidationMessage ||
+                control.IsValid ||
+                string.IsNullOrEmpty(control.ValidationMessage))
+            {
+                return;
+            }
+
+            int localMessageX = control.X + control.Width + 1;
+            int localMessageY = control.Y;
+            int messageX = XOffset() + localMessageX;
+            int messageY = YOffset() + localMessageY;
+
+            if (messageX >= clipBounds.Right)
+            {
+                localMessageX = control.X;
+                localMessageY = control.Y + control.Height;
+                messageX = XOffset() + localMessageX;
+                messageY = YOffset() + localMessageY;
+            }
+
+            int availableWidth = clipBounds.Right - messageX;
+            if (availableWidth <= 0 || messageY < clipBounds.Top || messageY >= clipBounds.Bottom)
+                return;
+
+            string message = TuiText.TruncateByVisualWidth(control.ValidationMessage, availableWidth);
+            int messageWidth = TuiText.VisualWidth(message);
+            for (int x = 0; x < messageWidth; x++)
+            {
+                int cellX = messageX + x;
+                if (!clipBounds.Contains(cellX, messageY) ||
+                    messageY < 0 ||
+                    messageY >= rows.Count ||
+                    cellX < 0 ||
+                    cellX >= rows[messageY].Cells.Count)
+                {
+                    continue;
+                }
+
+                Cell cell = rows[messageY].Cells[cellX];
+                cell.ForeColor = control.ValidationMessageForeColor;
+                cell.BackgroundColor = control.ValidationMessageBackgroundColor;
+                cell.Decoration = Cell.TextDecoration.None;
+                cell.Character = TuiText.CellAt(message, x);
+                cell.IsVisible = true;
+                cell.BackgroundImage = "";
+                cell.ScaleX = 1;
+                cell.ScaleY = 1;
+            }
         }
 
         private ClipBounds GetEffectiveClipBounds(IList<Row> rows)
@@ -489,13 +587,13 @@ namespace BlazorTUI.TUI
                 Bottom = bottom;
             }
 
-            private int Left { get; }
+            public int Left { get; }
 
-            private int Top { get; }
+            public int Top { get; }
 
-            private int Right { get; }
+            public int Right { get; }
 
-            private int Bottom { get; }
+            public int Bottom { get; }
 
             public bool Contains(int x, int y)
                 => x >= Left && x < Right && y >= Top && y < Bottom;

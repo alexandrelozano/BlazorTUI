@@ -247,6 +247,8 @@ namespace BlazorTUI.TUI
             }
         }
 
+        protected override object? GetValidationValue() => value;
+
         private bool DeleteSelection()
         {
             if (!HasSelection)

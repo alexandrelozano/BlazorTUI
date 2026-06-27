@@ -236,6 +236,8 @@ namespace BlazorTUI.TUI
                 RenderHorizontal(rows);
         }
 
+        protected override object? GetValidationValue() => SelectedValue ?? SelectedItem;
+
         private bool RemoveOptionAt(int index)
         {
             int nextSelectedIndex = selectedIndex;

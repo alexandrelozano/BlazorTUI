@@ -47,6 +47,7 @@ public class SampleAppSmokeTests : IClassFixture<WebApplicationFactory<Program>>
 
     [Theory]
     [InlineData("/examples/controls-events", "Controls and events example")]
+    [InlineData("/examples/form-validation", "Form validation example")]
     [InlineData("/examples/dialogs-menus", "Dialogs and menus example")]
     [InlineData("/examples/images", "Images example")]
     [InlineData("/examples/tabs", "TabControl example")]
