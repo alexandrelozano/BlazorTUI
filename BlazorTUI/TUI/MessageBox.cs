@@ -24,6 +24,8 @@ namespace BlazorTUI.TUI
 
         private Dialog dialog { get; set; }
 
+        private bool completed;
+
         public enum Result
         {
             OK,
@@ -40,6 +42,8 @@ namespace BlazorTUI.TUI
         public Result result { get; set; }  
 
         public Result DialogResult => result;
+
+        public event EventHandler<MessageBoxClosedEventArgs>? Closed;
 
         private Button defaultButton { get; set; }  
 
@@ -161,53 +165,39 @@ namespace BlazorTUI.TUI
             screen.SetFocus(defaultButton.name);
         }
 
-        private void bttOk_OnClick(Control sender)
-        {
-            dialog.Close();
+        public void Close(Result result = Result.Cancel)
+            => Complete(result);
 
-            result = Result.OK;
-        }
+        private void bttOk_OnClick(Control sender)
+            => Complete(Result.OK);
 
         private void bttCancel_OnClick(Control sender)
-        {
-            dialog.Close();
-
-            result = Result.Cancel;
-        }
+            => Complete(Result.Cancel);
 
         private void bttYes_OnClick(Control sender)
-        {
-            dialog.Close();
-
-            result = Result.Yes;
-        }
+            => Complete(Result.Yes);
 
         private void bttNo_OnClick(Control sender)
-        {
-            dialog.Close();
-
-            result = Result.No;
-        }
+            => Complete(Result.No);
 
         private void bttRetry_OnClick(Control sender)
-        {
-            dialog.Close();
-
-            result = Result.Retry;
-        }
+            => Complete(Result.Retry);
 
         private void bttIgnore_OnClick(Control sender)
-        {
-            dialog.Close();
-
-            result = Result.Ignore;
-        }
+            => Complete(Result.Ignore);
 
         private void bttAbort_OnClick(Control sender)
-        {
-            dialog.Close();
+            => Complete(Result.Abort);
 
-            result = Result.Abort;
+        private void Complete(Result selectedResult)
+        {
+            if (completed)
+                return;
+
+            completed = true;
+            result = selectedResult;
+            dialog.Close();
+            Closed?.Invoke(this, new MessageBoxClosedEventArgs(result));
         }
     }
 }

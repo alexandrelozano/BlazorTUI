@@ -156,4 +156,7 @@
         _ = terminal.Theme.Resolve(TuiThemeRole.Input, TuiThemeState.Error);
         return terminal;
     }
+
+    private static Task<bool> ConfirmWithDialogServiceAsync(Screen terminal)
+        => terminal.DialogService.ConfirmAsync("Continue?", "Confirm");
 }

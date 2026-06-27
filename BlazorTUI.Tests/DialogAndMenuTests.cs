@@ -48,6 +48,75 @@ public class DialogAndMenuTests
     }
 
     [Fact]
+    public async Task DialogServiceShowMessageAsyncCompletesWhenButtonIsActivated()
+    {
+        var screen = new Screen(40, 20);
+        Task<MessageBox.Result> resultTask = screen.DialogService.ShowMessageAsync(
+            "Saved",
+            "Result",
+            MessageBox.Buttons.OKCancel);
+
+        Dialog dialog = Assert.Single(screen.Dialogs);
+        Button okButton = dialog.Controls.OfType<Button>().First(button => button.Text == "Ok");
+
+        Assert.False(resultTask.IsCompleted);
+        okButton.Click(0, 0);
+
+        Assert.Equal(MessageBox.Result.OK, await resultTask);
+        Assert.Empty(screen.Dialogs);
+    }
+
+    [Fact]
+    public async Task DialogServiceConfirmAsyncReturnsFalseForNo()
+    {
+        var screen = new Screen(40, 20);
+        Task<bool> resultTask = screen.DialogService.ConfirmAsync("Continue?", "Confirm");
+
+        Dialog dialog = Assert.Single(screen.Dialogs);
+        Button noButton = dialog.Controls.OfType<Button>().First(button => button.Text == "No");
+        noButton.Click(0, 0);
+
+        Assert.False(await resultTask);
+        Assert.Empty(screen.Dialogs);
+    }
+
+    [Fact]
+    public async Task DialogServicePreservesModalKeyboardRouting()
+    {
+        var screen = new Screen(40, 20);
+        var underlyingInput = new TextBox("underlying", "", 0, 0, 10, Color.White, Color.Black);
+        screen.TopContainer.AddControl(underlyingInput);
+        screen.SetFocus("underlying");
+
+        Task<MessageBox.Result> resultTask = screen.DialogService.ShowMessageAsync("Saved", "Result");
+
+        screen.KeyDown("a", false);
+        screen.KeyDown("Enter", false);
+
+        Assert.Equal("", underlyingInput.Value);
+        Assert.Equal(MessageBox.Result.OK, await resultTask);
+        Assert.Empty(screen.Dialogs);
+    }
+
+    [Fact]
+    public async Task DialogServiceCancellationClosesDialogAndCancelsTask()
+    {
+        var screen = new Screen(40, 20);
+        using var cancellation = new CancellationTokenSource();
+        Task<MessageBox.Result> resultTask = screen.DialogService.ShowMessageAsync(
+            "Saved",
+            "Result",
+            cancellationToken: cancellation.Token);
+
+        Assert.Single(screen.Dialogs);
+
+        cancellation.Cancel();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => resultTask);
+        Assert.Empty(screen.Dialogs);
+    }
+
+    [Fact]
     public void MenuCanBeOpenedAndActivatedFromKeyboard()
     {
         var screen = new Screen(20, 10);

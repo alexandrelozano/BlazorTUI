@@ -253,6 +253,23 @@ Each text control retains its latest 100 text-changing operations. Undo and redo
 
 Pasting into a `TextBox` converts line breaks to spaces and respects the control width. `TextArea` preserves line breaks and applies its `MaxTextWidth` and `MaxLines` limits.
 
+## Dialog service
+
+Use `screen.DialogService` when application logic should wait for a modal choice without wiring button callbacks manually:
+
+```csharp
+MessageBox.Result result = await screen.DialogService.ShowMessageAsync(
+    "Order saved.",
+    "Result",
+    MessageBox.Buttons.OKOnly);
+
+bool confirmed = await screen.DialogService.ConfirmAsync(
+    "Submit this order?",
+    "Confirm");
+```
+
+`ShowMessageAsync` returns the selected `MessageBox.Result`. `ConfirmAsync` returns `true` for confirmation and `false` for rejection. The dialog is still modal: while it is open, keyboard and mouse input are routed to the top dialog until it closes. Both APIs accept an optional `CancellationToken`; cancellation closes the dialog and cancels the returned task.
+
 ## Command palettes
 
 `CommandPalette` provides a searchable list of actions that users can open with the configured command-palette shortcut. By default this is `F2`, with `Ctrl+K` and `Command+K` also supported when the browser does not reserve those shortcuts:
@@ -601,6 +618,7 @@ Run `dotnet run --project SampleApp` from the repository root and open `/example
 - Updated text rendering in common controls, menus, frames, dialogs, grids, breadcrumbs, status bars, and list-style controls to clip and align by visual cell width.
 - Added regression coverage for Unicode editing, selection, paste clipping, and cell rendering.
 - Added configurable keyboard shortcuts through `Screen.Shortcuts`, `TuiShortcutAction`, `TuiKeyGesture`, and `TuiShortcutMap`, including dynamic Blazor and JavaScript routing plus dynamic `aria-keyshortcuts`.
+- Added `Screen.DialogService` with task-based `ShowMessageAsync` and `ConfirmAsync` APIs that preserve modal dialog input and support cancellation.
 
 ### 0.8.8 — 2026-06-26
 

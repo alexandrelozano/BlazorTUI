@@ -35,6 +35,8 @@ namespace BlazorTUI.TUI
 
         public TuiShortcutMap Shortcuts { get; } = TuiShortcutMap.CreateDefault();
 
+        public TuiDialogService DialogService { get; }
+
         public long Revision { get; private set; }
 
         public Screen(short width, short height)
@@ -72,6 +74,7 @@ namespace BlazorTUI.TUI
             }
 
             Theme = TuiTheme.Classic;
+            DialogService = new TuiDialogService(this);
 
             topContainer = new Frame("TopContainer", "", 0, 0, width, height, Frame.BorderStyle.none, Theme.Border.ForeColor, Theme.Surface.BackgroundColor);
 
