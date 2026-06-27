@@ -8,6 +8,10 @@
     private static Screen CreateTerminal()
     {
         var terminal = new Screen(30, 22);
+        terminal.Shortcuts.SetBindings(TuiShortcutAction.ToggleCommandPalette, "F9", "Control+J");
+        terminal.Shortcuts.SetBindings(TuiShortcutAction.SelectNextTab, "Alt+N");
+        terminal.Shortcuts.SetBindings(TuiShortcutAction.SelectPreviousTab, "Alt+P");
+        terminal.Shortcuts.AddBinding(TuiShortcutAction.ControlOpen, "Control+O");
         var button = new Button(
             "save", "Save", 2, 2, 8,
             System.Drawing.Color.White, System.Drawing.Color.DarkGreen);

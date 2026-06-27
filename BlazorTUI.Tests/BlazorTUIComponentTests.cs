@@ -313,7 +313,7 @@ public class BlazorTUIComponentTests : BunitContext
         Assert.Contains("F2", grid.GetAttribute("aria-keyshortcuts"));
         Assert.Contains("Control+K", grid.GetAttribute("aria-keyshortcuts"));
         Assert.Contains("Meta+K", grid.GetAttribute("aria-keyshortcuts"));
-        Assert.Contains("F2 to open a command palette", component.Markup);
+        Assert.Contains("F2 or Control+K or Command+K to open a command palette", component.Markup);
         Assert.Contains("Command+K", component.Markup);
 
         grid.KeyDown(new KeyboardEventArgs { Key = "F2" });
@@ -321,6 +321,90 @@ public class BlazorTUIComponentTests : BunitContext
         Assert.True(palette.IsOpen);
         Assert.Contains("Command palette opened: Command", component.Find("[role=status]").TextContent);
         Assert.Contains("Build", component.Find("pre.blazortui-visually-hidden").TextContent);
+    }
+
+    [Fact]
+    public void ComponentUsesConfiguredCommandPaletteShortcut()
+    {
+        var screen = new Screen(30, 8);
+        screen.Shortcuts.SetBindings(TuiShortcutAction.ToggleCommandPalette, "F9");
+        var palette = new CommandPalette(
+            "commands",
+            new[] { new CommandPaletteItem("build", "Build") },
+            1, 1, 20,
+            Color.White, Color.Black);
+        screen.TopContainer.AddControl(palette);
+
+        var component = Render<global::BlazorTUI.BlazorTUI>(parameters =>
+            parameters.Add(instance => instance.screen, screen));
+
+        var grid = component.Find(".gridfs");
+        Assert.Contains("F9", grid.GetAttribute("aria-keyshortcuts"));
+        Assert.DoesNotContain("Control+K", grid.GetAttribute("aria-keyshortcuts"));
+
+        grid.KeyDown(new KeyboardEventArgs { Key = "F2" });
+        Assert.False(palette.IsOpen);
+
+        grid.KeyDown(new KeyboardEventArgs { Key = "F9" });
+        Assert.True(palette.IsOpen);
+        Assert.Contains("F9 to open a command palette", component.Markup);
+    }
+
+    [Fact]
+    public async Task ComponentUsesConfiguredModifiedTabShortcut()
+    {
+        var screen = new Screen(30, 12);
+        screen.Shortcuts.SetBindings(TuiShortcutAction.SelectNextTab, "Alt+N");
+        screen.Shortcuts.SetBindings(TuiShortcutAction.SelectPreviousTab, "Alt+P");
+        var tabs = new TabControl("tabs", 1, 1, 26, 9, Color.White, Color.Black);
+        screen.TopContainer.AddContainer(tabs);
+        TabPage first = tabs.AddTab("firstTab", "First");
+        TabPage second = tabs.AddTab("secondTab", "Second");
+        first.AddControl(new TextBox("firstInput", "", 1, 1, 8, Color.White, Color.Black));
+        second.AddControl(new TextBox("secondInput", "", 1, 1, 8, Color.White, Color.Black));
+        screen.SetFocus("firstInput");
+
+        var component = Render<global::BlazorTUI.BlazorTUI>(parameters =>
+            parameters.Add(instance => instance.screen, screen));
+        var grid = component.Find(".gridfs");
+
+        grid.KeyDown(new KeyboardEventArgs { Key = "n", AltKey = true });
+        Assert.Equal(0, tabs.SelectedIndex);
+
+        await component.InvokeAsync(() => component.Instance.HandleShortcut(nameof(TuiShortcutAction.SelectNextTab)));
+        Assert.Equal(1, tabs.SelectedIndex);
+
+        grid.KeyDown(new KeyboardEventArgs { Key = "p", AltKey = true });
+        Assert.Equal(1, tabs.SelectedIndex);
+
+        await component.InvokeAsync(() => component.Instance.HandleShortcut(nameof(TuiShortcutAction.SelectPreviousTab)));
+        Assert.Equal(0, tabs.SelectedIndex);
+        Assert.Contains("Alt+N", grid.GetAttribute("aria-keyshortcuts"));
+    }
+
+    [Fact]
+    public async Task ComponentUsesConfiguredClipboardShortcut()
+    {
+        var screen = new Screen(12, 4);
+        screen.Shortcuts.SetBindings(TuiShortcutAction.SelectAll, "Control+E");
+        var textBox = new TextBox("name", "Alex", 0, 0, 8, Color.White, Color.Black);
+        screen.TopContainer.AddControl(textBox);
+        screen.SetFocus("name");
+
+        var component = Render<global::BlazorTUI.BlazorTUI>(parameters =>
+            parameters.Add(instance => instance.screen, screen));
+        var grid = component.Find(".gridfs");
+
+        grid.KeyDown(new KeyboardEventArgs { Key = "a", CtrlKey = true });
+        Assert.False(textBox.HasSelection);
+
+        grid.KeyDown(new KeyboardEventArgs { Key = "e", CtrlKey = true });
+        Assert.False(textBox.HasSelection);
+
+        await component.InvokeAsync(() => component.Instance.HandleShortcut(nameof(TuiShortcutAction.SelectAll)));
+        Assert.True(textBox.HasSelection);
+        Assert.Equal("Alex", textBox.SelectedText);
+        Assert.Contains("Control+E", grid.GetAttribute("aria-keyshortcuts"));
     }
 
     [Fact]

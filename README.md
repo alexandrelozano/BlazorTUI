@@ -234,13 +234,28 @@ The component exposes the terminal as a labelled interactive region and provides
 
 Clipboard and edit-history shortcuts are intercepted only while a compatible `TextBox` or `TextArea` has focus. Other browser and assistive-technology shortcuts that use `Ctrl`, `Command`, or modified `Alt` combinations remain available to the browser. Clipboard access follows browser security and permission rules; use HTTPS outside local development.
 
+Shortcuts are configurable through `screen.Shortcuts`. Use `TuiKeyGesture.Parse` or shortcut strings to replace or add bindings:
+
+```csharp
+screen.Shortcuts.SetBindings(
+    TuiShortcutAction.ToggleCommandPalette,
+    "F9",
+    "Control+J");
+
+screen.Shortcuts.SetBindings(TuiShortcutAction.SelectNextTab, "Alt+N");
+screen.Shortcuts.SetBindings(TuiShortcutAction.SelectPreviousTab, "Alt+P");
+screen.Shortcuts.AddBinding(TuiShortcutAction.ControlOpen, "Control+O");
+```
+
+Configurable actions cover screen navigation, menu navigation, tab switching, command palette activation, common control actions, clipboard operations, and undo/redo. If a shortcut is removed from `screen.Shortcuts`, it is also removed from the component's advertised `aria-keyshortcuts` and from the JavaScript interception layer.
+
 Each text control retains its latest 100 text-changing operations. Undo and redo restore the text, cursor, selection, and `TextArea` scroll position. Assigning `Value` or calling `ClearHistory()` starts a new history.
 
 Pasting into a `TextBox` converts line breaks to spaces and respects the control width. `TextArea` preserves line breaks and applies its `MaxTextWidth` and `MaxLines` limits.
 
 ## Command palettes
 
-`CommandPalette` provides a searchable list of actions that users can open with `F2`. `Ctrl+K` and `Command+K` are also supported when the browser does not reserve those shortcuts:
+`CommandPalette` provides a searchable list of actions that users can open with the configured command-palette shortcut. By default this is `F2`, with `Ctrl+K` and `Command+K` also supported when the browser does not reserve those shortcuts:
 
 ```csharp
 var commands = new CommandPalette(
@@ -585,6 +600,7 @@ Run `dotnet run --project SampleApp` from the repository root and open `/example
 - Updated text editing in `TextBox`, `PasswordBox`, and `TextArea` so cursor movement, selection, delete/backspace, paste clipping, and undo/redo state operate on text elements instead of UTF-16 code units.
 - Updated text rendering in common controls, menus, frames, dialogs, grids, breadcrumbs, status bars, and list-style controls to clip and align by visual cell width.
 - Added regression coverage for Unicode editing, selection, paste clipping, and cell rendering.
+- Added configurable keyboard shortcuts through `Screen.Shortcuts`, `TuiShortcutAction`, `TuiKeyGesture`, and `TuiShortcutMap`, including dynamic Blazor and JavaScript routing plus dynamic `aria-keyshortcuts`.
 
 ### 0.8.8 — 2026-06-26
 

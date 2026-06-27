@@ -5,7 +5,7 @@
 @inject IJSRuntime JSRuntime
 
 <div class="containerfs">
-    <span id="@InstructionsId" class="blazortui-visually-hidden">@KeyboardInstructions</span>
+    <span id="@InstructionsId" class="blazortui-visually-hidden">@EffectiveKeyboardInstructions</span>
     @if (!string.IsNullOrWhiteSpace(AriaDescription))
     {
         <span id="@DescriptionId" class="blazortui-visually-hidden">@AriaDescription</span>
@@ -21,7 +21,8 @@
          aria-label="@AriaLabel"
          aria-roledescription="text user interface"
          aria-describedby="@DescriptionIds"
-         aria-keyshortcuts="Alt Tab Shift+Tab F2 Control+Tab Control+Shift+Tab Alt+PageDown Alt+PageUp Control+K Meta+K ArrowUp ArrowDown ArrowLeft ArrowRight Enter Space Escape F4 Backspace Home End PageUp PageDown Control+A Control+C Control+X Control+V Control+Z Control+Y Meta+A Meta+C Meta+X Meta+V Meta+Z Meta+Shift+Z"
+         aria-keyshortcuts="@AriaKeyShortcuts"
+         data-shortcuts="@ShortcutDescriptorsJson"
          data-clipboard-enabled="@(ActiveClipboardControl is not null ? "true" : "false")"
          data-clipboard-copy-enabled="@(ClipboardCopyEnabled ? "true" : "false")"
          data-clipboard-paste-enabled="@(ClipboardPasteEnabled ? "true" : "false")"
@@ -47,7 +48,7 @@
     public string? AriaDescription { get; set; }
 
     [Parameter]
-    public string KeyboardInstructions { get; set; } = "Use Tab and Shift+Tab to move between controls, F2 to open a command palette when available, Ctrl+K or Command+K as a browser-dependent command palette alternative, Alt+PageDown and Alt+PageUp to change tab pages, the arrow keys to navigate and adjust controls, PageUp and PageDown for large slider changes, Enter or Space to activate controls, F4 to toggle combo boxes, and standard clipboard, undo, and redo shortcuts in text controls.";
+    public string? KeyboardInstructions { get; set; }
 
     private readonly System.Timers.Timer _timer = new(250);
     private readonly string _accessibilityId = $"blazortui-{Guid.NewGuid():N}";
@@ -76,6 +77,36 @@
         => string.IsNullOrWhiteSpace(AriaDescription)
             ? $"{InstructionsId} {ScreenTextId}"
             : $"{InstructionsId} {DescriptionId} {ScreenTextId}";
+
+    private string EffectiveKeyboardInstructions
+        => KeyboardInstructions ?? BuildKeyboardInstructions();
+
+    private string AriaKeyShortcuts
+        => string.Join(
+            " ",
+            screen.Shortcuts
+                .ToAriaKeyShortcuts()
+                .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                .Concat([
+                    "ArrowUp",
+                    "ArrowDown",
+                    "ArrowLeft",
+                    "ArrowRight",
+                    "Enter",
+                    "Space",
+                    "Escape",
+                    "F4",
+                    "Backspace",
+                    "Delete",
+                    "Home",
+                    "End",
+                    "PageUp",
+                    "PageDown"
+                ])
+                .Distinct(StringComparer.OrdinalIgnoreCase));
+
+    private string ShortcutDescriptorsJson
+        => System.Text.Json.JsonSerializer.Serialize(screen.Shortcuts.GetDescriptors());
 
     private string AccessibleScreenText
     {
@@ -343,6 +374,16 @@
         RenderAfterControlChange();
     }
 
+    [JSInvokable("BlazorTUIHandleShortcut")]
+    public void HandleShortcut(string action)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(action);
+        if (!Enum.TryParse(action, out TuiShortcutAction shortcutAction))
+            return;
+
+        ExecuteShortcut(shortcutAction);
+    }
+
     private void TimeElapsed(object? sender, System.Timers.ElapsedEventArgs e)
         => _ = InvokeAsync(RefreshFromTimer);
 
@@ -360,17 +401,85 @@
 
     private void HandleKeyDown(KeyboardEventArgs e)
     {
-        if (e.CtrlKey || e.MetaKey || (e.AltKey && e.Key != "Alt"))
-            return;
-
-        if (e.Key == "F2" && ActiveCommandPalette is not null)
+        TuiKeyGesture gesture = TuiKeyGesture.FromKeyboardEvent(e.Key, e.CtrlKey, e.ShiftKey, e.AltKey, e.MetaKey);
+        if (screen.Shortcuts.TryGetAction(gesture, out TuiShortcutAction action))
         {
-            ToggleCommandPalette();
+            if (IsBrowserRoutedGesture(gesture))
+                return;
+
+            ExecuteShortcut(action);
             return;
         }
 
+        if (e.CtrlKey || e.MetaKey || (e.AltKey && e.Key != "Alt"))
+            return;
+
         screen.KeyDown(e.Key, e.ShiftKey);
         screen.Render();
+    }
+
+    private void ExecuteShortcut(TuiShortcutAction action)
+    {
+        switch (action)
+        {
+            case TuiShortcutAction.ToggleCommandPalette:
+                ToggleCommandPalette();
+                break;
+            case TuiShortcutAction.SelectNextTab:
+                MoveTab(previous: false);
+                break;
+            case TuiShortcutAction.SelectPreviousTab:
+                MoveTab(previous: true);
+                break;
+            case TuiShortcutAction.SelectAll:
+                SelectAllForClipboard();
+                break;
+            case TuiShortcutAction.Copy:
+                _ = CopySelectionForClipboard();
+                break;
+            case TuiShortcutAction.Cut:
+                CutSelectionForClipboard();
+                break;
+            case TuiShortcutAction.Paste:
+                break;
+            case TuiShortcutAction.Undo:
+                UndoTextEdit();
+                break;
+            case TuiShortcutAction.Redo:
+                RedoTextEdit();
+                break;
+            default:
+                if (screen.ExecuteShortcut(action))
+                    RenderAfterControlChange();
+                break;
+        }
+    }
+
+    private static bool IsBrowserRoutedGesture(TuiKeyGesture gesture)
+        => gesture.Control || gesture.Meta || (gesture.Alt && gesture.Key != "Alt");
+
+    private string BuildKeyboardInstructions()
+    {
+        string focusNext = DescribeShortcut(TuiShortcutAction.FocusNext, "Tab");
+        string focusPrevious = DescribeShortcut(TuiShortcutAction.FocusPrevious, "Shift+Tab");
+        string commandPalette = DescribeShortcut(TuiShortcutAction.ToggleCommandPalette, "F2");
+        string nextTab = DescribeShortcut(TuiShortcutAction.SelectNextTab, "Alt+PageDown");
+        string previousTab = DescribeShortcut(TuiShortcutAction.SelectPreviousTab, "Alt+PageUp");
+
+        return $"Use {focusNext} and {focusPrevious} to move between controls, " +
+            $"{commandPalette} to open a command palette when available, " +
+            $"{nextTab} and {previousTab} to change tab pages, " +
+            "the arrow keys to navigate and adjust controls, PageUp and PageDown for large slider changes, " +
+            "Enter or Space to activate controls, F4 to toggle combo boxes, and standard clipboard, undo, and redo shortcuts in text controls.";
+    }
+
+    private string DescribeShortcut(TuiShortcutAction action, string fallback)
+    {
+        IReadOnlyList<TuiKeyGesture> bindings = screen.Shortcuts.GetBindings(action);
+        if (bindings.Count == 0)
+            return fallback;
+
+        return string.Join(" or ", bindings.Select(gesture => gesture.ToString().Replace("Meta", "Command", StringComparison.Ordinal)));
     }
 
     private void RenderAfterControlChange()

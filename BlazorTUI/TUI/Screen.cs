@@ -33,6 +33,8 @@ namespace BlazorTUI.TUI
 
         public TuiTheme Theme { get; private set; }
 
+        public TuiShortcutMap Shortcuts { get; } = TuiShortcutMap.CreateDefault();
+
         public long Revision { get; private set; }
 
         public Screen(short width, short height)
@@ -110,6 +112,61 @@ namespace BlazorTUI.TUI
                 topContainer.KeyDown(key, shiftKey);
             else
                 dialogs.ElementAt(dialogs.Count - 1).KeyDown(key, shiftKey);    
+        }
+
+        public bool ExecuteShortcut(TuiShortcutAction action)
+        {
+            if (!Enum.IsDefined(action))
+                throw new ArgumentOutOfRangeException(nameof(action));
+
+            switch (action)
+            {
+                case TuiShortcutAction.FocusNext:
+                    KeyDown("Tab", false);
+                    return true;
+                case TuiShortcutAction.FocusPrevious:
+                    KeyDown("Tab", true);
+                    return true;
+                case TuiShortcutAction.ToggleMenuShortcuts:
+                    KeyDown("Alt", false);
+                    return true;
+                case TuiShortcutAction.MenuMovePrevious:
+                    KeyDown("ArrowLeft", false);
+                    return true;
+                case TuiShortcutAction.MenuMoveNext:
+                    KeyDown("ArrowRight", false);
+                    return true;
+                case TuiShortcutAction.MenuMoveUp:
+                    KeyDown("ArrowUp", false);
+                    return true;
+                case TuiShortcutAction.MenuMoveDown:
+                    KeyDown("ArrowDown", false);
+                    return true;
+                case TuiShortcutAction.MenuActivate:
+                    KeyDown("Enter", false);
+                    return true;
+                case TuiShortcutAction.ControlOpen:
+                    KeyDown("F4", false);
+                    return true;
+                case TuiShortcutAction.ControlCancel:
+                    KeyDown("Escape", false);
+                    return true;
+                case TuiShortcutAction.ControlActivate:
+                    KeyDown("Enter", false);
+                    return true;
+                case TuiShortcutAction.ToggleCommandPalette:
+                case TuiShortcutAction.SelectNextTab:
+                case TuiShortcutAction.SelectPreviousTab:
+                case TuiShortcutAction.SelectAll:
+                case TuiShortcutAction.Copy:
+                case TuiShortcutAction.Cut:
+                case TuiShortcutAction.Paste:
+                case TuiShortcutAction.Undo:
+                case TuiShortcutAction.Redo:
+                    return false;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(action));
+            }
         }
 
         public void Render()

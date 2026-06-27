@@ -33,77 +33,27 @@ export function attachKeyboardHandling(element, dotNetReference) {
     element.addEventListener("pointerdown", focusTerminal, { capture: true });
 
     element.addEventListener("keydown", async event => {
+        const shortcut = findShortcut(element, event);
+        if (shortcut) {
+            event.preventDefault();
+
+            const action = getShortcutAction(shortcut);
+            if (shouldHandleShortcutInJavaScript(shortcut) && isShortcutAvailable(action, event, element)) {
+                event.stopImmediatePropagation();
+
+                if (event.repeat) {
+                    return;
+                }
+
+                if (await handleConfiguredShortcut(action, event, element, dotNetReference, value => {
+                    pasteHandledByShortcut = value;
+                })) {
+                    return;
+                }
+            }
+        }
+
         const acceleratorPressed = event.ctrlKey || event.metaKey;
-        const shortcutKey = event.key.toLowerCase();
-        const controlTab = event.ctrlKey && !event.metaKey && !event.altKey && event.key === "Tab";
-        const alternateTabShortcut = event.altKey && !event.ctrlKey && !event.metaKey &&
-            (event.key === "PageDown" || event.key === "PageUp");
-        if ((controlTab || alternateTabShortcut) && element.dataset.tabNavigationEnabled === "true") {
-            event.preventDefault();
-            const previousTab = controlTab ? event.shiftKey : event.key === "PageUp";
-            try {
-                await dotNetReference.invokeMethodAsync("BlazorTUIMoveTab", previousTab);
-            }
-            catch {
-                // The component may have been disposed while the browser event was pending.
-            }
-            return;
-        }
-
-        if (acceleratorPressed && !event.altKey && shortcutKey === "k" &&
-            element.dataset.commandPaletteEnabled === "true") {
-            event.preventDefault();
-            try {
-                await dotNetReference.invokeMethodAsync("BlazorTUIToggleCommandPalette");
-            }
-            catch {
-                // The component may have been disposed while the browser event was pending.
-            }
-            return;
-        }
-
-        if (acceleratorPressed && !event.altKey && editHistoryKeys.has(shortcutKey)) {
-            if (element.dataset.editHistoryEnabled !== "true") {
-                return;
-            }
-
-            event.preventDefault();
-            const redo = shortcutKey === "y" || (shortcutKey === "z" && event.shiftKey);
-            const method = redo ? "BlazorTUIRedo" : "BlazorTUIUndo";
-            try {
-                await dotNetReference.invokeMethodAsync(method);
-            }
-            catch {
-                // The component may have been disposed while the browser event was pending.
-            }
-            return;
-        }
-
-        const clipboardKey = shortcutKey;
-        if (acceleratorPressed && !event.altKey && clipboardKeys.has(clipboardKey)) {
-            if (element.dataset.clipboardEnabled !== "true") {
-                return;
-            }
-
-            if ((clipboardKey === "c" || clipboardKey === "x") && element.dataset.clipboardCopyEnabled !== "true") {
-                return;
-            }
-
-            if (clipboardKey === "v" && element.dataset.clipboardPasteEnabled !== "true") {
-                return;
-            }
-
-            if (clipboardKey === "v" && !navigator.clipboard?.readText) {
-                return;
-            }
-
-            event.preventDefault();
-            await handleClipboardShortcut(clipboardKey, element, dotNetReference, value => {
-                pasteHandledByShortcut = value;
-            });
-            return;
-        }
-
         if (event.ctrlKey || event.metaKey || (event.altKey && event.key !== "Alt")) {
             return;
         }
@@ -131,6 +81,140 @@ export function attachKeyboardHandling(element, dotNetReference) {
         event.preventDefault();
         void dotNetReference.invokeMethodAsync("BlazorTUIPaste", text).catch(() => { });
     });
+}
+
+function findShortcut(element, event) {
+    let shortcuts = [];
+    try {
+        shortcuts = JSON.parse(element.dataset.shortcuts || "[]");
+    }
+    catch {
+        shortcuts = [];
+    }
+
+    const eventKey = normalizeKey(event.key);
+    const eventControl = eventKey === "Control" ? false : event.ctrlKey;
+    const eventShift = eventKey === "Shift" ? false : event.shiftKey;
+    const eventAlt = eventKey === "Alt" ? false : event.altKey;
+    const eventMeta = eventKey === "Meta" ? false : event.metaKey;
+
+    return shortcuts.find(shortcut =>
+        normalizeKey(shortcut.Key ?? shortcut.key) === eventKey &&
+        Boolean(shortcut.Control ?? shortcut.control) === eventControl &&
+        Boolean(shortcut.Shift ?? shortcut.shift) === eventShift &&
+        Boolean(shortcut.Alt ?? shortcut.alt) === eventAlt &&
+        Boolean(shortcut.Meta ?? shortcut.meta) === eventMeta);
+}
+
+function normalizeKey(key) {
+    if (key === "Ctrl") {
+        return "Control";
+    }
+
+    if (key === "Cmd" || key === "Command" || key === "Win" || key === "Windows") {
+        return "Meta";
+    }
+
+    if (key === "Space" || key === "Spacebar") {
+        return " ";
+    }
+
+    if (typeof key === "string" && key.length === 1) {
+        return key.toUpperCase();
+    }
+
+    return key;
+}
+
+function shouldHandleShortcutInJavaScript(shortcut) {
+    const key = normalizeKey(shortcut.Key ?? shortcut.key);
+    return Boolean(shortcut.Control ?? shortcut.control) ||
+        Boolean(shortcut.Meta ?? shortcut.meta) ||
+        (Boolean(shortcut.Alt ?? shortcut.alt) && key !== "Alt");
+}
+
+function getShortcutAction(shortcut) {
+    return shortcut.Action ?? shortcut.action;
+}
+
+function isShortcutAvailable(action, event, element) {
+    switch (action) {
+        case "ToggleCommandPalette":
+            return element.dataset.commandPaletteEnabled === "true";
+        case "SelectNextTab":
+        case "SelectPreviousTab":
+            return element.dataset.tabNavigationEnabled === "true";
+        case "SelectAll":
+            return element.dataset.clipboardEnabled === "true";
+        case "Copy":
+        case "Cut":
+            return element.dataset.clipboardEnabled === "true" &&
+                element.dataset.clipboardCopyEnabled === "true";
+        case "Paste":
+            return element.dataset.clipboardEnabled === "true" &&
+                element.dataset.clipboardPasteEnabled === "true" &&
+                Boolean(navigator.clipboard?.readText);
+        case "Undo":
+        case "Redo":
+            return element.dataset.editHistoryEnabled === "true";
+        default:
+            return true;
+    }
+}
+
+async function handleConfiguredShortcut(action, event, element, dotNetReference, setPasteInProgress) {
+    try {
+        switch (action) {
+            case "SelectAll":
+                await dotNetReference.invokeMethodAsync("BlazorTUISelectAll");
+                return true;
+            case "Copy": {
+                const text = await dotNetReference.invokeMethodAsync("BlazorTUICopySelection");
+                if (text !== null) {
+                    await writeClipboardText(text, element);
+                }
+                return true;
+            }
+            case "Cut": {
+                const text = await dotNetReference.invokeMethodAsync("BlazorTUICopySelection");
+                if (text !== null && await writeClipboardText(text, element)) {
+                    await dotNetReference.invokeMethodAsync("BlazorTUICutSelection");
+                }
+                return true;
+            }
+            case "Paste":
+                setPasteInProgress(true);
+                await dotNetReference.invokeMethodAsync("BlazorTUIPaste", await navigator.clipboard.readText());
+                return true;
+            case "Undo":
+                await dotNetReference.invokeMethodAsync("BlazorTUIUndo");
+                return true;
+            case "Redo":
+                await dotNetReference.invokeMethodAsync("BlazorTUIRedo");
+                return true;
+            case "SelectNextTab":
+                await dotNetReference.invokeMethodAsync("BlazorTUIMoveTab", false);
+                return true;
+            case "SelectPreviousTab":
+                await dotNetReference.invokeMethodAsync("BlazorTUIMoveTab", true);
+                return true;
+            case "ToggleCommandPalette":
+                await dotNetReference.invokeMethodAsync("BlazorTUIToggleCommandPalette");
+                return true;
+            default:
+                await dotNetReference.invokeMethodAsync("BlazorTUIHandleShortcut", action);
+                return true;
+        }
+    }
+    catch {
+        // The component may have been disposed, or the browser may deny clipboard access.
+        return true;
+    }
+    finally {
+        if (action === "Paste") {
+            setPasteInProgress(false);
+        }
+    }
 }
 
 async function handleClipboardShortcut(key, element, dotNetReference, setPasteInProgress) {
