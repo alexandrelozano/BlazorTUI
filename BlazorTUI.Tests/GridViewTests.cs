@@ -183,6 +183,139 @@ public class GridViewTests
     }
 
     [Fact]
+    public void CellEditingCommitsTextAndRaisesTypedEvents()
+    {
+        GridView grid = CreateEditableGrid(pageSize: 3);
+        grid.IsReadOnly = false;
+        grid.Columns[1].IsEditable = true;
+
+        GridViewCellEditStartedEventArgs? started = null;
+        GridViewCellEditCommittedEventArgs? committed = null;
+        grid.CellEditStarted += (_, args) => started = args;
+        grid.CellEditCommitted += (_, args) => committed = args;
+
+        Assert.True(grid.BeginEdit(1, 1));
+        Assert.True(grid.IsEditing);
+        Assert.Equal("Calzone", grid.EditingValue);
+        Assert.Equal(1, grid.EditingRowIndex);
+        Assert.Equal(1, grid.EditingSourceRowIndex);
+        Assert.Equal(1, grid.EditingColumnIndex);
+
+        grid.KeyDown("End", false);
+        grid.KeyDown("X", false);
+
+        Assert.Equal("CalzoneX", grid.EditingValue);
+        Assert.True(grid.CommitEdit());
+
+        Assert.False(grid.IsEditing);
+        Assert.Equal("CalzoneX", grid.Rows[1].Cells[1]);
+        Assert.NotNull(started);
+        Assert.Equal("Pizza", started.Column.Title);
+        Assert.Equal("Calzone", started.Value);
+        Assert.NotNull(committed);
+        Assert.Equal("Calzone", committed.PreviousValue);
+        Assert.Equal("CalzoneX", committed.Value);
+        Assert.Equal("Pizza", committed.Column.Title);
+    }
+
+    [Fact]
+    public void CellEditingCanBeCanceledWithoutChangingTheRow()
+    {
+        GridView grid = CreateEditableGrid(pageSize: 3);
+        grid.IsReadOnly = false;
+        grid.Columns[1].IsEditable = true;
+        GridViewCellEditCanceledEventArgs? canceled = null;
+        grid.CellEditCanceled += (_, args) => canceled = args;
+
+        Assert.True(grid.BeginEdit(0, 1));
+        grid.KeyDown("End", false);
+        grid.KeyDown("X", false);
+
+        Assert.True(grid.CancelEdit());
+
+        Assert.False(grid.IsEditing);
+        Assert.Equal("Pepperoni", grid.Rows[0].Cells[1]);
+        Assert.NotNull(canceled);
+        Assert.Equal("Pepperoni", canceled.OriginalValue);
+        Assert.Equal("Pizza", canceled.Column.Title);
+    }
+
+    [Fact]
+    public void CellEditingSupportsComboCheckNumericAndDateEditors()
+    {
+        GridView grid = CreateTypedEditorGrid();
+
+        Assert.True(grid.BeginEdit(0, 0));
+        grid.KeyDown("ArrowDown", false);
+        Assert.True(grid.CommitEdit());
+        Assert.Equal("Ready", grid.Rows[0].Cells[0]);
+
+        Assert.True(grid.BeginEdit(0, 1));
+        grid.KeyDown("Space", false);
+        Assert.True(grid.CommitEdit());
+        Assert.Equal("Yes", grid.Rows[0].Cells[1]);
+
+        Assert.True(grid.BeginEdit(0, 2));
+        grid.KeyDown("Home", false);
+        grid.KeyDown("Delete", false);
+        grid.KeyDown("Delete", false);
+        grid.KeyDown(".", false);
+
+        Assert.False(grid.CommitEdit());
+        Assert.True(grid.IsEditing);
+        Assert.Equal("Value must be numeric.", grid.EditValidationMessage);
+        Assert.True(grid.CancelEdit());
+
+        grid.Rows[0].cells[3] = "not-date";
+
+        Assert.True(grid.BeginEdit(0, 3));
+        Assert.False(grid.CommitEdit());
+        Assert.Equal("Value must be a valid date.", grid.EditValidationMessage);
+    }
+
+    [Fact]
+    public void CellEditingHonorsColumnValidationRules()
+    {
+        GridView grid = CreateEditableGrid(pageSize: 3);
+        grid.IsReadOnly = false;
+        grid.Columns[1].IsEditable = true;
+        grid.Columns[1].ValidationRules.Add(
+            value => value is string text && text.Length >= 3,
+            "Pizza must have at least 3 characters.");
+        grid.Rows[1].cells[1] = "AB";
+
+        Assert.True(grid.BeginEditSourceRow(1, 1));
+        Assert.False(grid.CommitEdit());
+        Assert.Equal("Pizza must have at least 3 characters.", grid.EditValidationMessage);
+
+        grid.KeyDown("End", false);
+        grid.KeyDown("C", false);
+
+        Assert.True(grid.CommitEdit());
+        Assert.Equal("ABC", grid.Rows[1].Cells[1]);
+    }
+
+    [Fact]
+    public void CellEditingIsReadOnlyByDefault()
+    {
+        GridView grid = CreateEditableGrid(pageSize: 3);
+        grid.Columns[1].IsEditable = true;
+
+        Assert.False(grid.BeginEdit(0, 1));
+
+        grid.SelectCell(0, 1);
+        grid.KeyDown("Enter", false);
+
+        Assert.False(grid.IsEditing);
+        Assert.Equal("Pepperoni", grid.Rows[0].Cells[1]);
+
+        grid.IsReadOnly = false;
+        Assert.True(grid.BeginEdit(0, 1));
+        grid.IsReadOnly = true;
+        Assert.False(grid.IsEditing);
+    }
+
+    [Fact]
     public void ValidatesArguments()
     {
         Assert.Throws<ArgumentException>(() =>
@@ -214,6 +347,14 @@ public class GridViewTests
         Assert.Throws<ArgumentNullException>(() => grid.SetColumnFilter(0, null!, "Custom"));
         Assert.Throws<ArgumentException>(() => grid.SetColumnFilter(0, _ => true, " "));
         Assert.Throws<ArgumentNullException>(() => grid.SetRowFilter(null!, "Custom"));
+        Assert.Throws<ArgumentOutOfRangeException>(() => grid.SelectedColumnIndex = 9);
+        Assert.Throws<ArgumentOutOfRangeException>(() => grid.SelectCell(0, 9));
+        Assert.Throws<ArgumentOutOfRangeException>(() => grid.SelectCell(9, 0));
+        Assert.Throws<ArgumentOutOfRangeException>(() => grid.BeginEdit(9, 0));
+        Assert.Throws<ArgumentOutOfRangeException>(() => grid.BeginEdit(0, 9));
+        Assert.Throws<ArgumentOutOfRangeException>(() => grid.BeginEditSourceRow(9, 0));
+        Assert.Throws<ArgumentOutOfRangeException>(() => grid.Columns[0].EditorKind = (GridViewCellEditorKind)99);
+        Assert.Throws<ArgumentNullException>(() => grid.Columns[0].EditorOptions = null!);
     }
 
     private static GridView CreateOrdersGrid(int pageSize)
@@ -241,6 +382,84 @@ public class GridViewTests
             Color.Yellow,
             Color.Black,
             pageSize);
+    }
+
+    private static GridView CreateEditableGrid(int pageSize)
+    {
+        var columns = new[]
+        {
+            new GridView.GridColumn { Title = "Order", Width = 7 },
+            new GridView.GridColumn { Title = "Pizza", Width = 12 },
+            new GridView.GridColumn { Title = "Status", Width = 9 }
+        };
+        var rows = new[]
+        {
+            new GridView.GridRow { Cells = new[] { "1", "Pepperoni", "Cooking" } },
+            new GridView.GridRow { Cells = new[] { "2", "Calzone", "Hold" } },
+            new GridView.GridRow { Cells = new[] { "3", "Veggie", "Ready" } }
+        };
+
+        return new GridView(
+            "editableOrdersGrid",
+            columns,
+            rows,
+            1, 1, 30, 5,
+            Color.Yellow,
+            Color.Black,
+            pageSize);
+    }
+
+    private static GridView CreateTypedEditorGrid()
+    {
+        var columns = new[]
+        {
+            new GridView.GridColumn
+            {
+                Title = "Status",
+                Width = 9,
+                IsEditable = true,
+                EditorKind = GridViewCellEditorKind.ComboBox,
+                EditorOptions = new[] { "New", "Ready", "Done" }
+            },
+            new GridView.GridColumn
+            {
+                Title = "Paid",
+                Width = 7,
+                IsEditable = true,
+                EditorKind = GridViewCellEditorKind.CheckBox,
+                EditorOptions = new[] { "No", "Yes" }
+            },
+            new GridView.GridColumn
+            {
+                Title = "Qty",
+                Width = 6,
+                IsEditable = true,
+                EditorKind = GridViewCellEditorKind.NumericBox
+            },
+            new GridView.GridColumn
+            {
+                Title = "Date",
+                Width = 12,
+                IsEditable = true,
+                EditorKind = GridViewCellEditorKind.DateBox
+            }
+        };
+        var rows = new[]
+        {
+            new GridView.GridRow { Cells = new[] { "New", "No", "10", "2026-06-28" } }
+        };
+
+        return new GridView(
+            "typedEditorsGrid",
+            columns,
+            rows,
+            1, 1, 34, 4,
+            Color.Yellow,
+            Color.Black,
+            pageSize: 1)
+        {
+            IsReadOnly = false
+        };
     }
 
     private static string Read(Screen screen, int x, int y, int length)

@@ -23,6 +23,26 @@ namespace BlazorTUI.TUI
             public string Title { get => title; set => title = value ?? ""; }
             public short width;
             public short Width { get => width; set => width = value; }
+            public bool isEditable;
+            public bool IsEditable { get => isEditable; set => isEditable = value; }
+            private GridViewCellEditorKind editorKind = GridViewCellEditorKind.TextBox;
+            public GridViewCellEditorKind EditorKind
+            {
+                get => editorKind;
+                set
+                {
+                    ValidateEditorKind(value);
+                    editorKind = value;
+                }
+            }
+            public string[] editorOptions = Array.Empty<string>();
+            public IReadOnlyList<string> EditorOptions
+            {
+                get => editorOptions;
+                set => editorOptions = value?.Select(option => option ?? "").ToArray() ??
+                    throw new ArgumentNullException(nameof(value));
+            }
+            public TuiValidationRuleCollection ValidationRules { get; } = new();
         }
 
         private readonly GridColumn[] columns;
@@ -33,8 +53,11 @@ namespace BlazorTUI.TUI
         private int pageIndex;
         private int pageSize;
         private int selectedViewRowIndex = -1;
+        private int selectedColumnIndex = -1;
         private int sortColumnIndex = -1;
         private GridSortDirection sortDirection = GridSortDirection.None;
+        private bool isReadOnly = true;
+        private CellEditState? editState;
 
         public IReadOnlyList<GridColumn> Columns => columns;
 
@@ -92,6 +115,12 @@ namespace BlazorTUI.TUI
             set => SelectRow(value);
         }
 
+        public int SelectedColumnIndex
+        {
+            get => selectedColumnIndex;
+            set => SelectCell(selectedViewRowIndex, value);
+        }
+
         public int SelectedSourceRowIndex
             => selectedViewRowIndex >= 0 && selectedViewRowIndex < viewRowIndexes.Count
                 ? viewRowIndexes[selectedViewRowIndex]
@@ -99,6 +128,32 @@ namespace BlazorTUI.TUI
 
         public GridRow? SelectedRow
             => SelectedSourceRowIndex >= 0 ? gridrows[SelectedSourceRowIndex] : null;
+
+        public bool IsReadOnly
+        {
+            get => isReadOnly;
+            set
+            {
+                if (isReadOnly == value)
+                    return;
+
+                isReadOnly = value;
+                if (isReadOnly)
+                    CancelEdit(raiseEvent: false);
+            }
+        }
+
+        public bool IsEditing => editState is not null;
+
+        public int EditingRowIndex => editState?.RowIndex ?? -1;
+
+        public int EditingSourceRowIndex => editState?.SourceRowIndex ?? -1;
+
+        public int EditingColumnIndex => editState?.ColumnIndex ?? -1;
+
+        public string EditingValue => editState?.Value ?? "";
+
+        public string EditValidationMessage { get; private set; } = "";
 
         public event EventHandler? SelectedRowChanged;
 
@@ -109,6 +164,12 @@ namespace BlazorTUI.TUI
         public event EventHandler<GridViewPageChangedEventArgs>? PageChanged;
 
         public event EventHandler<GridViewFilterChangedEventArgs>? FilterChanged;
+
+        public event EventHandler<GridViewCellEditStartedEventArgs>? CellEditStarted;
+
+        public event EventHandler<GridViewCellEditCommittedEventArgs>? CellEditCommitted;
+
+        public event EventHandler<GridViewCellEditCanceledEventArgs>? CellEditCanceled;
 
         public GridView(
             string name,
@@ -300,6 +361,7 @@ namespace BlazorTUI.TUI
             ValidateColumnIndex(columnIndex);
             ValidateSortDirection(direction);
 
+            CancelEdit(raiseEvent: false);
             int previousSourceRowIndex = SelectedSourceRowIndex;
             sortColumnIndex = direction == GridSortDirection.None ? -1 : columnIndex;
             sortDirection = direction;
@@ -319,6 +381,7 @@ namespace BlazorTUI.TUI
             if (sortDirection == GridSortDirection.None)
                 return;
 
+            CancelEdit(raiseEvent: false);
             int previousSourceRowIndex = SelectedSourceRowIndex;
             sortColumnIndex = -1;
             sortDirection = GridSortDirection.None;
@@ -336,6 +399,7 @@ namespace BlazorTUI.TUI
             if (index == pageIndex)
                 return false;
 
+            CancelEdit(raiseEvent: false);
             SetPageIndex(index);
             return true;
         }
@@ -345,6 +409,7 @@ namespace BlazorTUI.TUI
             if (pageIndex >= PageCount - 1)
                 return false;
 
+            CancelEdit(raiseEvent: false);
             SetPageIndex(pageIndex + 1);
             return true;
         }
@@ -354,6 +419,7 @@ namespace BlazorTUI.TUI
             if (pageIndex <= 0)
                 return false;
 
+            CancelEdit(raiseEvent: false);
             SetPageIndex(pageIndex - 1);
             return true;
         }
@@ -364,6 +430,19 @@ namespace BlazorTUI.TUI
                 throw new ArgumentOutOfRangeException(nameof(rowIndex));
 
             SetSelectedRowIndex(rowIndex, adjustPage: true);
+        }
+
+        public void SelectCell(int rowIndex, int columnIndex)
+        {
+            if (rowIndex < -1 || rowIndex >= viewRowIndexes.Count)
+                throw new ArgumentOutOfRangeException(nameof(rowIndex));
+            if (columnIndex < -1 || columnIndex >= columns.Length)
+                throw new ArgumentOutOfRangeException(nameof(columnIndex));
+
+            if (rowIndex >= 0)
+                SetSelectedRowIndex(rowIndex, adjustPage: true);
+
+            selectedColumnIndex = columnIndex;
         }
 
         public void SelectSourceRow(int sourceRowIndex)
@@ -378,6 +457,109 @@ namespace BlazorTUI.TUI
             SetSelectedRowIndex(rowIndex, adjustPage: true);
         }
 
+        public bool BeginEdit()
+        {
+            if (selectedViewRowIndex < 0)
+                return false;
+
+            int columnIndex = selectedColumnIndex >= 0
+                ? selectedColumnIndex
+                : GetFirstEditableColumnIndex();
+            return columnIndex >= 0 && BeginEdit(selectedViewRowIndex, columnIndex);
+        }
+
+        public bool BeginEdit(int rowIndex, int columnIndex)
+        {
+            if (rowIndex < 0 || rowIndex >= viewRowIndexes.Count)
+                throw new ArgumentOutOfRangeException(nameof(rowIndex));
+            ValidateColumnIndex(columnIndex);
+
+            if (IsReadOnly || !columns[columnIndex].IsEditable)
+                return false;
+
+            CancelEdit(raiseEvent: false);
+
+            int sourceRowIndex = viewRowIndexes[rowIndex];
+            string value = GetCellValue(gridrows[sourceRowIndex], columnIndex);
+            editState = new CellEditState(
+                rowIndex,
+                sourceRowIndex,
+                columnIndex,
+                value,
+                value,
+                TuiText.TextElementCount(value));
+            EditValidationMessage = "";
+            selectedColumnIndex = columnIndex;
+            SetSelectedRowIndex(rowIndex, adjustPage: true);
+
+            CellEditStarted?.Invoke(
+                this,
+                new GridViewCellEditStartedEventArgs(
+                    rowIndex,
+                    sourceRowIndex,
+                    columnIndex,
+                    gridrows[sourceRowIndex],
+                    columns[columnIndex],
+                    value));
+            return true;
+        }
+
+        public bool BeginEditSourceRow(int sourceRowIndex, int columnIndex)
+        {
+            if (sourceRowIndex < 0 || sourceRowIndex >= gridrows.Length)
+                throw new ArgumentOutOfRangeException(nameof(sourceRowIndex));
+            ValidateColumnIndex(columnIndex);
+
+            int rowIndex = viewRowIndexes.IndexOf(sourceRowIndex);
+            if (rowIndex < 0)
+                throw new ArgumentException("The source row is not visible in this GridView.", nameof(sourceRowIndex));
+
+            return BeginEdit(rowIndex, columnIndex);
+        }
+
+        public bool CommitEdit()
+        {
+            if (editState is null)
+                return false;
+
+            CellEditState state = editState;
+            GridColumn column = columns[state.ColumnIndex];
+            string value = NormalizeEditValue(column, state.Value);
+            if (!TryValidateEditValue(column, value, out string validationMessage))
+            {
+                EditValidationMessage = validationMessage;
+                return false;
+            }
+
+            int previousSelectedRowIndex = selectedViewRowIndex;
+            int previousSourceRowIndex = SelectedSourceRowIndex;
+            GridRow? previousSelectedRow = SelectedRow;
+
+            gridrows[state.SourceRowIndex].cells[state.ColumnIndex] = value;
+            editState = null;
+            EditValidationMessage = "";
+            RebuildViewRowIndexes();
+            RestoreSelection(state.SourceRowIndex);
+            selectedColumnIndex = state.ColumnIndex;
+            ClampPageIndexAfterDataChange();
+            RaiseSelectionChangedIfNeeded(previousSelectedRowIndex, previousSourceRowIndex, previousSelectedRow);
+
+            CellEditCommitted?.Invoke(
+                this,
+                new GridViewCellEditCommittedEventArgs(
+                    selectedViewRowIndex,
+                    state.SourceRowIndex,
+                    state.ColumnIndex,
+                    gridrows[state.SourceRowIndex],
+                    column,
+                    state.OriginalValue,
+                    value));
+            return true;
+        }
+
+        public bool CancelEdit()
+            => CancelEdit(raiseEvent: true);
+
         public override bool KeyDown(string key, bool shiftKey)
         {
             ArgumentException.ThrowIfNullOrEmpty(key);
@@ -385,8 +567,15 @@ namespace BlazorTUI.TUI
             if (!Visible)
                 return false;
 
+            if (editState is not null)
+                return HandleEditKeyDown(key);
+
             switch (key)
             {
+                case "ArrowLeft" when !IsReadOnly:
+                    return MoveSelectedColumn(-1);
+                case "ArrowRight" when !IsReadOnly:
+                    return MoveSelectedColumn(1);
                 case "ArrowUp":
                     MoveSelection(-1);
                     return viewRowIndexes.Count > 0;
@@ -409,6 +598,9 @@ namespace BlazorTUI.TUI
                     if (SelectedRow is null)
                         return false;
 
+                    if (!IsReadOnly && BeginEdit())
+                        return true;
+
                     NotifyClicked();
                     return true;
                 default:
@@ -422,6 +614,7 @@ namespace BlazorTUI.TUI
                 return false;
 
             container.TopContainer().SetFocus(Name);
+            CancelEdit(raiseEvent: false);
 
             if (X == Width - 1)
             {
@@ -453,7 +646,11 @@ namespace BlazorTUI.TUI
             if (pageRowIndex < 0 || pageRowIndex >= VisibleRowCapacity || rowIndex >= viewRowIndexes.Count)
                 return false;
 
+            selectedColumnIndex = GetColumnIndexAt(X);
             SetSelectedRowIndex(rowIndex, adjustPage: false);
+            if (!IsReadOnly && selectedColumnIndex >= 0 && columns[selectedColumnIndex].IsEditable)
+                BeginEdit(rowIndex, selectedColumnIndex);
+
             NotifyClicked();
             return true;
         }
@@ -473,11 +670,14 @@ namespace BlazorTUI.TUI
 
                     string character = GetRenderedCharacter(localX, localY);
                     bool selected = IsSelectedDataCell(localY);
+                    bool editingCell = IsEditingCell(localX, localY);
                     PrepareCell(
                         cell,
-                        selected ? BackgroundColor : ForeColor,
-                        selected ? ForeColor : BackgroundColor);
+                        editingCell ? Color.White : selected ? BackgroundColor : ForeColor,
+                        editingCell ? Color.DarkGreen : selected ? ForeColor : BackgroundColor);
                     cell.Character = character;
+                    if (editingCell && IsEditCursorCell(localX, localY))
+                        cell.Decoration = Cell.TextDecoration.UnderLine;
                 }
             }
         }
@@ -488,6 +688,7 @@ namespace BlazorTUI.TUI
             if (newPageSize == pageSize)
                 return;
 
+            CancelEdit(raiseEvent: false);
             pageSize = newPageSize;
             ClampPageIndexAfterDataChange(forcePageChanged: true);
         }
@@ -554,6 +755,8 @@ namespace BlazorTUI.TUI
             GridRow? previousSelectedRow = SelectedRow;
 
             selectedViewRowIndex = rowIndex;
+            if (selectedViewRowIndex < 0)
+                selectedColumnIndex = -1;
 
             if (adjustPage && selectedViewRowIndex >= 0)
             {
@@ -586,6 +789,8 @@ namespace BlazorTUI.TUI
         private void RestoreSelection(int sourceRowIndex)
         {
             selectedViewRowIndex = sourceRowIndex < 0 ? -1 : viewRowIndexes.IndexOf(sourceRowIndex);
+            if (selectedViewRowIndex < 0)
+                selectedColumnIndex = -1;
         }
 
         private void RebuildViewRowIndexes()
@@ -619,6 +824,7 @@ namespace BlazorTUI.TUI
 
         private void ApplyFilterChange(GridViewFilterState filter)
         {
+            CancelEdit(raiseEvent: false);
             int previousSelectedRowIndex = selectedViewRowIndex;
             int previousSourceRowIndex = SelectedSourceRowIndex;
             GridRow? previousSelectedRow = SelectedRow;
@@ -664,6 +870,270 @@ namespace BlazorTUI.TUI
                 ActiveColumnFilter? filter = columnFilters[columnIndex];
                 if (filter is not null && !filter.Predicate(GetCellValue(row, columnIndex)))
                     return false;
+            }
+
+            return true;
+        }
+
+        private bool CancelEdit(bool raiseEvent)
+        {
+            if (editState is null)
+                return false;
+
+            CellEditState state = editState;
+            editState = null;
+            EditValidationMessage = "";
+
+            if (raiseEvent)
+            {
+                CellEditCanceled?.Invoke(
+                    this,
+                    new GridViewCellEditCanceledEventArgs(
+                        state.RowIndex,
+                        state.SourceRowIndex,
+                        state.ColumnIndex,
+                        gridrows[state.SourceRowIndex],
+                        columns[state.ColumnIndex],
+                        state.OriginalValue));
+            }
+
+            return true;
+        }
+
+        private bool HandleEditKeyDown(string key)
+        {
+            if (editState is null)
+                return false;
+
+            switch (key)
+            {
+                case "Enter":
+                    return CommitEdit();
+                case "Escape":
+                    return CancelEdit();
+                case "Home":
+                    editState = editState with { Cursor = 0 };
+                    EditValidationMessage = "";
+                    return true;
+                case "End":
+                    editState = editState with { Cursor = TuiText.TextElementCount(editState.Value) };
+                    EditValidationMessage = "";
+                    return true;
+            }
+
+            GridColumn column = columns[editState.ColumnIndex];
+            if (column.EditorKind == GridViewCellEditorKind.ComboBox)
+            {
+                return key switch
+                {
+                    "ArrowDown" or "ArrowRight" => MoveComboEdit(1),
+                    "ArrowUp" or "ArrowLeft" => MoveComboEdit(-1),
+                    _ => true
+                };
+            }
+
+            if (column.EditorKind == GridViewCellEditorKind.CheckBox)
+            {
+                if (key is "Space" or " ")
+                    ToggleCheckEdit();
+                return true;
+            }
+
+            switch (key)
+            {
+                case "ArrowLeft":
+                    editState = editState with
+                    {
+                        Cursor = TuiText.PreviousTextElementIndex(editState.Value, editState.Cursor)
+                    };
+                    return true;
+                case "ArrowRight":
+                    editState = editState with
+                    {
+                        Cursor = TuiText.NextTextElementIndex(editState.Value, editState.Cursor)
+                    };
+                    return true;
+                case "Backspace":
+                    BackspaceEdit();
+                    return true;
+                case "Delete":
+                    DeleteEdit();
+                    return true;
+                default:
+                    if (TuiText.TextElementCount(key) == 1 && IsAllowedEditCharacter(column, key))
+                        InsertEditText(key);
+                    return true;
+            }
+        }
+
+        private bool MoveSelectedColumn(int direction)
+        {
+            if (selectedViewRowIndex < 0 || columns.Length == 0)
+                return false;
+
+            int currentColumnIndex = selectedColumnIndex < 0 ? 0 : selectedColumnIndex;
+            selectedColumnIndex = Math.Clamp(currentColumnIndex + direction, 0, columns.Length - 1);
+            return true;
+        }
+
+        private int GetFirstEditableColumnIndex()
+        {
+            for (int index = 0; index < columns.Length; index++)
+            {
+                if (columns[index].IsEditable)
+                    return index;
+            }
+
+            return -1;
+        }
+
+        private bool MoveComboEdit(int direction)
+        {
+            if (editState is null)
+                return false;
+
+            string[] options = columns[editState.ColumnIndex].editorOptions;
+            if (options.Length == 0)
+                return true;
+
+            int index = Array.FindIndex(options, option => option == editState.Value);
+            int nextIndex = index < 0
+                ? 0
+                : (index + direction + options.Length) % options.Length;
+            string value = options[nextIndex];
+            editState = editState with
+            {
+                Value = value,
+                Cursor = TuiText.TextElementCount(value)
+            };
+            EditValidationMessage = "";
+            return true;
+        }
+
+        private void ToggleCheckEdit()
+        {
+            if (editState is null)
+                return;
+
+            (string falseValue, string trueValue) = GetCheckValues(columns[editState.ColumnIndex]);
+            string value = string.Equals(editState.Value, trueValue, StringComparison.OrdinalIgnoreCase)
+                ? falseValue
+                : trueValue;
+            editState = editState with
+            {
+                Value = value,
+                Cursor = TuiText.TextElementCount(value)
+            };
+            EditValidationMessage = "";
+        }
+
+        private void BackspaceEdit()
+        {
+            if (editState is null || editState.Cursor <= 0)
+                return;
+
+            string value = TuiText.RemoveTextElements(editState.Value, editState.Cursor - 1, 1);
+            editState = editState with
+            {
+                Value = value,
+                Cursor = editState.Cursor - 1
+            };
+            EditValidationMessage = "";
+        }
+
+        private void DeleteEdit()
+        {
+            if (editState is null || editState.Cursor >= TuiText.TextElementCount(editState.Value))
+                return;
+
+            string value = TuiText.RemoveTextElements(editState.Value, editState.Cursor, 1);
+            editState = editState with { Value = value };
+            EditValidationMessage = "";
+        }
+
+        private void InsertEditText(string value)
+        {
+            if (editState is null)
+                return;
+
+            int contentWidth = Math.Max(0, columns[editState.ColumnIndex].Width - 1);
+            string candidate = TuiText.InsertAtTextElement(editState.Value, editState.Cursor, value);
+            if (TuiText.VisualWidth(candidate) > contentWidth)
+                return;
+
+            editState = editState with
+            {
+                Value = candidate,
+                Cursor = editState.Cursor + TuiText.TextElementCount(value)
+            };
+            EditValidationMessage = "";
+        }
+
+        private static bool IsAllowedEditCharacter(GridColumn column, string value)
+        {
+            if (column.EditorKind == GridViewCellEditorKind.NumericBox)
+                return value.All(character => char.IsDigit(character) || character is '-' or '.' or ',');
+
+            if (column.EditorKind == GridViewCellEditorKind.DateBox)
+                return value.All(character => char.IsDigit(character) || character is '/' or '-');
+
+            return column.EditorKind == GridViewCellEditorKind.TextBox;
+        }
+
+        private string NormalizeEditValue(GridColumn column, string value)
+            => column.EditorKind switch
+            {
+                GridViewCellEditorKind.CheckBox => NormalizeCheckValue(column, value),
+                _ => value
+            };
+
+        private static string NormalizeCheckValue(GridColumn column, string value)
+        {
+            (string falseValue, string trueValue) = GetCheckValues(column);
+            return string.Equals(value, trueValue, StringComparison.OrdinalIgnoreCase) ? trueValue : falseValue;
+        }
+
+        private static (string FalseValue, string TrueValue) GetCheckValues(GridColumn column)
+            => column.editorOptions.Length >= 2
+                ? (column.editorOptions[0], column.editorOptions[1])
+                : ("False", "True");
+
+        private static bool TryValidateEditValue(GridColumn column, string value, out string message)
+        {
+            message = "";
+            switch (column.EditorKind)
+            {
+                case GridViewCellEditorKind.ComboBox:
+                    if (column.editorOptions.Length > 0 &&
+                        !column.editorOptions.Contains(value, StringComparer.OrdinalIgnoreCase))
+                    {
+                        message = "Value must be one of the configured options.";
+                        return false;
+                    }
+                    break;
+                case GridViewCellEditorKind.NumericBox:
+                    if (!double.TryParse(value, out _))
+                    {
+                        message = "Value must be numeric.";
+                        return false;
+                    }
+                    break;
+                case GridViewCellEditorKind.DateBox:
+                    if (!DateOnly.TryParse(value, out _))
+                    {
+                        message = "Value must be a valid date.";
+                        return false;
+                    }
+                    break;
+            }
+
+            foreach (TuiValidationRule rule in column.ValidationRules)
+            {
+                if (!rule.IsValid(value))
+                {
+                    message = rule.Message;
+                    return false;
+                }
             }
 
             return true;
@@ -730,9 +1200,26 @@ namespace BlazorTUI.TUI
         {
             var builder = new StringBuilder();
             for (int index = 0; index < columns.Length; index++)
-                builder.Append(FormatCell(GetCellValue(row, index), columns[index].Width));
+            {
+                string value = editState is not null &&
+                    editState.SourceRowIndex >= 0 &&
+                    ReferenceEquals(row, gridrows[editState.SourceRowIndex]) &&
+                    editState.ColumnIndex == index
+                        ? GetEditDisplayValue(columns[index], editState.Value)
+                        : GetCellValue(row, index);
+                builder.Append(FormatCell(value, columns[index].Width));
+            }
 
             return builder.ToString();
+        }
+
+        private static string GetEditDisplayValue(GridColumn column, string value)
+        {
+            if (column.EditorKind != GridViewCellEditorKind.CheckBox)
+                return value;
+
+            (_, string trueValue) = GetCheckValues(column);
+            return string.Equals(value, trueValue, StringComparison.OrdinalIgnoreCase) ? "[X]" : "[ ]";
         }
 
         private static string FormatCell(string text, short width, string indicator = "")
@@ -767,6 +1254,14 @@ namespace BlazorTUI.TUI
             return -1;
         }
 
+        private int GetColumnStart(int columnIndex)
+        {
+            int cursor = 0;
+            for (int index = 0; index < columnIndex; index++)
+                cursor += columns[index].Width;
+            return cursor;
+        }
+
         private IEnumerable<int> GetCurrentPageViewIndexes()
         {
             for (int index = PageStartRowIndex; index <= PageEndRowIndex; index++)
@@ -799,6 +1294,32 @@ namespace BlazorTUI.TUI
 
             cell = rows[y].Cells[x];
             return true;
+        }
+
+        private bool IsEditingCell(int localX, int localY)
+        {
+            if (editState is null || localY < 2)
+                return false;
+
+            int rowIndex = PageStartRowIndex + localY - 2;
+            if (rowIndex != editState.RowIndex)
+                return false;
+
+            int columnStart = GetColumnStart(editState.ColumnIndex);
+            int columnEnd = columnStart + columns[editState.ColumnIndex].Width - 1;
+            return localX >= columnStart && localX < columnEnd;
+        }
+
+        private bool IsEditCursorCell(int localX, int localY)
+        {
+            if (editState is null || !IsEditingCell(localX, localY))
+                return false;
+
+            int columnStart = GetColumnStart(editState.ColumnIndex);
+            int cursorColumn = columnStart + Math.Min(
+                TuiText.VisualWidth(GetEditDisplayValue(columns[editState.ColumnIndex], editState.Value), editState.Cursor),
+                Math.Max(0, columns[editState.ColumnIndex].Width - 2));
+            return localX == cursorColumn;
         }
 
         private int PageStartRowIndex => Math.Min(pageIndex * PageSize, viewRowIndexes.Count);
@@ -847,6 +1368,12 @@ namespace BlazorTUI.TUI
                 throw new ArgumentOutOfRangeException(nameof(direction));
         }
 
+        private static void ValidateEditorKind(GridViewCellEditorKind editorKind)
+        {
+            if (!Enum.IsDefined(editorKind))
+                throw new ArgumentOutOfRangeException(nameof(editorKind));
+        }
+
         private static void ValidateStringComparison(StringComparison comparison)
         {
             if (!Enum.IsDefined(comparison))
@@ -862,6 +1389,7 @@ namespace BlazorTUI.TUI
             {
                 ArgumentNullException.ThrowIfNull(column);
                 ArgumentOutOfRangeException.ThrowIfLessThan(column.Width, (short)1);
+                ValidateEditorKind(column.EditorKind);
             }
         }
 
@@ -883,5 +1411,13 @@ namespace BlazorTUI.TUI
         private sealed record ActiveRowFilter(
             string Description,
             Func<GridRow, bool> Predicate);
+
+        private sealed record CellEditState(
+            int RowIndex,
+            int SourceRowIndex,
+            int ColumnIndex,
+            string OriginalValue,
+            string Value,
+            int Cursor);
     }
 }

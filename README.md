@@ -242,7 +242,8 @@ Call `ApplyTheme` again to switch themes at runtime. Explicit colors assigned af
 - `F2`: open the first available `CommandPalette`.
 - `Ctrl+K` or `Command+K`: alternative command-palette shortcut when the browser does not reserve it.
 - `Alt+PageDown` or `Alt+PageUp`: move to the next or previous page of the focused `TabControl`. `Ctrl+Tab` is also supported when the browser does not reserve it for browser-tab navigation.
-- `Enter` or `Space`: activate buttons and selection controls, open or confirm a `ComboBox`, and toggle the selected `TreeView` node.
+- `Enter` or `Space`: activate buttons and selection controls, open or confirm a `ComboBox`, toggle the selected `TreeView` node, and start editing an editable `GridView` cell.
+- `Escape`: cancel an active `GridView` cell edit or close controls that support cancellation.
 - `F4`: open or close the focused `ComboBox`; `Escape` closes it without changing the selection.
 - Arrow keys: navigate text, breadcrumbs, combo boxes, trees, lists, grids, color pickers, and menus where applicable. In a `TreeView`, left and right collapse, expand, or move between parent and child nodes.
 - `Home` and `End`: move to the first or last item, or set a `Slider` to its minimum or maximum.
@@ -369,7 +370,7 @@ Use `AddItem`, `RemoveItem`, `ClearItems`, `GetItem`, `SelectIndex`, `SelectItem
 
 ## Grid views
 
-`GridView` displays tabular data and supports column sorting, filtering, row selection, and pagination:
+`GridView` displays tabular data and supports column sorting, filtering, row selection, pagination, and optional cell editing. Grids are read-only by default; set `IsReadOnly = false` and mark individual columns with `IsEditable = true` when users should be able to edit cells:
 
 ```csharp
 var orders = new GridView(
@@ -377,7 +378,14 @@ var orders = new GridView(
     new[]
     {
         new GridView.GridColumn { Title = "Order", Width = 8 },
-        new GridView.GridColumn { Title = "Pizza", Width = 12 },
+        new GridView.GridColumn
+        {
+            Title = "Pizza",
+            Width = 12,
+            IsEditable = true,
+            EditorKind = GridViewCellEditorKind.ComboBox,
+            EditorOptions = new[] { "Pepperoni", "Calzone", "Veggie" }
+        },
         new GridView.GridColumn { Title = "Status", Width = 10 }
     },
     new[]
@@ -406,6 +414,20 @@ orders.SelectionChanged += (_, args) =>
 orders.FilterChanged += (_, args) =>
     status.Value = $"Filter rows: {args.FilteredRowCount}";
 
+orders.CellEditStarted += (_, args) =>
+    status.Value = $"Editing: {args.Column.Title}";
+
+orders.CellEditCommitted += (_, args) =>
+    status.Value = $"Updated: {args.Column.Title} = {args.Value}";
+
+orders.CellEditCanceled += (_, args) =>
+    status.Value = $"Canceled: {args.Column.Title}";
+
+orders.IsReadOnly = false;
+orders.Columns[1].ValidationRules.Add(
+    value => value is string text && text.Length > 0,
+    "Pizza is required.");
+
 orders.SetTextFilter(2, "Ready");
 orders.SetExactFilter(1, new[] { "Pepperoni", "Veggie" });
 orders.SetColumnFilter(1, value => value.Length > 6, "Long pizza names");
@@ -415,7 +437,7 @@ orders.ClearFilters();
 frame.AddControl(orders);
 ```
 
-Use `SortByColumn(columnIndex)` to toggle ascending/descending sorting, or `SortByColumn(columnIndex, direction)` for an explicit `GridSortDirection`. `ClearSort` restores the original row order. Use `SetTextFilter`, `SetExactFilter`, `SetColumnFilter`, `SetRowFilter`, `ClearFilter`, `ClearRowFilter`, and `ClearFilters` to control filtering. `Filters`, `RowFilter`, `HasActiveFilters`, and `FilteredRowCount` expose the current filtered state. Filtered columns show a `◊` marker in the header; sorted columns show `▲` or `▼`. `NextPage`, `PreviousPage`, `GoToPage`, `PageIndex`, `PageSize`, and `PageCount` manage pagination. `SelectedRow`, `SelectedRowIndex`, `SelectedSourceRowIndex`, `SelectRow`, and `SelectSourceRow` manage row selection. Clicking a column header sorts it, clicking the up/down glyphs changes pages, and `PageUp`/`PageDown` work from the keyboard.
+Use `SortByColumn(columnIndex)` to toggle ascending/descending sorting, or `SortByColumn(columnIndex, direction)` for an explicit `GridSortDirection`. `ClearSort` restores the original row order. Use `SetTextFilter`, `SetExactFilter`, `SetColumnFilter`, `SetRowFilter`, `ClearFilter`, `ClearRowFilter`, and `ClearFilters` to control filtering. `Filters`, `RowFilter`, `HasActiveFilters`, and `FilteredRowCount` expose the current filtered state. Filtered columns show a `◊` marker in the header; sorted columns show `▲` or `▼`. `NextPage`, `PreviousPage`, `GoToPage`, `PageIndex`, `PageSize`, and `PageCount` manage pagination. `SelectedRow`, `SelectedRowIndex`, `SelectedSourceRowIndex`, `SelectedColumnIndex`, `SelectRow`, `SelectSourceRow`, and `SelectCell` manage selection. Use `BeginEdit`, `CommitEdit`, and `CancelEdit` for programmatic cell editing; users can start editing an editable cell with `Enter`, commit with `Enter`, and cancel with `Escape`. Column editors support `TextBox`, `ComboBox`, `CheckBox`, `NumericBox`, and `DateBox` modes through `GridViewCellEditorKind`, plus per-column validation rules and typed `CellEditStarted`, `CellEditCommitted`, and `CellEditCanceled` events. Clicking a column header sorts it, clicking the up/down glyphs changes pages, and `PageUp`/`PageDown` work from the keyboard.
 
 ## Radio groups
 
@@ -639,7 +661,7 @@ The repository contains focused pages that can be run directly:
 | --- | --- |
 | [Controls and events](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/ControlsAndEvents.razor) | Text and password input, validation, combo-box and radio-group selection, command palette actions, checkbox state, callbacks, focus order, and status messages |
 | [Form validation](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/FormValidation.razor) | Required fields, custom validation rules, inline error messages, and first-invalid focus |
-| [GridView](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/GridViewExample.razor) | Sorting, pagination, row selection, text filters, exact filters, predicate filters, and filter indicators |
+| [GridView](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/GridViewExample.razor) | Sorting, pagination, row selection, filters, filter indicators, editable cells, column editors, validation, and edit events |
 | [Dialogs and menus](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/DialogsAndMenus.razor) | Menu shortcuts, custom modal dialogs, and message boxes |
 | [Images](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/Images.razor) | Loading encoded image bytes into a `PictureBox` |
 | [TabControl](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/Tabs.razor) | Tab pages, nested controls, focus changes, mouse selection, and keyboard navigation |
@@ -658,6 +680,7 @@ Run `dotnet run --project SampleApp` from the repository root and open `/` or `/
 
 - Added `GridView` filtering with text filters, exact-value filters, custom column predicates, row predicates, filter state inspection, filtered-row counts, and typed `FilterChanged` events.
 - Added filtered-column header indicators and preserved sorting, pagination, and selection behavior when filters change the visible row set.
+- Added optional `GridView` cell editing with per-column editor types, validation rules, selection helpers, and typed start/commit/cancel events. Grids remain read-only by default.
 - Added a dedicated GridView example page and moved the sample app root page to the redesigned BlazorTUI example catalog.
 - Moved the complete all-controls showcase to `/examples/showcase`.
 

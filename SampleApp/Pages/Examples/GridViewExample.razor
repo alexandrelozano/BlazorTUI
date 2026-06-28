@@ -7,7 +7,7 @@
 <BlazorTUI.BlazorTUI
     screen="@screen"
     AriaLabel="GridView example"
-    AriaDescription="Dedicated GridView example with sorting, pagination, row selection, and filtering." />
+    AriaDescription="Dedicated GridView example with sorting, pagination, row selection, filtering, and cell editing." />
 
 @code {
     private Screen screen = null!;
@@ -24,7 +24,7 @@
         screen.TopContainer.AddContainer(frame);
 
         frame.AddControl(new Label(
-            "gridInstructions", "Sort headers, change pages, select rows, or apply filters.",
+            "gridInstructions", "Sort, page, filter, select, or edit cells.",
             3, 2, 48, Color.White, Color.DarkBlue));
 
         AddFilterButton(frame, "allOrdersButton", "All", 3, () =>
@@ -50,9 +50,28 @@
             new[]
             {
                 new GridView.GridColumn { Title = "Order", Width = 7 },
-                new GridView.GridColumn { Title = "Pizza", Width = 14 },
-                new GridView.GridColumn { Title = "Courier", Width = 12 },
-                new GridView.GridColumn { Title = "Status", Width = 10 }
+                new GridView.GridColumn
+                {
+                    Title = "Pizza",
+                    Width = 14,
+                    IsEditable = true,
+                    EditorKind = GridViewCellEditorKind.ComboBox,
+                    EditorOptions = PizzaOptions
+                },
+                new GridView.GridColumn
+                {
+                    Title = "Courier",
+                    Width = 12,
+                    IsEditable = true
+                },
+                new GridView.GridColumn
+                {
+                    Title = "Status",
+                    Width = 10,
+                    IsEditable = true,
+                    EditorKind = GridViewCellEditorKind.ComboBox,
+                    EditorOptions = StatusOptions
+                }
             },
             CreateRows(),
             3,
@@ -62,6 +81,10 @@
             Color.Yellow,
             Color.Black,
             pageSize: 6);
+        ordersGrid.IsReadOnly = false;
+        ordersGrid.Columns[2].ValidationRules.Add(
+            value => value is string text && !string.IsNullOrWhiteSpace(text),
+            "Courier required.");
         ordersGrid.Sorted += (_, args) =>
             status.Value = args.Direction == GridSortDirection.None
                 ? "Sort cleared"
@@ -76,6 +99,12 @@
             status.Value = args.Row is null
                 ? "No selected row"
                 : $"Selected order {args.Row.Cells[0]}";
+        ordersGrid.CellEditStarted += (_, args) =>
+            status.Value = $"Editing {args.Column.Title}";
+        ordersGrid.CellEditCommitted += (_, args) =>
+            status.Value = $"Updated {args.Column.Title}: {args.Value}";
+        ordersGrid.CellEditCanceled += (_, args) =>
+            status.Value = $"Canceled {args.Column.Title}";
         frame.AddControl(ordersGrid);
 
         status = new StatusBar(
@@ -85,11 +114,12 @@
         };
         status.AddItem("sortHint", "Header sort");
         status.AddItem("pageHint", "PgUp/PgDn");
-        status.AddItem("filterHint", "Filters");
+        status.AddItem("editHint", "Enter edit");
+        status.AddItem("cancelHint", "Esc cancel");
         frame.AddControl(status);
 
         frame.AddControl(new Label(
-            "gridFooter", "Filtered columns show ◊. Sorted columns show ▲ or ▼.",
+            "gridFooter", "Editable columns: Pizza, Courier, Status.",
             3, 21, 47, Color.White, Color.DarkBlue));
 
         screen.SetFocus("ordersGrid");
@@ -109,6 +139,24 @@
         ordersGrid.ClearFilters();
         applyFilter();
     }
+
+    private static readonly string[] PizzaOptions =
+    [
+        "Pepperoni",
+        "Tomato,Gorgonzola",
+        "Veggie",
+        "Calzone",
+        "Margherita",
+        "Hawaiian"
+    ];
+
+    private static readonly string[] StatusOptions =
+    [
+        "Cooking",
+        "Ready",
+        "Delivering",
+        "Delivered"
+    ];
 
     private static GridView.GridRow[] CreateRows()
         => new[]

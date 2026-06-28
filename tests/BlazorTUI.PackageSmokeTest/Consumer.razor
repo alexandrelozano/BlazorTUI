@@ -142,6 +142,20 @@
         ordersGrid.PageChanged += (_, args) => _ = args.PageIndex;
         ordersGrid.SelectionChanged += (_, args) => _ = args.Row?.Cells[0];
         ordersGrid.FilterChanged += (_, args) => _ = args.FilteredRowCount;
+        ordersGrid.CellEditStarted += (_, args) => _ = args.Value;
+        ordersGrid.CellEditCommitted += (_, args) => _ = args.Value;
+        ordersGrid.CellEditCanceled += (_, args) => _ = args.OriginalValue;
+        ordersGrid.IsReadOnly = false;
+        ordersGrid.Columns[1].IsEditable = true;
+        ordersGrid.Columns[1].EditorKind = GridViewCellEditorKind.ComboBox;
+        ordersGrid.Columns[1].EditorOptions = new[] { "Pepperoni", "Calzone", "Veggie", "Margherita" };
+        ordersGrid.Columns[1].ValidationRules.Add(
+            value => value is string text && text.Length > 0,
+            "Pizza required");
+        ordersGrid.SelectCell(1, 1);
+        _ = ordersGrid.BeginEdit();
+        ordersGrid.KeyDown("ArrowDown", false);
+        _ = ordersGrid.CommitEdit();
         ordersGrid.SortByColumn(1);
         ordersGrid.NextPage();
         ordersGrid.SelectRow(2);
