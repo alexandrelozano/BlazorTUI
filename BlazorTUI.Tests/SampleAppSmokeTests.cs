@@ -26,10 +26,11 @@ public class SampleAppSmokeTests : IClassFixture<WebApplicationFactory<Program>>
         string html = await response.Content.ReadAsStringAsync();
 
         response.EnsureSuccessStatusCode();
+        Assert.Contains("<title>BlazorTUI examples</title>", html);
         Assert.Contains("_framework/blazor.server.js", html);
         Assert.Contains("class=\"gridfs\"", html);
-        Assert.Contains("--tui-columns:80; --tui-rows:40", html);
-        Assert.Contains("data:image/png;base64,", html);
+        Assert.Contains("--tui-columns:80; --tui-rows:34", html);
+        Assert.Contains("aria-label=\"BlazorTUI example catalog\"", html);
     }
 
     [Fact]
@@ -41,13 +42,14 @@ public class SampleAppSmokeTests : IClassFixture<WebApplicationFactory<Program>>
 
         Assert.Contains("<title>BlazorTUI examples</title>", html);
         Assert.Contains("class=\"gridfs\"", html);
-        Assert.Contains("--tui-columns:60; --tui-rows:30", html);
+        Assert.Contains("--tui-columns:80; --tui-rows:34", html);
         Assert.Contains("aria-label=\"BlazorTUI example catalog\"", html);
     }
 
     [Theory]
     [InlineData("/examples/controls-events", "Controls and events example")]
     [InlineData("/examples/form-validation", "Form validation example")]
+    [InlineData("/examples/grid-view", "GridView example")]
     [InlineData("/examples/dialogs-menus", "Dialogs and menus example")]
     [InlineData("/examples/images", "Images example")]
     [InlineData("/examples/tabs", "TabControl example")]
@@ -74,6 +76,19 @@ public class SampleAppSmokeTests : IClassFixture<WebApplicationFactory<Program>>
 
         string html = await client.GetStringAsync("/examples/images");
 
+        Assert.Contains("data:image/png;base64,", html);
+    }
+
+    [Fact]
+    public async Task CompleteShowcaseStartsAndEmbedsEncodedImage()
+    {
+        using HttpClient client = factory.CreateClient();
+
+        string html = await client.GetStringAsync("/examples/showcase");
+
+        Assert.Contains("<title>Complete showcase</title>", html);
+        Assert.Contains("class=\"gridfs\"", html);
+        Assert.Contains("--tui-columns:80; --tui-rows:40", html);
         Assert.Contains("data:image/png;base64,", html);
     }
 }

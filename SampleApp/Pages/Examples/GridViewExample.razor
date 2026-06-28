@@ -1,0 +1,130 @@
+@page "/examples/grid-view"
+@using global::BlazorTUI.TUI
+@using Color = System.Drawing.Color
+
+<PageTitle>GridView example</PageTitle>
+
+<BlazorTUI.BlazorTUI
+    screen="@screen"
+    AriaLabel="GridView example"
+    AriaDescription="Dedicated GridView example with sorting, pagination, row selection, and filtering." />
+
+@code {
+    private Screen screen = null!;
+    private GridView ordersGrid = null!;
+    private StatusBar status = null!;
+
+    protected override void OnInitialized()
+    {
+        screen = new Screen(60, 30);
+
+        var frame = new Frame(
+            "gridFrame", "GRIDVIEW", 3, 3, 54, 24,
+            Frame.BorderStyle.Line, Color.Yellow, Color.DarkBlue);
+        screen.TopContainer.AddContainer(frame);
+
+        frame.AddControl(new Label(
+            "gridInstructions", "Sort headers, change pages, select rows, or apply filters.",
+            3, 2, 48, Color.White, Color.DarkBlue));
+
+        AddFilterButton(frame, "allOrdersButton", "All", 3, () =>
+        {
+            ordersGrid.ClearFilters();
+            status.Value = $"All rows: {ordersGrid.FilteredRowCount}";
+        });
+        AddFilterButton(frame, "cookingOrdersButton", "Cooking", 11, () =>
+            ApplySingleFilter(() => ordersGrid.SetExactFilter(3, "Cooking")));
+        AddFilterButton(frame, "readyOrdersButton", "Ready", 22, () =>
+            ApplySingleFilter(() => ordersGrid.SetExactFilter(3, "Ready")));
+        AddFilterButton(frame, "johnOrdersButton", "John", 31, () =>
+            ApplySingleFilter(() => ordersGrid.SetTextFilter(2, "John")));
+        AddFilterButton(frame, "specialOrdersButton", "Special", 39, () =>
+            ApplySingleFilter(() => ordersGrid.SetColumnFilter(
+                1,
+                pizza => pizza.Contains("Gorgonzola", StringComparison.OrdinalIgnoreCase) ||
+                    pizza.Contains("Veggie", StringComparison.OrdinalIgnoreCase),
+                "Special pizzas")));
+
+        ordersGrid = new GridView(
+            "ordersGrid",
+            new[]
+            {
+                new GridView.GridColumn { Title = "Order", Width = 7 },
+                new GridView.GridColumn { Title = "Pizza", Width = 14 },
+                new GridView.GridColumn { Title = "Courier", Width = 12 },
+                new GridView.GridColumn { Title = "Status", Width = 10 }
+            },
+            CreateRows(),
+            3,
+            7,
+            47,
+            10,
+            Color.Yellow,
+            Color.Black,
+            pageSize: 6);
+        ordersGrid.Sorted += (_, args) =>
+            status.Value = args.Direction == GridSortDirection.None
+                ? "Sort cleared"
+                : $"Sorted {args.Column?.Title}: {args.Direction}";
+        ordersGrid.FilterChanged += (_, args) =>
+            status.Value = args.IsActive
+                ? $"Filter {args.Description}: {args.FilteredRowCount} rows"
+                : $"Filters cleared: {args.FilteredRowCount} rows";
+        ordersGrid.PageChanged += (_, args) =>
+            status.Value = $"Page {args.PageIndex + 1}/{args.PageCount}";
+        ordersGrid.SelectionChanged += (_, args) =>
+            status.Value = args.Row is null
+                ? "No selected row"
+                : $"Selected order {args.Row.Cells[0]}";
+        frame.AddControl(ordersGrid);
+
+        status = new StatusBar(
+            "gridStatus", "Ready", 3, 19, 47, Color.Black, Color.Cyan)
+        {
+            Separator = "  "
+        };
+        status.AddItem("sortHint", "Header sort");
+        status.AddItem("pageHint", "PgUp/PgDn");
+        status.AddItem("filterHint", "Filters");
+        frame.AddControl(status);
+
+        frame.AddControl(new Label(
+            "gridFooter", "Filtered columns show ◊. Sorted columns show ▲ or ▼.",
+            3, 21, 47, Color.White, Color.DarkBlue));
+
+        screen.SetFocus("ordersGrid");
+    }
+
+    private void AddFilterButton(Frame frame, string name, string text, short x, Action action)
+    {
+        var button = new Button(
+            name, text, x, 4, (short)Math.Max(7, text.Length + 2),
+            Color.White, Color.DarkGreen);
+        button.Clicked += (_, _) => action();
+        frame.AddControl(button);
+    }
+
+    private void ApplySingleFilter(Action applyFilter)
+    {
+        ordersGrid.ClearFilters();
+        applyFilter();
+    }
+
+    private static GridView.GridRow[] CreateRows()
+        => new[]
+        {
+            Row("1", "Pepperoni", "John River", "Cooking"),
+            Row("2", "Tomato,Gorgonzola", "Anna Smith", "Ready"),
+            Row("3", "Veggie", "John River", "Delivering"),
+            Row("4", "Calzone", "Maria Lee", "Cooking"),
+            Row("5", "Margherita", "Anna Smith", "Delivered"),
+            Row("6", "Pepperoni", "John River", "Ready"),
+            Row("7", "Hawaiian", "Maria Lee", "Cooking"),
+            Row("8", "Veggie", "Anna Smith", "Delivered"),
+            Row("9", "Tomato,Gorgonzola", "John River", "Cooking"),
+            Row("10", "Calzone", "Maria Lee", "Ready")
+        };
+
+    private static GridView.GridRow Row(string order, string pizza, string courier, string orderStatus)
+        => new() { Cells = new[] { order, pizza, courier, orderStatus } };
+}

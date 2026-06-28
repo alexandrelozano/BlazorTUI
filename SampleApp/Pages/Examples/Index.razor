@@ -1,4 +1,5 @@
 @page "/examples"
+@page "/"
 @using global::BlazorTUI.TUI
 @using Color = System.Drawing.Color
 @inject NavigationManager Navigation
@@ -15,6 +16,7 @@
     {
         new("controlsExample", "Controls and events", "Inputs and callbacks", "/examples/controls-events"),
         new("validationExample", "Form validation", "Required fields", "/examples/form-validation"),
+        new("gridViewExample", "GridView", "Sorting, pages, filters", "/examples/grid-view"),
         new("dialogsExample", "Dialogs and menus", "Modal interactions", "/examples/dialogs-menus"),
         new("imagesExample", "Images", "PictureBox rendering", "/examples/images"),
         new("tabsExample", "TabControl", "Tabbed layouts", "/examples/tabs"),
@@ -23,42 +25,47 @@
         new("splitExample", "SplitPanel", "Resizable panes", "/examples/split-panels"),
         new("breadcrumbExample", "Breadcrumb", "Hierarchical navigation", "/examples/breadcrumbs"),
         new("themesExample", "Themes", "Runtime palettes", "/examples/themes"),
-        new("showcaseExample", "Complete showcase", "All controls", "/")
+        new("showcaseExample", "Complete showcase", "All controls", "/examples/showcase")
     };
 
     private Screen screen = null!;
 
     protected override void OnInitialized()
     {
-        screen = new Screen(60, 30);
+        screen = new Screen(80, 34);
 
         var frame = new Frame(
-            "examplesFrame", "BLAZORTUI EXAMPLES", 3, 3, 54, 27,
+            "examplesFrame", "BLAZORTUI EXAMPLES", 3, 2, 74, 30,
             Frame.BorderStyle.Line, Color.Yellow, Color.DarkBlue);
         screen.TopContainer.AddContainer(frame);
 
         frame.AddControl(new Label(
             "catalogInstructions", "Choose an example with Tab and press Enter.",
-            3, 2, 42, Color.White, Color.DarkBlue));
+            3, 2, 44, Color.White, Color.DarkBlue));
+
+        frame.AddControl(new Label(
+            "catalogSubtitle", "Focused pages show one feature at a time; showcase displays everything together.",
+            3, 3, 66, Color.Cyan, Color.DarkBlue));
 
         for (int index = 0; index < Destinations.Length; index++)
         {
             ExampleDestination destination = Destinations[index];
-            short row = (short)(4 + index * 2);
+            short column = (short)(index < 6 ? 3 : 39);
+            short row = (short)(6 + (index % 6) * 4);
             var button = new Button(
                 destination.ControlName, destination.Title,
-                3, row, 23, Color.Yellow, Color.Black);
+                column, row, 24, Color.Yellow, Color.Black);
             button.Clicked += (_, _) => Navigation.NavigateTo(destination.Route);
             frame.AddControl(button);
 
             frame.AddControl(new Label(
                 $"{destination.ControlName}Description", destination.Description,
-                28, row, 22, Color.Cyan, Color.DarkBlue));
+                column, (short)(row + 1), 31, Color.Cyan, Color.DarkBlue));
         }
 
         frame.AddControl(new Label(
-            "catalogFooter", "Mouse clicks are also supported.",
-            3, 25, 36, Color.White, Color.DarkBlue));
+            "catalogFooter", "The root page is this catalog. Mouse clicks are also supported.",
+            3, 28, 58, Color.White, Color.DarkBlue));
 
         screen.SetFocus(Destinations[0].ControlName);
     }

@@ -27,7 +27,9 @@ namespace BlazorTUI.TUI
 
         private readonly GridColumn[] columns;
         private readonly GridRow[] gridrows;
+        private readonly ActiveColumnFilter?[] columnFilters;
         private readonly List<int> viewRowIndexes = new();
+        private ActiveRowFilter? rowFilter;
         private int pageIndex;
         private int pageSize;
         private int selectedViewRowIndex = -1;
@@ -37,6 +39,26 @@ namespace BlazorTUI.TUI
         public IReadOnlyList<GridColumn> Columns => columns;
 
         public IReadOnlyList<GridRow> Rows => gridrows;
+
+        public IReadOnlyList<GridViewFilterState> Filters
+            => Enumerable.Range(0, columns.Length)
+                .Select(GetFilter)
+                .ToList();
+
+        public GridViewFilterState? RowFilter
+            => rowFilter is null
+                ? null
+                : new GridViewFilterState(
+                    -1,
+                    null,
+                    GridViewFilterKind.RowPredicate,
+                    rowFilter.Description,
+                    isActive: true);
+
+        public bool HasActiveFilters
+            => rowFilter is not null || columnFilters.Any(filter => filter is not null);
+
+        public int FilteredRowCount => viewRowIndexes.Count;
 
         public IReadOnlyList<GridRow> CurrentPageRows
             => GetCurrentPageViewIndexes()
@@ -86,6 +108,8 @@ namespace BlazorTUI.TUI
 
         public event EventHandler<GridViewPageChangedEventArgs>? PageChanged;
 
+        public event EventHandler<GridViewFilterChangedEventArgs>? FilterChanged;
+
         public GridView(
             string name,
             GridColumn[] columns,
@@ -114,12 +138,150 @@ namespace BlazorTUI.TUI
             BackgroundColor = backgroundcolor;
             this.columns = columns;
             this.gridrows = gridrows;
+            columnFilters = new ActiveColumnFilter?[columns.Length];
             TabStop = true;
             this.pageSize = pageSize == 0
                 ? DefaultPageSize
                 : ValidatePageSize(pageSize);
 
             RebuildViewRowIndexes();
+        }
+
+        public void SetTextFilter(
+            int columnIndex,
+            string text,
+            StringComparison comparison = StringComparison.OrdinalIgnoreCase)
+        {
+            ValidateColumnIndex(columnIndex);
+            ArgumentNullException.ThrowIfNull(text);
+            ValidateStringComparison(comparison);
+
+            if (text.Length == 0)
+            {
+                ClearFilter(columnIndex);
+                return;
+            }
+
+            SetColumnFilterCore(
+                columnIndex,
+                GridViewFilterKind.Text,
+                text,
+                value => value.Contains(text, comparison));
+        }
+
+        public void SetExactFilter(int columnIndex, string value, StringComparer? comparer = null)
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            SetExactFilter(columnIndex, new[] { value }, comparer);
+        }
+
+        public void SetExactFilter(int columnIndex, IEnumerable<string> values, StringComparer? comparer = null)
+        {
+            ValidateColumnIndex(columnIndex);
+            ArgumentNullException.ThrowIfNull(values);
+
+            string[] filterValues = values
+                .Select(value => value ?? throw new ArgumentException("Filter values cannot contain null.", nameof(values)))
+                .ToArray();
+            if (filterValues.Length == 0)
+            {
+                ClearFilter(columnIndex);
+                return;
+            }
+
+            var allowedValues = new HashSet<string>(filterValues, comparer ?? StringComparer.OrdinalIgnoreCase);
+            SetColumnFilterCore(
+                columnIndex,
+                GridViewFilterKind.Exact,
+                string.Join(", ", filterValues),
+                allowedValues.Contains);
+        }
+
+        public void SetColumnFilter(int columnIndex, Func<string, bool> predicate, string description)
+        {
+            ValidateColumnIndex(columnIndex);
+            ArgumentNullException.ThrowIfNull(predicate);
+            ArgumentException.ThrowIfNullOrWhiteSpace(description);
+
+            SetColumnFilterCore(columnIndex, GridViewFilterKind.Predicate, description, predicate);
+        }
+
+        public void SetRowFilter(Func<GridRow, bool> predicate, string description)
+        {
+            ArgumentNullException.ThrowIfNull(predicate);
+            ArgumentException.ThrowIfNullOrWhiteSpace(description);
+
+            rowFilter = new ActiveRowFilter(description, predicate);
+            ApplyFilterChange(new GridViewFilterState(
+                -1,
+                null,
+                GridViewFilterKind.RowPredicate,
+                description,
+                isActive: true));
+        }
+
+        public void ClearFilter(int columnIndex)
+        {
+            ValidateColumnIndex(columnIndex);
+            if (columnFilters[columnIndex] is null)
+                return;
+
+            columnFilters[columnIndex] = null;
+            ApplyFilterChange(GetFilter(columnIndex));
+        }
+
+        public void ClearRowFilter()
+        {
+            if (rowFilter is null)
+                return;
+
+            rowFilter = null;
+            ApplyFilterChange(new GridViewFilterState(
+                -1,
+                null,
+                GridViewFilterKind.RowPredicate,
+                "",
+                isActive: false));
+        }
+
+        public void ClearFilters()
+        {
+            if (!HasActiveFilters)
+                return;
+
+            Array.Clear(columnFilters);
+            rowFilter = null;
+            ApplyFilterChange(new GridViewFilterState(
+                -1,
+                null,
+                GridViewFilterKind.None,
+                "",
+                isActive: false));
+        }
+
+        public bool IsFilterActive(int columnIndex)
+        {
+            ValidateColumnIndex(columnIndex);
+            return columnFilters[columnIndex] is not null;
+        }
+
+        public GridViewFilterState GetFilter(int columnIndex)
+        {
+            ValidateColumnIndex(columnIndex);
+            ActiveColumnFilter? filter = columnFilters[columnIndex];
+            return filter is null
+                ? new GridViewFilterState(
+                    columnIndex,
+                    columns[columnIndex],
+                    GridViewFilterKind.None,
+                    "",
+                    isActive: false)
+                : new GridViewFilterState(
+                    columnIndex,
+                    columns[columnIndex],
+                    filter.Kind,
+                    filter.Description,
+                    isActive: true);
         }
 
         public void SortByColumn(int columnIndex)
@@ -428,7 +590,8 @@ namespace BlazorTUI.TUI
 
         private void RebuildViewRowIndexes()
         {
-            IEnumerable<int> rowIndexes = Enumerable.Range(0, gridrows.Length);
+            IEnumerable<int> rowIndexes = Enumerable.Range(0, gridrows.Length)
+                .Where(RowMatchesFilters);
             if (sortDirection != GridSortDirection.None && sortColumnIndex >= 0)
             {
                 rowIndexes = sortDirection == GridSortDirection.Ascending
@@ -442,6 +605,68 @@ namespace BlazorTUI.TUI
 
             viewRowIndexes.Clear();
             viewRowIndexes.AddRange(rowIndexes);
+        }
+
+        private void SetColumnFilterCore(
+            int columnIndex,
+            GridViewFilterKind kind,
+            string description,
+            Func<string, bool> predicate)
+        {
+            columnFilters[columnIndex] = new ActiveColumnFilter(kind, description, predicate);
+            ApplyFilterChange(GetFilter(columnIndex));
+        }
+
+        private void ApplyFilterChange(GridViewFilterState filter)
+        {
+            int previousSelectedRowIndex = selectedViewRowIndex;
+            int previousSourceRowIndex = SelectedSourceRowIndex;
+            GridRow? previousSelectedRow = SelectedRow;
+
+            RebuildViewRowIndexes();
+            RestoreSelection(previousSourceRowIndex);
+            ClampPageIndexAfterDataChange();
+            RaiseSelectionChangedIfNeeded(previousSelectedRowIndex, previousSourceRowIndex, previousSelectedRow);
+            FilterChanged?.Invoke(this, new GridViewFilterChangedEventArgs(filter, FilteredRowCount));
+        }
+
+        private void RaiseSelectionChangedIfNeeded(
+            int previousSelectedRowIndex,
+            int previousSourceRowIndex,
+            GridRow? previousSelectedRow)
+        {
+            if (previousSelectedRowIndex == selectedViewRowIndex &&
+                previousSourceRowIndex == SelectedSourceRowIndex)
+            {
+                return;
+            }
+
+            SelectedRowChanged?.Invoke(this, EventArgs.Empty);
+            SelectionChanged?.Invoke(
+                this,
+                new GridViewSelectionChangedEventArgs(
+                    previousSelectedRowIndex,
+                    selectedViewRowIndex,
+                    previousSourceRowIndex,
+                    SelectedSourceRowIndex,
+                    previousSelectedRow,
+                    SelectedRow));
+        }
+
+        private bool RowMatchesFilters(int rowIndex)
+        {
+            GridRow row = gridrows[rowIndex];
+            if (rowFilter is not null && !rowFilter.Predicate(row))
+                return false;
+
+            for (int columnIndex = 0; columnIndex < columnFilters.Length; columnIndex++)
+            {
+                ActiveColumnFilter? filter = columnFilters[columnIndex];
+                if (filter is not null && !filter.Predicate(GetCellValue(row, columnIndex)))
+                    return false;
+            }
+
+            return true;
         }
 
         private string GetRenderedCharacter(int localX, int localY)
@@ -490,9 +715,11 @@ namespace BlazorTUI.TUI
             {
                 GridColumn column = columns[index];
                 string title = column.Title;
-                string indicator = index == sortColumnIndex
+                string filterIndicator = columnFilters[index] is not null ? "◊" : "";
+                string sortIndicator = index == sortColumnIndex
                     ? sortDirection == GridSortDirection.Ascending ? "▲" : "▼"
                     : "";
+                string indicator = filterIndicator + sortIndicator;
                 builder.Append(FormatCell(title, column.Width, indicator));
             }
 
@@ -620,6 +847,12 @@ namespace BlazorTUI.TUI
                 throw new ArgumentOutOfRangeException(nameof(direction));
         }
 
+        private static void ValidateStringComparison(StringComparison comparison)
+        {
+            if (!Enum.IsDefined(comparison))
+                throw new ArgumentOutOfRangeException(nameof(comparison));
+        }
+
         private static void ValidateColumns(IReadOnlyList<GridColumn> columns)
         {
             if (columns.Count == 0)
@@ -641,5 +874,14 @@ namespace BlazorTUI.TUI
                     throw new ArgumentException("Every GridView row must contain at least one cell for each column.", nameof(rows));
             }
         }
+
+        private sealed record ActiveColumnFilter(
+            GridViewFilterKind Kind,
+            string Description,
+            Func<string, bool> Predicate);
+
+        private sealed record ActiveRowFilter(
+            string Description,
+            Func<GridRow, bool> Predicate);
     }
 }

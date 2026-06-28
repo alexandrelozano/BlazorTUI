@@ -23,6 +23,7 @@ public class ExampleCatalogTests : BunitContext
         Assert.Contains("BLAZORTUI EXAMPLES", accessibleText);
         Assert.Contains("Controls and events", accessibleText);
         Assert.Contains("Form validation", accessibleText);
+        Assert.Contains("GridView", accessibleText);
         Assert.Contains("Dialogs and menus", accessibleText);
         Assert.Contains("Images", accessibleText);
         Assert.Contains("TabControl", accessibleText);
@@ -37,6 +38,7 @@ public class ExampleCatalogTests : BunitContext
     [Theory]
     [InlineData("controlsExample", "/examples/controls-events")]
     [InlineData("validationExample", "/examples/form-validation")]
+    [InlineData("gridViewExample", "/examples/grid-view")]
     [InlineData("dialogsExample", "/examples/dialogs-menus")]
     [InlineData("imagesExample", "/examples/images")]
     [InlineData("tabsExample", "/examples/tabs")]
@@ -45,7 +47,7 @@ public class ExampleCatalogTests : BunitContext
     [InlineData("splitExample", "/examples/split-panels")]
     [InlineData("breadcrumbExample", "/examples/breadcrumbs")]
     [InlineData("themesExample", "/examples/themes")]
-    [InlineData("showcaseExample", "/")]
+    [InlineData("showcaseExample", "/examples/showcase")]
     public void CatalogButtonsNavigateToTheirExample(string controlName, string expectedPath)
     {
         var component = Render<global::SampleApp.Pages.Examples.Index>();

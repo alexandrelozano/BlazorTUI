@@ -369,7 +369,7 @@ Use `AddItem`, `RemoveItem`, `ClearItems`, `GetItem`, `SelectIndex`, `SelectItem
 
 ## Grid views
 
-`GridView` displays tabular data and supports column sorting, row selection, and pagination:
+`GridView` displays tabular data and supports column sorting, filtering, row selection, and pagination:
 
 ```csharp
 var orders = new GridView(
@@ -403,10 +403,19 @@ orders.PageChanged += (_, args) =>
 orders.SelectionChanged += (_, args) =>
     status.Value = $"Selected order: {args.Row?.Cells[0]}";
 
+orders.FilterChanged += (_, args) =>
+    status.Value = $"Filter rows: {args.FilteredRowCount}";
+
+orders.SetTextFilter(2, "Ready");
+orders.SetExactFilter(1, new[] { "Pepperoni", "Veggie" });
+orders.SetColumnFilter(1, value => value.Length > 6, "Long pizza names");
+orders.SetRowFilter(row => row.Cells[0] != "2", "Exclude order 2");
+orders.ClearFilters();
+
 frame.AddControl(orders);
 ```
 
-Use `SortByColumn(columnIndex)` to toggle ascending/descending sorting, or `SortByColumn(columnIndex, direction)` for an explicit `GridSortDirection`. `ClearSort` restores the original row order. `NextPage`, `PreviousPage`, `GoToPage`, `PageIndex`, `PageSize`, and `PageCount` manage pagination. `SelectedRow`, `SelectedRowIndex`, `SelectedSourceRowIndex`, `SelectRow`, and `SelectSourceRow` manage row selection. Clicking a column header sorts it, clicking the up/down glyphs changes pages, and `PageUp`/`PageDown` work from the keyboard.
+Use `SortByColumn(columnIndex)` to toggle ascending/descending sorting, or `SortByColumn(columnIndex, direction)` for an explicit `GridSortDirection`. `ClearSort` restores the original row order. Use `SetTextFilter`, `SetExactFilter`, `SetColumnFilter`, `SetRowFilter`, `ClearFilter`, `ClearRowFilter`, and `ClearFilters` to control filtering. `Filters`, `RowFilter`, `HasActiveFilters`, and `FilteredRowCount` expose the current filtered state. Filtered columns show a `◊` marker in the header; sorted columns show `▲` or `▼`. `NextPage`, `PreviousPage`, `GoToPage`, `PageIndex`, `PageSize`, and `PageCount` manage pagination. `SelectedRow`, `SelectedRowIndex`, `SelectedSourceRowIndex`, `SelectRow`, and `SelectSourceRow` manage row selection. Clicking a column header sorts it, clicking the up/down glyphs changes pages, and `PageUp`/`PageDown` work from the keyboard.
 
 ## Radio groups
 
@@ -630,6 +639,7 @@ The repository contains focused pages that can be run directly:
 | --- | --- |
 | [Controls and events](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/ControlsAndEvents.razor) | Text and password input, validation, combo-box and radio-group selection, command palette actions, checkbox state, callbacks, focus order, and status messages |
 | [Form validation](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/FormValidation.razor) | Required fields, custom validation rules, inline error messages, and first-invalid focus |
+| [GridView](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/GridViewExample.razor) | Sorting, pagination, row selection, text filters, exact filters, predicate filters, and filter indicators |
 | [Dialogs and menus](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/DialogsAndMenus.razor) | Menu shortcuts, custom modal dialogs, and message boxes |
 | [Images](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/Images.razor) | Loading encoded image bytes into a `PictureBox` |
 | [TabControl](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/Tabs.razor) | Tab pages, nested controls, focus changes, mouse selection, and keyboard navigation |
@@ -640,9 +650,16 @@ The repository contains focused pages that can be run directly:
 | [Themes](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/Themes.razor) | Runtime theme switching, predefined palettes, control roles, and visual states |
 | [Complete showcase](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Index.razor) | All controls, nested frames, z-order, callbacks, and animation |
 
-Run `dotnet run --project SampleApp` from the repository root and open `/examples` to browse them. The example routes are exercised by the automated test suite so API changes cannot silently leave the documentation out of date.
+Run `dotnet run --project SampleApp` from the repository root and open `/` or `/examples` to browse them. The example routes are exercised by the automated test suite so API changes cannot silently leave the documentation out of date.
 
 ## Changelog
+
+### 0.8.10 — 2026-06-28
+
+- Added `GridView` filtering with text filters, exact-value filters, custom column predicates, row predicates, filter state inspection, filtered-row counts, and typed `FilterChanged` events.
+- Added filtered-column header indicators and preserved sorting, pagination, and selection behavior when filters change the visible row set.
+- Added a dedicated GridView example page and moved the sample app root page to the redesigned BlazorTUI example catalog.
+- Moved the complete all-controls showcase to `/examples/showcase`.
 
 ### 0.8.9 — 2026-06-27
 

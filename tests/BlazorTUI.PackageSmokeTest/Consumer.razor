@@ -141,9 +141,18 @@
         ordersGrid.Sorted += (_, args) => _ = args.Direction;
         ordersGrid.PageChanged += (_, args) => _ = args.PageIndex;
         ordersGrid.SelectionChanged += (_, args) => _ = args.Row?.Cells[0];
+        ordersGrid.FilterChanged += (_, args) => _ = args.FilteredRowCount;
         ordersGrid.SortByColumn(1);
         ordersGrid.NextPage();
         ordersGrid.SelectRow(2);
+        ordersGrid.SetTextFilter(1, "e");
+        _ = ordersGrid.Filters;
+        _ = ordersGrid.FilteredRowCount;
+        ordersGrid.ClearFilter(1);
+        ordersGrid.SetExactFilter(1, new[] { "Pepperoni", "Veggie" });
+        ordersGrid.SetRowFilter(row => row.Cells[0] != "2", "Exclude order two");
+        _ = ordersGrid.RowFilter;
+        ordersGrid.ClearFilters();
         terminal.TopContainer.AddControl(ordersGrid);
         var commands = new CommandPalette(
             "commands",
