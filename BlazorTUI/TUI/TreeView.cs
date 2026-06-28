@@ -136,6 +136,41 @@ namespace BlazorTUI.TUI
             }
         }
 
+        internal void ExportTreeViewState(TuiElementState state)
+        {
+            ArgumentNullException.ThrowIfNull(state);
+
+            if (selectedNode is not null)
+                state.SetString("SelectedNode", selectedNode.Name);
+            state.SetStringList(
+                "ExpandedNodes",
+                nodes.SelectMany(node => node.EnumerateSubtree())
+                    .Where(node => node.IsExpanded)
+                    .Select(node => node.Name));
+            state.SetInteger("ScrollIndex", scrollIndex);
+        }
+
+        internal void RestoreTreeViewState(TuiElementState state)
+        {
+            ArgumentNullException.ThrowIfNull(state);
+
+            if (state.TryGetStringList("ExpandedNodes", out IReadOnlyList<string> restoredExpandedNodes))
+            {
+                var expandedNames = new HashSet<string>(restoredExpandedNodes, StringComparer.Ordinal);
+                foreach (TreeNode node in nodes.SelectMany(node => node.EnumerateSubtree()))
+                    node.SetExpanded(node.HasChildren && expandedNames.Contains(node.Name));
+            }
+
+            if (state.TryGetString("SelectedNode", out string restoredSelectedNode))
+                selectedNode = GetNode(restoredSelectedNode) ?? selectedNode;
+
+            IReadOnlyList<VisibleNode> visibleNodes = GetVisibleNodes();
+            scrollIndex = state.TryGetInteger("ScrollIndex", out int restoredScrollIndex)
+                ? Math.Clamp(restoredScrollIndex, 0, Math.Max(0, visibleNodes.Count - Height))
+                : 0;
+            EnsureSelectionVisible(visibleNodes);
+        }
+
         public override bool KeyDown(string key, bool shiftKey)
         {
             if (!Visible || selectedNode is null)

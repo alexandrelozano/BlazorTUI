@@ -99,6 +99,38 @@ namespace BlazorTUI.TUI
             ActivateTab((selectedIndex - 1 + tabs.Count) % tabs.Count, true);
         }
 
+        internal void ExportTabControlState(TuiElementState state)
+        {
+            ArgumentNullException.ThrowIfNull(state);
+
+            state.SetInteger("SelectedIndex", selectedIndex);
+            state.SetBoolean("IsKeyboardActive", IsKeyboardActive);
+            if (SelectedTab is not null)
+                state.SetString("SelectedTab", SelectedTab.Name);
+        }
+
+        internal void RestoreTabControlState(TuiElementState state)
+        {
+            ArgumentNullException.ThrowIfNull(state);
+
+            if (state.TryGetInteger("SelectedIndex", out int restoredSelectedIndex) &&
+                restoredSelectedIndex >= 0 &&
+                restoredSelectedIndex < tabs.Count)
+            {
+                selectedIndex = restoredSelectedIndex;
+            }
+            else if (state.TryGetString("SelectedTab", out string restoredSelectedTab))
+            {
+                int tabIndex = tabs.FindIndex(tab => tab.Name == restoredSelectedTab);
+                if (tabIndex >= 0)
+                    selectedIndex = tabIndex;
+            }
+
+            if (state.TryGetBoolean("IsKeyboardActive", out bool restoredKeyboardActive))
+                IsKeyboardActive = restoredKeyboardActive;
+            UpdateTabVisibility();
+        }
+
         public override void SetFocus(string name)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(name);

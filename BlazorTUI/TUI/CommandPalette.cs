@@ -202,6 +202,35 @@ namespace BlazorTUI.TUI
         public void ClearSearch()
             => SetSearchText("");
 
+        internal void ExportCommandPaletteState(TuiElementState state)
+        {
+            ArgumentNullException.ThrowIfNull(state);
+
+            state.SetString("SearchText", searchText);
+            state.SetInteger("HighlightedIndex", highlightedIndex);
+            state.SetInteger("ScrollIndex", scrollIndex);
+            state.SetBoolean("IsOpen", IsOpen);
+        }
+
+        internal void RestoreCommandPaletteState(TuiElementState state)
+        {
+            ArgumentNullException.ThrowIfNull(state);
+
+            if (state.TryGetString("SearchText", out string restoredSearchText))
+                searchText = ValidateText(restoredSearchText);
+
+            RefreshFilteredCommands();
+
+            highlightedIndex = state.TryGetInteger("HighlightedIndex", out int restoredHighlightedIndex)
+                ? Math.Clamp(restoredHighlightedIndex, -1, Math.Max(-1, filteredCommands.Count - 1))
+                : highlightedIndex;
+            scrollIndex = state.TryGetInteger("ScrollIndex", out int restoredScrollIndex)
+                ? Math.Max(0, restoredScrollIndex)
+                : 0;
+            IsOpen = state.TryGetBoolean("IsOpen", out bool restoredOpen) && restoredOpen && Visible;
+            EnsureHighlightedCommandVisible();
+        }
+
         public override bool KeyDown(string key, bool shiftKey)
         {
             ArgumentException.ThrowIfNullOrEmpty(key);

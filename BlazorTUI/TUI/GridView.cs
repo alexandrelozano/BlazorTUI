@@ -227,7 +227,9 @@ namespace BlazorTUI.TUI
                 columnIndex,
                 GridViewFilterKind.Text,
                 text,
-                value => value.Contains(text, comparison));
+                value => value.Contains(text, comparison),
+                new[] { text },
+                comparison);
         }
 
         public void SetExactFilter(int columnIndex, string value, StringComparer? comparer = null)
@@ -255,7 +257,8 @@ namespace BlazorTUI.TUI
                 columnIndex,
                 GridViewFilterKind.Exact,
                 string.Join(", ", filterValues),
-                allowedValues.Contains);
+                allowedValues.Contains,
+                filterValues);
         }
 
         public void SetColumnFilter(int columnIndex, Func<string, bool> predicate, string description)
@@ -560,6 +563,157 @@ namespace BlazorTUI.TUI
         public bool CancelEdit()
             => CancelEdit(raiseEvent: true);
 
+        internal void ExportGridViewState(TuiElementState state)
+        {
+            ArgumentNullException.ThrowIfNull(state);
+
+            state.SetBoolean("IsReadOnly", IsReadOnly);
+            state.SetInteger("PageIndex", pageIndex);
+            state.SetInteger("PageSize", pageSize);
+            state.SetInteger("SelectedRowIndex", selectedViewRowIndex);
+            state.SetInteger("SelectedSourceRowIndex", SelectedSourceRowIndex);
+            state.SetInteger("SelectedColumnIndex", selectedColumnIndex);
+            state.SetInteger("SortColumnIndex", sortColumnIndex);
+            state.SetInteger("SortDirection", (int)sortDirection);
+            state.SetBoolean("IsEditing", IsEditing);
+            if (editState is not null)
+            {
+                state.SetInteger("EditingSourceRowIndex", editState.SourceRowIndex);
+                state.SetInteger("EditingColumnIndex", editState.ColumnIndex);
+                state.SetString("EditingValue", editState.Value);
+            }
+
+            for (int rowIndex = 0; rowIndex < gridrows.Length; rowIndex++)
+                state.SetStringList($"Row:{rowIndex}", gridrows[rowIndex].cells);
+
+            for (int columnIndex = 0; columnIndex < columnFilters.Length; columnIndex++)
+            {
+                ActiveColumnFilter? filter = columnFilters[columnIndex];
+                if (filter is null)
+                    continue;
+
+                state.SetInteger($"Filter:{columnIndex}:Kind", (int)filter.Kind);
+                state.SetString($"Filter:{columnIndex}:Description", filter.Description);
+                state.SetStringList($"Filter:{columnIndex}:Values", filter.Values);
+                state.SetInteger($"Filter:{columnIndex}:Comparison", (int)filter.Comparison);
+            }
+
+            if (rowFilter is not null)
+                state.SetString("RowFilterDescription", rowFilter.Description);
+        }
+
+        internal void RestoreGridViewState(TuiElementState state)
+        {
+            ArgumentNullException.ThrowIfNull(state);
+
+            CancelEdit(raiseEvent: false);
+
+            for (int rowIndex = 0; rowIndex < gridrows.Length; rowIndex++)
+            {
+                if (!state.TryGetStringList($"Row:{rowIndex}", out IReadOnlyList<string> cells))
+                    continue;
+
+                int columnCount = Math.Min(gridrows[rowIndex].cells.Length, cells.Count);
+                for (int columnIndex = 0; columnIndex < columnCount; columnIndex++)
+                    gridrows[rowIndex].cells[columnIndex] = cells[columnIndex] ?? "";
+            }
+
+            Array.Clear(columnFilters);
+            rowFilter = null;
+            for (int columnIndex = 0; columnIndex < columnFilters.Length; columnIndex++)
+            {
+                if (!state.TryGetInteger($"Filter:{columnIndex}:Kind", out int filterKindValue) ||
+                    !Enum.IsDefined((GridViewFilterKind)filterKindValue))
+                {
+                    continue;
+                }
+
+                var filterKind = (GridViewFilterKind)filterKindValue;
+                state.TryGetString($"Filter:{columnIndex}:Description", out string description);
+                state.TryGetStringList($"Filter:{columnIndex}:Values", out IReadOnlyList<string> values);
+                var filterValues = values.ToArray();
+
+                if (filterKind == GridViewFilterKind.Text && filterValues.Length > 0)
+                {
+                    var comparison = StringComparison.OrdinalIgnoreCase;
+                    if (state.TryGetInteger($"Filter:{columnIndex}:Comparison", out int comparisonValue) &&
+                        Enum.IsDefined((StringComparison)comparisonValue))
+                    {
+                        comparison = (StringComparison)comparisonValue;
+                    }
+
+                    string text = filterValues[0];
+                    columnFilters[columnIndex] = new ActiveColumnFilter(
+                        GridViewFilterKind.Text,
+                        description.Length == 0 ? text : description,
+                        value => value.Contains(text, comparison),
+                        filterValues,
+                        comparison);
+                }
+                else if (filterKind == GridViewFilterKind.Exact && filterValues.Length > 0)
+                {
+                    var allowedValues = new HashSet<string>(filterValues, StringComparer.OrdinalIgnoreCase);
+                    columnFilters[columnIndex] = new ActiveColumnFilter(
+                        GridViewFilterKind.Exact,
+                        description.Length == 0 ? string.Join(", ", filterValues) : description,
+                        allowedValues.Contains,
+                        filterValues,
+                        StringComparison.OrdinalIgnoreCase);
+                }
+            }
+
+            if (state.TryGetInteger("PageSize", out int restoredPageSize) &&
+                restoredPageSize >= 1 &&
+                (VisibleRowCapacity == 0 || restoredPageSize <= VisibleRowCapacity))
+            {
+                pageSize = restoredPageSize;
+            }
+
+            if (state.TryGetInteger("SortColumnIndex", out int restoredSortColumnIndex) &&
+                state.TryGetInteger("SortDirection", out int restoredSortDirectionValue) &&
+                restoredSortColumnIndex >= 0 &&
+                restoredSortColumnIndex < columns.Length &&
+                Enum.IsDefined((GridSortDirection)restoredSortDirectionValue))
+            {
+                sortColumnIndex = restoredSortColumnIndex;
+                sortDirection = (GridSortDirection)restoredSortDirectionValue;
+            }
+            else
+            {
+                sortColumnIndex = -1;
+                sortDirection = GridSortDirection.None;
+            }
+
+            RebuildViewRowIndexes();
+
+            int selectedSourceRowIndex = state.TryGetInteger("SelectedSourceRowIndex", out int restoredSourceRowIndex)
+                ? restoredSourceRowIndex
+                : -1;
+            RestoreSelection(selectedSourceRowIndex);
+            if (selectedViewRowIndex < 0 &&
+                state.TryGetInteger("SelectedRowIndex", out int restoredRowIndex) &&
+                restoredRowIndex >= 0 &&
+                restoredRowIndex < viewRowIndexes.Count)
+            {
+                selectedViewRowIndex = restoredRowIndex;
+            }
+
+            selectedColumnIndex = state.TryGetInteger("SelectedColumnIndex", out int restoredColumnIndex) &&
+                restoredColumnIndex >= -1 &&
+                restoredColumnIndex < columns.Length
+                    ? restoredColumnIndex
+                    : -1;
+
+            pageIndex = state.TryGetInteger("PageIndex", out int restoredPageIndex)
+                ? Math.Clamp(restoredPageIndex, 0, PageCount - 1)
+                : 0;
+            if (selectedViewRowIndex >= 0)
+                pageIndex = Math.Clamp(selectedViewRowIndex / PageSize, 0, PageCount - 1);
+
+            isReadOnly = !state.TryGetBoolean("IsReadOnly", out bool restoredReadOnly) || restoredReadOnly;
+            EditValidationMessage = "";
+        }
+
         public override bool KeyDown(string key, bool shiftKey)
         {
             ArgumentException.ThrowIfNullOrEmpty(key);
@@ -816,9 +970,16 @@ namespace BlazorTUI.TUI
             int columnIndex,
             GridViewFilterKind kind,
             string description,
-            Func<string, bool> predicate)
+            Func<string, bool> predicate,
+            IEnumerable<string>? values = null,
+            StringComparison comparison = StringComparison.OrdinalIgnoreCase)
         {
-            columnFilters[columnIndex] = new ActiveColumnFilter(kind, description, predicate);
+            columnFilters[columnIndex] = new ActiveColumnFilter(
+                kind,
+                description,
+                predicate,
+                values?.ToArray() ?? Array.Empty<string>(),
+                comparison);
             ApplyFilterChange(GetFilter(columnIndex));
         }
 
@@ -1406,7 +1567,9 @@ namespace BlazorTUI.TUI
         private sealed record ActiveColumnFilter(
             GridViewFilterKind Kind,
             string Description,
-            Func<string, bool> Predicate);
+            Func<string, bool> Predicate,
+            string[] Values,
+            StringComparison Comparison);
 
         private sealed record ActiveRowFilter(
             string Description,

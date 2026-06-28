@@ -40,6 +40,38 @@ namespace BlazorTUI.TUI
             this.TabStop = true;
         }
 
+        internal void ExportListBoxState(TuiElementState state)
+        {
+            ArgumentNullException.ThrowIfNull(state);
+
+            state.SetStringList("SelectedItems", itemsSelected);
+            state.SetInteger("CursorY", cursorY);
+            state.SetInteger("ScrollY", scrollY);
+        }
+
+        internal void RestoreListBoxState(TuiElementState state)
+        {
+            ArgumentNullException.ThrowIfNull(state);
+
+            if (state.TryGetStringList("SelectedItems", out IReadOnlyList<string> restoredSelectedItems))
+            {
+                itemsSelected.Clear();
+                foreach (string item in restoredSelectedItems)
+                {
+                    if (items.Contains(item) && !itemsSelected.Contains(item))
+                        itemsSelected.Add(item);
+                }
+            }
+
+            int maximumIndex = Math.Max(0, items.Count - 1);
+            cursorY = state.TryGetInteger("CursorY", out int restoredCursorY)
+                ? (short)Math.Clamp(restoredCursorY, 0, maximumIndex)
+                : (short)0;
+            scrollY = state.TryGetInteger("ScrollY", out int restoredScrollY)
+                ? (short)Math.Clamp(restoredScrollY, 0, Math.Max(0, items.Count - height))
+                : (short)0;
+        }
+
         public override bool KeyDown(string key, bool shiftKey)
         {
             bool handled = false;

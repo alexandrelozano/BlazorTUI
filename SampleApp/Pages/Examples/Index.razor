@@ -44,8 +44,8 @@
             3, 2, 44, Color.White, Color.DarkBlue));
 
         frame.AddControl(new Label(
-            "catalogSubtitle", "Focused pages show one feature at a time; showcase displays everything together.",
-            3, 3, 66, Color.Cyan, Color.DarkBlue));
+            "catalogSubtitle", "Focused pages show one feature; showcase displays all controls.",
+            3, 3, 68, Color.Cyan, Color.DarkBlue));
 
         for (int index = 0; index < Destinations.Length; index++)
         {
@@ -64,8 +64,8 @@
         }
 
         frame.AddControl(new Label(
-            "catalogFooter", "The root page is this catalog. Mouse clicks are also supported.",
-            3, 28, 58, Color.White, Color.DarkBlue));
+            "catalogFooter", "Root page: this catalog. Mouse clicks supported.",
+            3, 28, 68, Color.White, Color.DarkBlue));
 
         screen.SetFocus(Destinations[0].ControlName);
     }

@@ -167,6 +167,65 @@ namespace BlazorTUI.TUI
             editHistory.Clear();
         }
 
+        internal void ExportTextAreaState(TuiElementState state)
+        {
+            ArgumentNullException.ThrowIfNull(state);
+
+            state.SetString("Value", CanonicalText);
+            state.SetInteger("CursorX", cursorX);
+            state.SetInteger("CursorY", cursorY);
+            state.SetInteger("ScrollX", scrollX);
+            state.SetInteger("ScrollY", scrollY);
+            if (selectionAnchor.HasValue)
+            {
+                state.SetInteger("SelectionAnchorX", selectionAnchor.Value.Column);
+                state.SetInteger("SelectionAnchorY", selectionAnchor.Value.Line);
+            }
+        }
+
+        internal void RestoreTextAreaState(TuiElementState state)
+        {
+            ArgumentNullException.ThrowIfNull(state);
+
+            if (state.TryGetString("Value", out string restoredText))
+            {
+                text = restoredText.Split('\n').ToList();
+                if (text.Count == 0)
+                    text.Add("");
+            }
+
+            cursorY = state.TryGetInteger("CursorY", out int restoredCursorY)
+                ? (short)Math.Clamp(restoredCursorY, 0, text.Count - 1)
+                : (short)0;
+            cursorX = state.TryGetInteger("CursorX", out int restoredCursorX)
+                ? (short)Math.Clamp(restoredCursorX, 0, TuiText.TextElementCount(text[cursorY]))
+                : (short)0;
+
+            if (state.TryGetInteger("SelectionAnchorY", out int restoredAnchorY) &&
+                state.TryGetInteger("SelectionAnchorX", out int restoredAnchorX))
+            {
+                short anchorY = (short)Math.Clamp(restoredAnchorY, 0, text.Count - 1);
+                short anchorX = (short)Math.Clamp(restoredAnchorX, 0, TuiText.TextElementCount(text[anchorY]));
+                selectionAnchor = new TextPosition(anchorY, anchorX);
+                if (selectionAnchor == CursorPosition)
+                    selectionAnchor = null;
+            }
+            else
+            {
+                selectionAnchor = null;
+            }
+
+            scrollX = state.TryGetInteger("ScrollX", out int restoredScrollX)
+                ? (short)Math.Max(0, restoredScrollX)
+                : (short)0;
+            scrollY = state.TryGetInteger("ScrollY", out int restoredScrollY)
+                ? (short)Math.Clamp(restoredScrollY, 0, Math.Max(0, text.Count - 1))
+                : (short)0;
+
+            EnsureCursorVisible();
+            ClearHistory();
+        }
+
         public override bool Click(short X, short Y)
         {
             bool handled = false;

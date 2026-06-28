@@ -185,6 +185,11 @@
         _ = terminal.GetInvalidControls();
         terminal.ApplyTheme(TuiTheme.Dark);
         _ = terminal.Theme.Resolve(TuiThemeRole.Input, TuiThemeState.Error);
+        terminal.SetFocus("priority");
+        TuiScreenState state = terminal.ExportState();
+        string serializedState = terminal.ExportStateJson();
+        terminal.RestoreState(state);
+        terminal.RestoreStateJson(serializedState);
         return terminal;
     }
 

@@ -128,6 +128,38 @@ namespace BlazorTUI.TUI
             editHistory.Clear();
         }
 
+        internal void ExportTextInputState(TuiElementState state)
+        {
+            ArgumentNullException.ThrowIfNull(state);
+
+            state.SetString("Value", text);
+            state.SetInteger("Cursor", cursor);
+            if (selectionAnchor.HasValue)
+                state.SetInteger("SelectionAnchor", selectionAnchor.Value);
+        }
+
+        internal void RestoreTextInputState(TuiElementState state)
+        {
+            ArgumentNullException.ThrowIfNull(state);
+
+            if (state.TryGetString("Value", out string restoredText))
+                text = restoredText;
+
+            short maximumPosition = ToShortTextElementCount(text);
+            cursor = state.TryGetInteger("Cursor", out int restoredCursor)
+                ? (short)Math.Clamp(restoredCursor, 0, maximumPosition)
+                : maximumPosition;
+
+            selectionAnchor = state.TryGetInteger("SelectionAnchor", out int restoredAnchor)
+                ? (short)Math.Clamp(restoredAnchor, 0, maximumPosition)
+                : null;
+
+            if (selectionAnchor == cursor)
+                selectionAnchor = null;
+
+            ClearHistory();
+        }
+
         public override bool Click(short X, short Y)
         {
             bool handled = false;

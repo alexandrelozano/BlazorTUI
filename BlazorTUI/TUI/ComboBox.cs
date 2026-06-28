@@ -171,6 +171,48 @@ namespace BlazorTUI.TUI
                 OpenDropDown();
         }
 
+        internal void ExportComboBoxState(TuiElementState state)
+        {
+            ArgumentNullException.ThrowIfNull(state);
+
+            state.SetInteger("SelectedIndex", selectedIndex);
+            state.SetInteger("HighlightedIndex", highlightedIndex);
+            state.SetInteger("ScrollIndex", scrollIndex);
+            state.SetBoolean("IsDropDownOpen", IsDropDownOpen);
+            if (SelectedItem is not null)
+                state.SetString("SelectedItem", SelectedItem);
+        }
+
+        internal void RestoreComboBoxState(TuiElementState state)
+        {
+            ArgumentNullException.ThrowIfNull(state);
+
+            if (state.TryGetInteger("SelectedIndex", out int restoredSelectedIndex) &&
+                restoredSelectedIndex >= -1 &&
+                restoredSelectedIndex < items.Count)
+            {
+                selectedIndex = restoredSelectedIndex;
+            }
+            else if (state.TryGetString("SelectedItem", out string restoredSelectedItem))
+            {
+                int itemIndex = items.IndexOf(restoredSelectedItem);
+                if (itemIndex >= 0)
+                    selectedIndex = itemIndex;
+            }
+
+            highlightedIndex = state.TryGetInteger("HighlightedIndex", out int restoredHighlightedIndex)
+                ? Math.Clamp(restoredHighlightedIndex, 0, Math.Max(0, items.Count - 1))
+                : selectedIndex;
+            if (items.Count == 0)
+                highlightedIndex = -1;
+
+            scrollIndex = state.TryGetInteger("ScrollIndex", out int restoredScrollIndex)
+                ? Math.Max(0, restoredScrollIndex)
+                : 0;
+            IsDropDownOpen = state.TryGetBoolean("IsDropDownOpen", out bool restoredOpen) && restoredOpen && items.Count > 0;
+            EnsureHighlightedItemVisible();
+        }
+
         public override bool KeyDown(string key, bool shiftKey)
         {
             if (!Visible)

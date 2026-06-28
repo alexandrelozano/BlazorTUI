@@ -235,6 +235,26 @@ screen.ApplyTheme(corporateTheme);
 
 Call `ApplyTheme` again to switch themes at runtime. Explicit colors assigned after applying a theme remain under application control until the next theme application.
 
+## State persistence
+
+Use `Screen.ExportState` and `Screen.RestoreState` when the application needs to preserve the current terminal state, for example before navigating away or refreshing data:
+
+```csharp
+TuiScreenState state = screen.ExportState();
+
+// Recreate or update the same screen structure.
+screen.RestoreState(state);
+```
+
+For storage in a database, browser storage, or a user profile, use the JSON helpers:
+
+```csharp
+string json = screen.ExportStateJson(indented: true);
+screen.RestoreStateJson(json);
+```
+
+The snapshot restores current control values, focus, text selections, selected items, active tabs, split-panel position, tree expansion and selection, grid row values, grid sorting, text/exact grid filters, grid pagination, and command-palette search state. Predicate-based grid filters and row filters keep their exported description metadata, but their delegate functions are not restored because arbitrary delegates are not serializable.
+
 ## Keyboard and mouse interaction
 
 - `Tab`: move to the next focusable control.
@@ -675,6 +695,13 @@ The repository contains focused pages that can be run directly:
 Run `dotnet run --project SampleApp` from the repository root and open `/` or `/examples` to browse them. The example routes are exercised by the automated test suite so API changes cannot silently leave the documentation out of date.
 
 ## Changelog
+
+### 0.8.11 — 2026-06-28
+
+- Added `Screen.ExportState`, `Screen.RestoreState`, `Screen.ExportStateJson`, and `Screen.RestoreStateJson` for saving and restoring terminal state.
+- Added serializable `TuiScreenState` and `TuiElementState` snapshots covering focus, text selections, values, selected items, active tabs, split-panel positions, tree expansion, command-palette search, and GridView state.
+- Added state-persistence regression tests and NuGet consumer coverage for the new public API.
+- Incremented the package version to `0.8.11`.
 
 ### 0.8.10 — 2026-06-28
 

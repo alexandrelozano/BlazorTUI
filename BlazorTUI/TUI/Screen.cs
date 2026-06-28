@@ -111,6 +111,21 @@ namespace BlazorTUI.TUI
                 ? topContainer.GetInvalidControls()
                 : dialogs.ElementAt(dialogs.Count - 1).GetInvalidControls();
 
+        public TuiScreenState ExportState()
+            => TuiStatePersistence.Export(this);
+
+        public string ExportStateJson(bool indented = false)
+            => ExportState().ToJson(indented);
+
+        public void RestoreState(TuiScreenState state)
+        {
+            ArgumentNullException.ThrowIfNull(state);
+            TuiStatePersistence.Restore(this, state);
+        }
+
+        public void RestoreStateJson(string json)
+            => RestoreState(TuiScreenState.FromJson(json));
+
         public void KeyDown(string key, bool shiftKey)
         {
             ArgumentException.ThrowIfNullOrEmpty(key);
