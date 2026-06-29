@@ -199,6 +199,26 @@ namespace BlazorTUI.TUI
                     colorState.SetInteger("ColorArgb", colorPicker.Color.ToArgb());
                     colorState.SetString("ColorName", colorPicker.Color.Name);
                     return colorState;
+                case Sparkline sparkline:
+                    var sparklineState = new TuiElementState(nameof(Sparkline));
+                    sparkline.ExportSparklineState(sparklineState);
+                    return sparklineState;
+                case BarChart barChart:
+                    var barChartState = new TuiElementState(nameof(BarChart));
+                    barChart.ExportBarChartState(barChartState);
+                    return barChartState;
+                case Gauge gauge:
+                    var gaugeState = new TuiElementState(nameof(Gauge));
+                    gauge.ExportGaugeState(gaugeState);
+                    return gaugeState;
+                case Timeline timeline:
+                    var timelineState = new TuiElementState(nameof(Timeline));
+                    timeline.ExportTimelineState(timelineState);
+                    return timelineState;
+                case KeyValueList keyValueList:
+                    var keyValueState = new TuiElementState(nameof(KeyValueList));
+                    keyValueList.ExportKeyValueListState(keyValueState);
+                    return keyValueState;
                 case StatusBar statusBar:
                     var statusState = new TuiElementState(nameof(StatusBar));
                     statusState.SetString("Message", statusBar.Message);
@@ -345,6 +365,21 @@ namespace BlazorTUI.TUI
                     break;
                 case ColorPicker colorPicker:
                     RestoreColorPickerState(colorPicker, state);
+                    break;
+                case Sparkline sparkline:
+                    sparkline.RestoreSparklineState(state);
+                    break;
+                case BarChart barChart:
+                    barChart.RestoreBarChartState(state);
+                    break;
+                case Gauge gauge:
+                    gauge.RestoreGaugeState(state);
+                    break;
+                case Timeline timeline:
+                    timeline.RestoreTimelineState(state);
+                    break;
+                case KeyValueList keyValueList:
+                    keyValueList.RestoreKeyValueListState(state);
                     break;
                 case StatusBar statusBar:
                     RestoreStatusBarState(statusBar, state);

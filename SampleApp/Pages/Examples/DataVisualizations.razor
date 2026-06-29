@@ -1,0 +1,85 @@
+@page "/examples/data-visualizations"
+@using global::BlazorTUI.TUI
+@using Color = System.Drawing.Color
+
+<PageTitle>Data visualizations example</PageTitle>
+
+<BlazorTUI.BlazorTUI
+    screen="@screen"
+    AriaLabel="Data visualizations example"
+    AriaDescription="Shows terminal-friendly visual display controls." />
+
+@code {
+    private readonly Screen screen = CreateScreen();
+
+    private static Screen CreateScreen()
+    {
+        var screen = new Screen(60, 30);
+        var frame = new Frame(
+            "visualizationFrame", "DATA VISUALIZATIONS", 4, 3, 52, 22,
+            Frame.BorderStyle.Line, Color.Yellow, Color.DarkBlue);
+        screen.TopContainer.AddContainer(frame);
+
+        frame.AddControl(new Label(
+            "visualizationDescription", "Compact charts and detail views for dashboards.",
+            3, 2, 46, Color.White, Color.DarkBlue));
+
+        frame.AddControl(new Label(
+            "sparklineLabel", "Sparkline:", 3, 4, 11, Color.Cyan, Color.DarkBlue));
+        frame.AddControl(new Sparkline(
+            "salesSparkline",
+            new[] { 12.0, 18.0, 15.0, 22.0, 28.0, 25.0, 35.0, 40.0, 33.0, 45.0 },
+            15, 4, 26,
+            Color.Yellow, Color.Black));
+
+        frame.AddControl(new Label(
+            "gaugeLabel", "Gauge:", 3, 6, 11, Color.Cyan, Color.DarkBlue));
+        frame.AddControl(new Gauge(
+            "cpuGauge", 0, 100, 68,
+            15, 6, 26,
+            Color.Yellow, Color.Black));
+
+        frame.AddControl(new Label(
+            "barChartLabel", "BarChart:", 3, 8, 11, Color.Cyan, Color.DarkBlue));
+        frame.AddControl(new BarChart(
+            "ordersBarChart",
+            new[]
+            {
+                new BarChartItem("open", "Open", 12),
+                new BarChartItem("ready", "Ready", 18),
+                new BarChartItem("sent", "Sent", 9),
+                new BarChartItem("paid", "Paid", 15)
+            },
+            3, 9, 32, 4,
+            Color.Yellow, Color.Black));
+
+        frame.AddControl(new KeyValueList(
+            "metricsList",
+            new[]
+            {
+                new KeyValueListItem("orders", "Orders", "54"),
+                new KeyValueListItem("avg", "Avg", "18m"),
+                new KeyValueListItem("sla", "SLA", "96%")
+            },
+            36, 4, 12, 3,
+            Color.White, Color.DarkBlue,
+            keyWidth: 6));
+
+        frame.AddControl(new Timeline(
+            "releaseTimeline",
+            new[]
+            {
+                new TimelineItem("plan", "Planned"),
+                new TimelineItem("build", "Built"),
+                new TimelineItem("ship", "Shipped")
+            },
+            36, 9, 12, 5,
+            Color.Cyan, Color.DarkBlue));
+
+        frame.AddControl(new Label(
+            "visualizationHint", "Use them for compact status and dashboard panels.",
+            3, 18, 46, Color.Cyan, Color.DarkBlue));
+
+        return screen;
+    }
+}

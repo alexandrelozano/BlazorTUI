@@ -24,6 +24,7 @@ public class ExampleCatalogTests : BunitContext
         Assert.Contains("Controls and events", accessibleText);
         Assert.Contains("Form validation", accessibleText);
         Assert.Contains("GridView", accessibleText);
+        Assert.Contains("Data visualizations", accessibleText);
         Assert.Contains("Dialogs and menus", accessibleText);
         Assert.Contains("Images", accessibleText);
         Assert.Contains("TabControl", accessibleText);
@@ -48,6 +49,7 @@ public class ExampleCatalogTests : BunitContext
     [InlineData("controlsExample", "/examples/controls-events")]
     [InlineData("validationExample", "/examples/form-validation")]
     [InlineData("gridViewExample", "/examples/grid-view")]
+    [InlineData("dataVisualizationsExample", "/examples/data-visualizations")]
     [InlineData("dialogsExample", "/examples/dialogs-menus")]
     [InlineData("imagesExample", "/examples/images")]
     [InlineData("tabsExample", "/examples/tabs")]

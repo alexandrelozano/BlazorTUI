@@ -17,6 +17,7 @@
         new("controlsExample", "Controls and events", "Inputs and callbacks", "/examples/controls-events"),
         new("validationExample", "Form validation", "Required fields", "/examples/form-validation"),
         new("gridViewExample", "GridView", "Sorting, pages, filters", "/examples/grid-view"),
+        new("dataVisualizationsExample", "Data visualizations", "Charts and metrics", "/examples/data-visualizations"),
         new("dialogsExample", "Dialogs and menus", "Modal interactions", "/examples/dialogs-menus"),
         new("imagesExample", "Images", "PictureBox rendering", "/examples/images"),
         new("tabsExample", "TabControl", "Tabbed layouts", "/examples/tabs"),
@@ -59,8 +60,8 @@
         for (int index = 0; index < Destinations.Length; index++)
         {
             ExampleDestination destination = Destinations[index];
-            short column = (short)(3 + (index / 7) * 25);
-            short row = (short)(6 + (index % 7) * 3);
+            short column = (short)(3 + (index / 8) * 25);
+            short row = (short)(5 + (index % 8) * 3);
             var button = new Button(
                 destination.ControlName, destination.Title,
                 column, row, 21, Color.Yellow, Color.Black);

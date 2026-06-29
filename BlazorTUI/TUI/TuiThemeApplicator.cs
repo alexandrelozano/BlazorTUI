@@ -63,8 +63,8 @@ namespace BlazorTUI.TUI
                 Button or CommandPalette => TuiThemeRole.Action,
                 CheckBox or RadioButton or RadioGroup or TreeView or Slider or ColorPicker or Breadcrumb => TuiThemeRole.Selection,
                 StatusBar => TuiThemeRole.Status,
-                ProgressBar or Spinner or PictureBox => TuiThemeRole.Accent,
-                GridView => TuiThemeRole.Surface,
+                ProgressBar or Spinner or PictureBox or Sparkline or BarChart or Gauge => TuiThemeRole.Accent,
+                GridView or Timeline or KeyValueList => TuiThemeRole.Surface,
                 _ => TuiThemeRole.Surface
             };
 

@@ -71,6 +71,44 @@
         calendar.DateSelected += (_, args) => _ = args.Value;
         calendar.AddDisabledDate(new DateOnly(2026, 6, 18));
         calendar.Value = new DateOnly(2026, 6, 16);
+        var sparkline = new Sparkline(
+            "sparkline",
+            new[] { 1.0, 2.0, 3.0 },
+            0, 0, 10,
+            System.Drawing.Color.White,
+            System.Drawing.Color.Black);
+        sparkline.AddValue(4);
+        var barChart = new BarChart(
+            "barChart",
+            new[]
+            {
+                new BarChartItem("open", "Open", 2),
+                new BarChartItem("done", "Done", 4)
+            },
+            0, 0, 12, 2,
+            System.Drawing.Color.White,
+            System.Drawing.Color.Black);
+        barChart.Orientation = BarChartOrientation.Vertical;
+        var gauge = new Gauge(
+            "gauge", 0, 100, 45,
+            0, 0, 12,
+            System.Drawing.Color.White,
+            System.Drawing.Color.Black);
+        gauge.Value = 55;
+        var timeline = new Timeline(
+            "timeline",
+            new[] { new TimelineItem("build", "Built") },
+            0, 0, 12, 1,
+            System.Drawing.Color.White,
+            System.Drawing.Color.Black);
+        timeline.AddItem(new TimelineItem("ship", "Shipped"));
+        var keyValueList = new KeyValueList(
+            "keyValueList",
+            new[] { new KeyValueListItem("status", "Status", "Ready") },
+            0, 0, 16, 1,
+            System.Drawing.Color.White,
+            System.Drawing.Color.Black);
+        keyValueList.SetValue("status", "Done");
         IClipboardControl clipboard = input;
         IClipboardPermissions passwordClipboard = password;
         IUndoableControl editHistory = input;

@@ -185,7 +185,7 @@ Use `FirstPanel` and `SecondPanel` as normal containers for controls or nested c
 | Text and input | `Label`, `TextBox`, `PasswordBox`, `TextArea`, `NumericBox`, `DateBox`, `Calendar`, `DatePicker`, `DateRangePicker`, `MonthPicker`, `TimeBox` |
 | Selection | `CheckBox`, `RadioButton`, `RadioGroup`, `ComboBox`, `ListBox`, `TreeView`, `Slider`, `ColorPicker` |
 | Actions and navigation | `Breadcrumb`, `BreadcrumbItem`, `Button`, `CommandPalette`, `CommandPaletteItem`, `MenuBar`, `Menu`, `MenuItem` |
-| Data and feedback | `GridView`, `ProgressBar`, `Spinner`, `StatusBar`, `PictureBox` |
+| Data and feedback | `GridView`, `Sparkline`, `BarChart`, `Gauge`, `Timeline`, `KeyValueList`, `ProgressBar`, `Spinner`, `StatusBar`, `PictureBox` |
 | Modal UI | `Dialog`, `MessageBox` |
 
 Control constructors accept `System.Drawing.Color` values for foreground and background colors.
@@ -334,6 +334,76 @@ frame.AddControl(billingMonth);
 
 Use `Value`, `Format`, `OpenMonthGrid`, `CloseMonthGrid`, `ToggleMonthGrid`, `DisplayedYear`, and `HighlightedMonth` to control it programmatically. Supported display formats are `YYYYMM`, `MMYYYY`, and `MMMYYYY`.
 
+## Data visualizations
+
+BlazorTUI includes terminal-friendly display controls for dashboards and detail panes:
+
+```csharp
+var trend = new Sparkline(
+    "trend",
+    new[] { 12.0, 18.0, 15.0, 22.0, 28.0 },
+    3,
+    4,
+    20,
+    Color.Yellow,
+    Color.Black);
+
+var orders = new BarChart(
+    "orders",
+    new[]
+    {
+        new BarChartItem("open", "Open", 12),
+        new BarChartItem("ready", "Ready", 18)
+    },
+    3,
+    6,
+    28,
+    4,
+    Color.Yellow,
+    Color.Black);
+
+var cpu = new Gauge(
+    "cpu",
+    0,
+    100,
+    68,
+    3,
+    11,
+    24,
+    Color.Yellow,
+    Color.Black);
+
+var events = new Timeline(
+    "events",
+    new[]
+    {
+        new TimelineItem("planned", "Planned"),
+        new TimelineItem("built", "Built")
+    },
+    3,
+    13,
+    20,
+    3,
+    Color.Cyan,
+    Color.Black);
+
+var details = new KeyValueList(
+    "details",
+    new[]
+    {
+        new KeyValueListItem("status", "Status", "Ready"),
+        new KeyValueListItem("owner", "Owner", "Ops")
+    },
+    28,
+    13,
+    20,
+    3,
+    Color.White,
+    Color.Black);
+```
+
+`Sparkline` renders compact trends from numeric sequences. `BarChart` supports horizontal and vertical bars. `Gauge` renders a bounded value with an optional percentage. `Timeline` shows ordered events with markers. `KeyValueList` aligns labels and values for details panes. All five controls render into the normal cell buffer, respect parent clipping, support theme roles, and participate in state persistence.
+
 ## Themes
 
 Use `Screen.ApplyTheme` to apply a reusable color palette to all current containers, controls, dialogs, and the menu bar. Built-in themes are available through `TuiTheme.Classic`, `TuiTheme.Dark`, `TuiTheme.Light`, and `TuiTheme.HighContrast`:
@@ -389,7 +459,7 @@ string json = screen.ExportStateJson(indented: true);
 screen.RestoreStateJson(json);
 ```
 
-The snapshot restores current control values, focus, text selections, selected items, active tabs, split-panel position, calendar state, date-picker, date-range-picker, and month-picker popup state, tree expansion and selection, grid row values, grid sorting, text/exact grid filters, grid pagination, and command-palette search state. Predicate-based grid filters and row filters keep their exported description metadata, but their delegate functions are not restored because arbitrary delegates are not serializable. Virtual providers remain application-owned; state persistence restores keys, focus, paging, and search where applicable, not the provider's backing data.
+The snapshot restores current control values, focus, text selections, selected items, active tabs, split-panel position, calendar state, date-picker, date-range-picker, and month-picker popup state, data-visualization values/items, tree expansion and selection, grid row values, grid sorting, text/exact grid filters, grid pagination, and command-palette search state. Predicate-based grid filters and row filters keep their exported description metadata, but their delegate functions are not restored because arbitrary delegates are not serializable. Virtual providers remain application-owned; state persistence restores keys, focus, paging, and search where applicable, not the provider's backing data.
 
 ## Keyboard and mouse interaction
 
@@ -860,6 +930,7 @@ The repository contains focused pages that can be run directly:
 | [Controls and events](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/ControlsAndEvents.razor) | Text and password input, validation, combo-box and radio-group selection, command palette actions, checkbox state, callbacks, focus order, and status messages |
 | [Form validation](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/FormValidation.razor) | Required fields, custom validation rules, inline error messages, and first-invalid focus |
 | [GridView](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/GridViewExample.razor) | Sorting, pagination, row selection, filters, filter indicators, editable cells, column editors, validation, and edit events |
+| [Data visualizations](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/DataVisualizations.razor) | Sparklines, bar charts, gauges, timelines, and aligned key/value details |
 | [Dialogs and menus](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/DialogsAndMenus.razor) | Menu shortcuts, custom modal dialogs, and message boxes |
 | [Images](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/Images.razor) | Loading encoded image bytes into a `PictureBox` |
 | [TabControl](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/Tabs.razor) | Tab pages, nested controls, focus changes, mouse selection, and keyboard navigation |
@@ -896,6 +967,8 @@ Run `dotnet run --project SampleApp` from the repository root and open `/` or `/
 - Added a focused executable DateRangePicker example and NuGet consumer coverage for the new public API.
 - Added `Calendar`, a standalone month view with day selection, `MinDate`/`MaxDate`, disabled dates, keyboard and mouse navigation, typed selection events, validation integration, theme integration, and state persistence.
 - Added a focused executable Calendar example and NuGet consumer coverage for the new public API.
+- Added data visualization controls: `Sparkline`, `BarChart`, `Gauge`, `Timeline`, and `KeyValueList`.
+- Added clipping, theme integration, state persistence, focused executable examples, regression tests, and NuGet consumer coverage for the visualization controls.
 
 ### 0.8.12 — 2026-06-29
 
