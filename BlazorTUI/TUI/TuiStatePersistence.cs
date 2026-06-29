@@ -113,6 +113,10 @@ namespace BlazorTUI.TUI
                         dateState.SetString("DateValue", dateBox.Value.Value.ToString("O", CultureInfo.InvariantCulture));
                     dateState.SetBoolean("HasDateValue", dateBox.Value.HasValue);
                     return dateState;
+                case Calendar calendar:
+                    var calendarState = new TuiElementState(nameof(Calendar));
+                    calendar.ExportCalendarState(calendarState);
+                    return calendarState;
                 case DatePicker datePicker:
                     var datePickerState = new TuiElementState(nameof(DatePicker));
                     datePicker.ExportDatePickerState(datePickerState);
@@ -271,6 +275,9 @@ namespace BlazorTUI.TUI
                     {
                         dateBox.Value = parsedDate;
                     }
+                    break;
+                case Calendar calendar:
+                    calendar.RestoreCalendarState(state);
                     break;
                 case DatePicker datePicker:
                     datePicker.RestoreDatePickerState(state);

@@ -60,6 +60,17 @@
         dateRangePicker.SetRange(new DateOnly(2026, 6, 11), new DateOnly(2026, 6, 15));
         DateRangePickerValue dateRange = new(dateRangePicker.StartValue!.Value, dateRangePicker.EndValue!.Value);
         _ = dateRange;
+        var calendar = new Calendar(
+            "calendar",
+            new DateOnly(2026, 6, 15),
+            0, 0,
+            System.Drawing.Color.White,
+            System.Drawing.Color.Black,
+            minDate: new DateOnly(2026, 6, 1),
+            maxDate: new DateOnly(2026, 6, 30));
+        calendar.DateSelected += (_, args) => _ = args.Value;
+        calendar.AddDisabledDate(new DateOnly(2026, 6, 18));
+        calendar.Value = new DateOnly(2026, 6, 16);
         IClipboardControl clipboard = input;
         IClipboardPermissions passwordClipboard = password;
         IUndoableControl editHistory = input;

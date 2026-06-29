@@ -1,0 +1,57 @@
+@page "/examples/calendar"
+@using global::BlazorTUI.TUI
+@using Color = System.Drawing.Color
+
+<PageTitle>Calendar example</PageTitle>
+
+<BlazorTUI.BlazorTUI
+    screen="@screen"
+    AriaLabel="Calendar example"
+    AriaDescription="Shows a standalone month calendar with selection constraints." />
+
+@code {
+    private readonly Screen screen = CreateScreen();
+
+    private static Screen CreateScreen()
+    {
+        var screen = new Screen(60, 30);
+        var frame = new Frame(
+            "calendarFrame", "CALENDAR", 4, 3, 52, 22,
+            Frame.BorderStyle.Line, Color.Yellow, Color.DarkBlue);
+        screen.TopContainer.AddContainer(frame);
+
+        frame.AddControl(new Label(
+            "calendarDescription", "Standalone month calendar with disabled days.",
+            3, 2, 46, Color.White, Color.DarkBlue));
+
+        var calendar = new Calendar(
+            "bookingCalendar",
+            new DateOnly(2026, 6, 15),
+            3, 5,
+            Color.Yellow,
+            Color.Black,
+            minDate: new DateOnly(2026, 6, 5),
+            maxDate: new DateOnly(2026, 7, 20));
+        calendar.AddDisabledDate(new DateOnly(2026, 6, 18));
+        calendar.AddDisabledDate(new DateOnly(2026, 6, 19));
+        frame.AddControl(calendar);
+
+        var status = new StatusBar(
+            "calendarStatus", "Selected: 2026-06-15",
+            3, 18, 46,
+            Color.Black, Color.Cyan);
+        frame.AddControl(status);
+
+        calendar.DateSelected += (_, args) =>
+            status.Value = args.Value.HasValue
+                ? $"Selected: {args.Value:yyyy-MM-dd}"
+                : "No date selected";
+
+        frame.AddControl(new Label(
+            "calendarHint", "Arrows move. PgUp/PgDn month. Enter selects.",
+            3, 16, 46, Color.Cyan, Color.DarkBlue));
+
+        screen.SetFocus("bookingCalendar");
+        return screen;
+    }
+}

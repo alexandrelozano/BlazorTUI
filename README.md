@@ -182,7 +182,7 @@ Use `FirstPanel` and `SecondPanel` as normal containers for controls or nested c
 | Category | Controls |
 | --- | --- |
 | Layout | `Frame`, `StackPanel`, `GridPanel`, `DockPanel`, `WrapPanel`, `ScrollViewer`, `SplitPanel`, `TabControl`, `TabPage` |
-| Text and input | `Label`, `TextBox`, `PasswordBox`, `TextArea`, `NumericBox`, `DateBox`, `DatePicker`, `DateRangePicker`, `MonthPicker`, `TimeBox` |
+| Text and input | `Label`, `TextBox`, `PasswordBox`, `TextArea`, `NumericBox`, `DateBox`, `Calendar`, `DatePicker`, `DateRangePicker`, `MonthPicker`, `TimeBox` |
 | Selection | `CheckBox`, `RadioButton`, `RadioGroup`, `ComboBox`, `ListBox`, `TreeView`, `Slider`, `ColorPicker` |
 | Actions and navigation | `Breadcrumb`, `BreadcrumbItem`, `Button`, `CommandPalette`, `CommandPaletteItem`, `MenuBar`, `Menu`, `MenuItem` |
 | Data and feedback | `GridView`, `ProgressBar`, `Spinner`, `StatusBar`, `PictureBox` |
@@ -232,7 +232,34 @@ saveButton.Clicked += (_, _) =>
 
 Validation messages are rendered inline beside the control when there is room, or below it when the right side is full. Use `ShowValidationMessage`, `ValidationMessageForeColor`, and `ValidationMessageBackgroundColor` to control that display. Use `GetInvalidControls()` when application code needs to inspect the current invalid controls after validation.
 
-`TextBox`, `PasswordBox`, `TextArea`, `DateBox`, `DatePicker`, `DateRangePicker`, `MonthPicker`, `TimeBox`, `NumericBox`, `CheckBox`, `RadioButton`, `ComboBox`, `RadioGroup`, `ListBox`, `TreeView`, `Slider`, and `ColorPicker` expose their current value to validation rules. For checkboxes and radio buttons, a required field means the value must be selected.
+`TextBox`, `PasswordBox`, `TextArea`, `DateBox`, `Calendar`, `DatePicker`, `DateRangePicker`, `MonthPicker`, `TimeBox`, `NumericBox`, `CheckBox`, `RadioButton`, `ComboBox`, `RadioGroup`, `ListBox`, `TreeView`, `Slider`, and `ColorPicker` expose their current value to validation rules. For checkboxes and radio buttons, a required field means the value must be selected.
+
+## Calendar
+
+`Calendar` is a standalone month view for direct date selection. It supports keyboard navigation, mouse selection, optional `MinDate` and `MaxDate`, disabled dates, and typed date-selection events:
+
+```csharp
+var bookingCalendar = new Calendar(
+    "bookingCalendar",
+    new DateOnly(2026, 6, 15),
+    3,
+    5,
+    Color.Yellow,
+    Color.Black,
+    minDate: new DateOnly(2026, 6, 1),
+    maxDate: new DateOnly(2026, 6, 30));
+
+bookingCalendar.AddDisabledDate(new DateOnly(2026, 6, 18));
+
+bookingCalendar.DateSelected += (_, args) =>
+    status.Value = args.Value.HasValue
+        ? $"Selected: {args.Value:yyyy-MM-dd}"
+        : "No date selected";
+
+frame.AddControl(bookingCalendar);
+```
+
+Use `Value` or `SelectedDate`, `DisplayedMonth`, `HighlightedDate`, `DisplayMonth`, `MinDate`, `MaxDate`, `AddDisabledDate`, `RemoveDisabledDate`, `ClearDisabledDates`, and `IsDateEnabled` to control it programmatically.
 
 ## Date picker
 
@@ -362,7 +389,7 @@ string json = screen.ExportStateJson(indented: true);
 screen.RestoreStateJson(json);
 ```
 
-The snapshot restores current control values, focus, text selections, selected items, active tabs, split-panel position, date-picker, date-range-picker, and month-picker popup state, tree expansion and selection, grid row values, grid sorting, text/exact grid filters, grid pagination, and command-palette search state. Predicate-based grid filters and row filters keep their exported description metadata, but their delegate functions are not restored because arbitrary delegates are not serializable. Virtual providers remain application-owned; state persistence restores keys, focus, paging, and search where applicable, not the provider's backing data.
+The snapshot restores current control values, focus, text selections, selected items, active tabs, split-panel position, calendar state, date-picker, date-range-picker, and month-picker popup state, tree expansion and selection, grid row values, grid sorting, text/exact grid filters, grid pagination, and command-palette search state. Predicate-based grid filters and row filters keep their exported description metadata, but their delegate functions are not restored because arbitrary delegates are not serializable. Virtual providers remain application-owned; state persistence restores keys, focus, paging, and search where applicable, not the provider's backing data.
 
 ## Keyboard and mouse interaction
 
@@ -374,9 +401,9 @@ The snapshot restores current control values, focus, text selections, selected i
 - `Enter` or `Space`: activate buttons and selection controls, open or confirm a `ComboBox`, `DatePicker`, `DateRangePicker`, or `MonthPicker`, toggle the selected `TreeView` node, and start editing an editable `GridView` cell.
 - `Escape`: cancel an active `GridView` cell edit or close controls that support cancellation.
 - `F4`: open or close the focused `ComboBox`, `DatePicker`, `DateRangePicker`, or `MonthPicker`; `Escape` closes it without changing the selection.
-- Arrow keys: navigate text, breadcrumbs, combo boxes, date/date-range/month pickers, trees, lists, grids, color pickers, and menus where applicable. In a `TreeView`, left and right collapse, expand, or move between parent and child nodes.
+- Arrow keys: navigate text, breadcrumbs, combo boxes, calendars, date/date-range/month pickers, trees, lists, grids, color pickers, and menus where applicable. In a `TreeView`, left and right collapse, expand, or move between parent and child nodes.
 - `Home` and `End`: move to the first or last item, or set a `Slider` to its minimum or maximum.
-- `PageUp` and `PageDown`: move between pages in a focused `GridView`, change the displayed month in a focused `DatePicker`, change the displayed year in a focused `MonthPicker`, or apply the configured `LargeChange` to a focused `Slider`.
+- `PageUp` and `PageDown`: move between pages in a focused `GridView`, change the displayed month in a focused `Calendar` or `DatePicker`, change the displayed year in a focused `MonthPicker`, or apply the configured `LargeChange` to a focused `Slider`.
 - `Shift` plus the arrow, `Home`, or `End` keys: select text in `TextBox` and `TextArea`.
 - `Ctrl+A`, `Ctrl+C`, `Ctrl+X`, and `Ctrl+V`: select all, copy, cut, and paste in text controls. Use `Command` instead of `Ctrl` on macOS.
 - `Ctrl+Z` and `Ctrl+Y`: undo and redo text edits. On macOS, use `Command+Z` and `Command+Shift+Z`.
@@ -844,6 +871,7 @@ The repository contains focused pages that can be run directly:
 | [DockPanel](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/DockPanelExample.razor) | Top, bottom, left, right, and fill regions |
 | [WrapPanel](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/WrapPanelExample.razor) | Flow layout that wraps items across lines |
 | [ScrollViewer](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/ScrollViewerExample.razor) | Clipped viewport over larger content with scroll offsets |
+| [Calendar](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/CalendarExample.razor) | Standalone month view with min/max dates, disabled dates, keyboard navigation, and typed selection events |
 | [DatePicker](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/DatePickerExample.razor) | Compact date input with popup calendar navigation and typed value-change events |
 | [DateRangePicker](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/DateRangePickerExample.razor) | Compact date range input with two-step calendar selection and typed value-change events |
 | [MonthPicker](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/MonthPickerExample.razor) | Compact month input with popup month-grid navigation and typed value-change events |
@@ -866,6 +894,8 @@ Run `dotnet run --project SampleApp` from the repository root and open `/` or `/
 - Added `DateRangePicker`, a compact nullable date-range input with two-step popup calendar selection.
 - Added range normalization, tentative range highlighting, typed `ValueChanged` events, validation integration, theme integration, and state persistence for `DateRangePicker`.
 - Added a focused executable DateRangePicker example and NuGet consumer coverage for the new public API.
+- Added `Calendar`, a standalone month view with day selection, `MinDate`/`MaxDate`, disabled dates, keyboard and mouse navigation, typed selection events, validation integration, theme integration, and state persistence.
+- Added a focused executable Calendar example and NuGet consumer coverage for the new public API.
 
 ### 0.8.12 — 2026-06-29
 
