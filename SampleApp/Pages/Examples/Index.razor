@@ -23,6 +23,11 @@
         new("treeExample", "TreeView", "Hierarchical data", "/examples/tree-view"),
         new("sliderExample", "Slider", "Numeric ranges", "/examples/sliders"),
         new("splitExample", "SplitPanel", "Resizable panes", "/examples/split-panels"),
+        new("stackExample", "StackPanel", "Linear layout", "/examples/stack-panel"),
+        new("gridPanelExample", "GridPanel", "Rows and columns", "/examples/grid-panel"),
+        new("dockPanelExample", "DockPanel", "Docked regions", "/examples/dock-panel"),
+        new("wrapPanelExample", "WrapPanel", "Flow layout", "/examples/wrap-panel"),
+        new("scrollViewerExample", "ScrollViewer", "Clipped content", "/examples/scroll-viewer"),
         new("breadcrumbExample", "Breadcrumb", "Hierarchical navigation", "/examples/breadcrumbs"),
         new("themesExample", "Themes", "Runtime palettes", "/examples/themes"),
         new("showcaseExample", "Complete showcase", "All controls", "/examples/showcase")
@@ -35,7 +40,7 @@
         screen = new Screen(80, 34);
 
         var frame = new Frame(
-            "examplesFrame", "BLAZORTUI EXAMPLES", 3, 2, 74, 30,
+            "examplesFrame", "BLAZORTUI EXAMPLES", 1, 2, 78, 30,
             Frame.BorderStyle.Line, Color.Yellow, Color.DarkBlue);
         screen.TopContainer.AddContainer(frame);
 
@@ -45,27 +50,27 @@
 
         frame.AddControl(new Label(
             "catalogSubtitle", "Focused pages show one feature; showcase displays all controls.",
-            3, 3, 68, Color.Cyan, Color.DarkBlue));
+            3, 3, 72, Color.Cyan, Color.DarkBlue));
 
         for (int index = 0; index < Destinations.Length; index++)
         {
             ExampleDestination destination = Destinations[index];
-            short column = (short)(index < 6 ? 3 : 39);
+            short column = (short)(3 + (index / 6) * 25);
             short row = (short)(6 + (index % 6) * 4);
             var button = new Button(
                 destination.ControlName, destination.Title,
-                column, row, 24, Color.Yellow, Color.Black);
+                column, row, 21, Color.Yellow, Color.Black);
             button.Clicked += (_, _) => Navigation.NavigateTo(destination.Route);
             frame.AddControl(button);
 
             frame.AddControl(new Label(
                 $"{destination.ControlName}Description", destination.Description,
-                column, (short)(row + 1), 31, Color.Cyan, Color.DarkBlue));
+                column, (short)(row + 1), 21, Color.Cyan, Color.DarkBlue));
         }
 
         frame.AddControl(new Label(
             "catalogFooter", "Root page: this catalog. Mouse clicks supported.",
-            3, 28, 68, Color.White, Color.DarkBlue));
+            3, 28, 72, Color.White, Color.DarkBlue));
 
         screen.SetFocus(Destinations[0].ControlName);
     }

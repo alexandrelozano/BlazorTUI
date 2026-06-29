@@ -30,6 +30,11 @@ public class ExampleCatalogTests : BunitContext
         Assert.Contains("TreeView", accessibleText);
         Assert.Contains("Slider", accessibleText);
         Assert.Contains("SplitPanel", accessibleText);
+        Assert.Contains("StackPanel", accessibleText);
+        Assert.Contains("GridPanel", accessibleText);
+        Assert.Contains("DockPanel", accessibleText);
+        Assert.Contains("WrapPanel", accessibleText);
+        Assert.Contains("ScrollViewer", accessibleText);
         Assert.Contains("Breadcrumb", accessibleText);
         Assert.Contains("Themes", accessibleText);
         Assert.Contains("Complete showcase", accessibleText);
@@ -45,6 +50,11 @@ public class ExampleCatalogTests : BunitContext
     [InlineData("treeExample", "/examples/tree-view")]
     [InlineData("sliderExample", "/examples/sliders")]
     [InlineData("splitExample", "/examples/split-panels")]
+    [InlineData("stackExample", "/examples/stack-panel")]
+    [InlineData("gridPanelExample", "/examples/grid-panel")]
+    [InlineData("dockPanelExample", "/examples/dock-panel")]
+    [InlineData("wrapPanelExample", "/examples/wrap-panel")]
+    [InlineData("scrollViewerExample", "/examples/scroll-viewer")]
     [InlineData("breadcrumbExample", "/examples/breadcrumbs")]
     [InlineData("themesExample", "/examples/themes")]
     [InlineData("showcaseExample", "/examples/showcase")]

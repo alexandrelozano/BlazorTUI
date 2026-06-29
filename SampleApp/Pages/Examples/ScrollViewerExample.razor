@@ -1,0 +1,62 @@
+@page "/examples/scroll-viewer"
+@using global::BlazorTUI.TUI
+@using Color = System.Drawing.Color
+
+<PageTitle>ScrollViewer example</PageTitle>
+
+<BlazorTUI.BlazorTUI
+    screen="@screen"
+    AriaLabel="ScrollViewer example"
+    AriaDescription="Shows a clipped viewport over larger content." />
+
+@code {
+    private readonly Screen screen = CreateScreen();
+
+    private static Screen CreateScreen()
+    {
+        var screen = new Screen(60, 30);
+        var frame = new Frame(
+            "scrollFrame", "SCROLLVIEWER", 4, 3, 52, 22,
+            Frame.BorderStyle.Line, Color.Yellow, Color.DarkBlue);
+        screen.TopContainer.AddContainer(frame);
+
+        frame.AddControl(new Label(
+            "scrollDescription", "Viewport clips content. Buttons scroll it.",
+            3, 2, 46, Color.White, Color.DarkBlue));
+
+        var viewer = new ScrollViewer(
+            "ordersViewer", 3, 5, 36, 10,
+            Color.Cyan, Color.Black);
+        frame.AddContainer(viewer);
+
+        for (int index = 0; index < 18; index++)
+        {
+            viewer.AddControl(new Label(
+                $"scrollRow{index}", $"Order {index + 1:D2} - customer and delivery details",
+                1, (short)index, 42,
+                Color.Yellow, Color.Black));
+        }
+
+        var down = new Button("scrollDownButton", "Down", 42, 6, 8, Color.Yellow, Color.DarkGreen);
+        down.Clicked += (_, _) => viewer.ScrollBy(0, 3);
+        frame.AddControl(down);
+
+        var up = new Button("scrollUpButton", "Up", 42, 8, 8, Color.Yellow, Color.DarkGreen);
+        up.Clicked += (_, _) => viewer.ScrollBy(0, -3);
+        frame.AddControl(up);
+
+        var right = new Button("scrollRightButton", "Right", 42, 10, 8, Color.Yellow, Color.DarkGreen);
+        right.Clicked += (_, _) => viewer.ScrollBy(8, 0);
+        frame.AddControl(right);
+
+        var left = new Button("scrollLeftButton", "Left", 42, 12, 8, Color.Yellow, Color.DarkGreen);
+        left.Clicked += (_, _) => viewer.ScrollBy(-8, 0);
+        frame.AddControl(left);
+
+        frame.AddControl(new Label(
+            "scrollHint", "Right/bottom arrows show scrollbars.",
+            3, 18, 46, Color.Cyan, Color.DarkBlue));
+        screen.SetFocus("scrollDownButton");
+        return screen;
+    }
+}

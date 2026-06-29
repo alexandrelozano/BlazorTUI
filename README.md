@@ -111,6 +111,41 @@ Every control must have a non-empty, unique name. Add elements through:
 
 These methods initialize parent references, tab order, and z-order. Use `screen.SetFocus("controlName")` to select the initial control.
 
+## Layout panels
+
+Use layout panels when you want the library to calculate child coordinates for common layouts instead of manually assigning every `X` and `Y`:
+
+- `StackPanel` places children vertically or horizontally with optional spacing and cross-axis alignment.
+- `GridPanel` places children in rows and columns using fixed, auto, and star-like `GridPanelLength` definitions.
+- `DockPanel` docks children to `Top`, `Bottom`, `Left`, `Right`, or `Fill`.
+- `WrapPanel` flows children across lines when the current row or column is full.
+- `ScrollViewer` clips oversized content and exposes `ScrollTo` and `ScrollBy` offsets.
+
+```csharp
+var form = new GridPanel(
+    "formGrid",
+    new[] { GridPanelLength.Fixed(12), GridPanelLength.Star() },
+    new[] { GridPanelLength.Auto, GridPanelLength.Auto },
+    2,
+    3,
+    36,
+    6,
+    Color.White,
+    Color.Black);
+
+form.AddControl(new Label(
+    "nameLabel", "Name:", 0, 0, 8,
+    Color.White, Color.Black), row: 0, column: 0);
+
+form.AddControl(new TextBox(
+    "nameInput", "", 0, 0, 16,
+    Color.Yellow, Color.Black), row: 0, column: 1);
+
+frame.AddContainer(form);
+```
+
+Panels are still containers: add them with `AddContainer`, place controls inside them with `AddControl`, and keep using explicit unique control names.
+
 ## Split panels
 
 `SplitPanel` divides a rectangular area into two child containers separated by one splitter cell. A vertical split creates left and right panes; a horizontal split creates top and bottom panes:
@@ -146,7 +181,7 @@ Use `FirstPanel` and `SecondPanel` as normal containers for controls or nested c
 
 | Category | Controls |
 | --- | --- |
-| Layout | `Frame`, `SplitPanel`, `TabControl`, `TabPage` |
+| Layout | `Frame`, `StackPanel`, `GridPanel`, `DockPanel`, `WrapPanel`, `ScrollViewer`, `SplitPanel`, `TabControl`, `TabPage` |
 | Text and input | `Label`, `TextBox`, `PasswordBox`, `TextArea`, `NumericBox`, `DateBox`, `TimeBox` |
 | Selection | `CheckBox`, `RadioButton`, `RadioGroup`, `ComboBox`, `ListBox`, `TreeView`, `Slider`, `ColorPicker` |
 | Actions and navigation | `Breadcrumb`, `BreadcrumbItem`, `Button`, `CommandPalette`, `CommandPaletteItem`, `MenuBar`, `Menu`, `MenuItem` |
@@ -730,6 +765,11 @@ The repository contains focused pages that can be run directly:
 | [TreeView](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/TreeViewExample.razor) | Hierarchical nodes, dynamic expansion, selection events, mouse input, and keyboard navigation |
 | [Slider](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/Sliders.razor) | Horizontal and vertical ranges, direct mouse selection, small and large keyboard changes, and value events |
 | [SplitPanel](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/SplitPanels.razor) | Vertical and horizontal panes, nested layouts, shared focus navigation, and programmatic resizing |
+| [StackPanel](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/StackPanelExample.razor) | Vertical and horizontal child flow with spacing and alignment |
+| [GridPanel](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/GridPanelExample.razor) | Fixed, auto, and star-like rows and columns |
+| [DockPanel](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/DockPanelExample.razor) | Top, bottom, left, right, and fill regions |
+| [WrapPanel](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/WrapPanelExample.razor) | Flow layout that wraps items across lines |
+| [ScrollViewer](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/ScrollViewerExample.razor) | Clipped viewport over larger content with scroll offsets |
 | [Breadcrumb](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/Breadcrumbs.razor) | Hierarchical path navigation, keyboard selection, mouse activation, item mutation, and activation events |
 | [Themes](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/Themes.razor) | Runtime theme switching, predefined palettes, control roles, and visual states |
 | [Complete showcase](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Index.razor) | All controls, nested frames, z-order, callbacks, and animation |
@@ -744,6 +784,8 @@ Run `dotnet run --project SampleApp` from the repository root and open `/` or `/
 - Added key-based virtual selection helpers such as `SelectedRowKey`, `SelectRowKey`, `SelectedKey`, `SelectKey`, `SelectedNodeKey`, and `SelectNodeKey`.
 - Preserved existing non-virtual constructors while allowing large controls to fetch only visible rows, nodes, items, or commands during normal rendering.
 - Added virtualization regression tests and NuGet consumer coverage for the new public API.
+- Added higher-level layout containers: `StackPanel`, `GridPanel`, `DockPanel`, `WrapPanel`, and `ScrollViewer`.
+- Added focused executable examples for each new layout container.
 
 ### 0.8.11 — 2026-06-28
 

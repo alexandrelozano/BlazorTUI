@@ -94,6 +94,59 @@
             System.Drawing.Color.White, System.Drawing.Color.DarkBlue));
         split.MoveSplitter(1);
         terminal.TopContainer.AddContainer(split);
+        var stack = new StackPanel(
+            "consumerStack", 0, 0, 12, 4,
+            LayoutOrientation.Vertical,
+            System.Drawing.Color.White,
+            System.Drawing.Color.Black)
+        {
+            Spacing = 1,
+            Alignment = LayoutAlignment.Stretch
+        };
+        stack.AddControl(new Label(
+            "consumerStackLabel", "Stack", 0, 0, 5,
+            System.Drawing.Color.White,
+            System.Drawing.Color.Black));
+        var layoutGrid = new GridPanel(
+            "consumerGridPanel",
+            new[] { GridPanelLength.Fixed(6), GridPanelLength.Star() },
+            new[] { GridPanelLength.Auto, GridPanelLength.Star() },
+            0, 0, 16, 4,
+            System.Drawing.Color.White,
+            System.Drawing.Color.Black);
+        layoutGrid.AddControl(new Label(
+            "consumerGridPanelLabel", "Grid", 0, 0, 4,
+            System.Drawing.Color.White,
+            System.Drawing.Color.Black), 0, 0);
+        var dock = new DockPanel(
+            "consumerDock", 0, 0, 16, 4,
+            System.Drawing.Color.White,
+            System.Drawing.Color.Black);
+        dock.AddControl(new Label(
+            "consumerDockTop", "Dock", 0, 0, 4,
+            System.Drawing.Color.White,
+            System.Drawing.Color.Black), DockPanelDock.Top);
+        var wrap = new WrapPanel(
+            "consumerWrap", 0, 0, 16, 4,
+            LayoutOrientation.Horizontal,
+            System.Drawing.Color.White,
+            System.Drawing.Color.Black)
+        {
+            ItemSpacing = 1
+        };
+        wrap.AddControl(new Label(
+            "consumerWrapLabel", "Wrap", 0, 0, 4,
+            System.Drawing.Color.White,
+            System.Drawing.Color.Black));
+        var viewer = new ScrollViewer(
+            "consumerScroll", 0, 0, 12, 3,
+            System.Drawing.Color.White,
+            System.Drawing.Color.Black);
+        viewer.AddControl(new Label(
+            "consumerScrollLabel", "Scrollable", 0, 4, 10,
+            System.Drawing.Color.White,
+            System.Drawing.Color.Black));
+        viewer.ScrollBy(0, 2);
         var tabs = new TabControl(
             "tabs", 0, 8, 20, 4,
             System.Drawing.Color.White, System.Drawing.Color.DarkBlue);

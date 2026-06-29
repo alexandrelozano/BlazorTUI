@@ -32,6 +32,9 @@ namespace BlazorTUI.TUI
                     ApplyColorPair(splitPanel, theme.Resolve(TuiThemeRole.Border));
                     splitPanel.BackgroundColor = theme.Surface.BackgroundColor;
                     break;
+                case LayoutPanel layoutPanel:
+                    ApplyColorPair(layoutPanel, theme.Resolve(TuiThemeRole.Surface));
+                    break;
             }
 
             foreach (Control control in container.Controls)
@@ -81,6 +84,12 @@ namespace BlazorTUI.TUI
         {
             splitPanel.ForeColor = colors.ForeColor;
             splitPanel.BackgroundColor = colors.BackgroundColor;
+        }
+
+        private static void ApplyColorPair(LayoutPanel layoutPanel, TuiColorPair colors)
+        {
+            layoutPanel.ForeColor = colors.ForeColor;
+            layoutPanel.BackgroundColor = colors.BackgroundColor;
         }
     }
 }

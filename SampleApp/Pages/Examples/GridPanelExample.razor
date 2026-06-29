@@ -1,0 +1,62 @@
+@page "/examples/grid-panel"
+@using global::BlazorTUI.TUI
+@using Color = System.Drawing.Color
+
+<PageTitle>GridPanel example</PageTitle>
+
+<BlazorTUI.BlazorTUI
+    screen="@screen"
+    AriaLabel="GridPanel example"
+    AriaDescription="Shows fixed, auto, and star GridPanel layout." />
+
+@code {
+    private readonly Screen screen = CreateScreen();
+
+    private static Screen CreateScreen()
+    {
+        var screen = new Screen(60, 30);
+        var frame = new Frame(
+            "gridPanelFrame", "GRIDPANEL", 4, 3, 52, 22,
+            Frame.BorderStyle.Line, Color.Yellow, Color.DarkBlue);
+        screen.TopContainer.AddContainer(frame);
+
+        frame.AddControl(new Label(
+            "gridPanelDescription", "Fixed, Auto, and Star cells arrange children.",
+            3, 2, 46, Color.White, Color.DarkBlue));
+
+        var grid = new GridPanel(
+            "formGrid",
+            new[]
+            {
+                GridPanelLength.Fixed(12),
+                GridPanelLength.Star(),
+                GridPanelLength.Auto
+            },
+            new[]
+            {
+                GridPanelLength.Auto,
+                GridPanelLength.Auto,
+                GridPanelLength.Fixed(3),
+                GridPanelLength.Star()
+            },
+            3, 5, 46, 13,
+            Color.Cyan, Color.Black)
+        {
+            Padding = 1
+        };
+
+        grid.AddControl(new Label("nameGridLabel", "Name:", 0, 0, 8, Color.White, Color.Black), 0, 0);
+        grid.AddControl(new TextBox("nameGridInput", "Ada", 0, 0, 12, Color.Yellow, Color.Black), 0, 1);
+        grid.AddControl(new Button("saveGridButton", "Save", 0, 0, 8, Color.Yellow, Color.DarkGreen), 0, 2);
+        grid.AddControl(new Label("roleGridLabel", "Role:", 0, 0, 8, Color.White, Color.Black), 1, 0);
+        grid.AddControl(new ComboBox("roleGridCombo", new[] { "Admin", "User", "Guest" }, 0, 0, 12, Color.Yellow, Color.Black), 1, 1, columnSpan: 2);
+        grid.AddControl(new TextArea("notesGridArea", "Notes span two columns.", 0, 0, 28, 3, 28, 3, Color.Yellow, Color.Black), 2, 0, rowSpan: 2, columnSpan: 3);
+
+        frame.AddContainer(grid);
+        frame.AddControl(new Label(
+            "gridPanelHint", "Auto uses child size; star consumes remaining cells.",
+            3, 19, 46, Color.Cyan, Color.DarkBlue));
+        screen.SetFocus("nameGridInput");
+        return screen;
+    }
+}

@@ -1,0 +1,59 @@
+@page "/examples/stack-panel"
+@using global::BlazorTUI.TUI
+@using Color = System.Drawing.Color
+
+<PageTitle>StackPanel example</PageTitle>
+
+<BlazorTUI.BlazorTUI
+    screen="@screen"
+    AriaLabel="StackPanel example"
+    AriaDescription="Shows vertical and horizontal StackPanel layout." />
+
+@code {
+    private readonly Screen screen = CreateScreen();
+
+    private static Screen CreateScreen()
+    {
+        var screen = new Screen(60, 30);
+        var frame = new Frame(
+            "stackFrame", "STACKPANEL", 4, 3, 52, 22,
+            Frame.BorderStyle.Line, Color.Yellow, Color.DarkBlue);
+        screen.TopContainer.AddContainer(frame);
+
+        frame.AddControl(new Label(
+            "stackDescription", "Automatic vertical and horizontal placement.",
+            3, 2, 46, Color.White, Color.DarkBlue));
+
+        var vertical = new StackPanel(
+            "verticalStack", 3, 5, 20, 10,
+            LayoutOrientation.Vertical, Color.Cyan, Color.Black)
+        {
+            Padding = 1,
+            Spacing = 1,
+            Alignment = LayoutAlignment.Stretch
+        };
+        vertical.AddControl(new Button("profileButton", "Profile", 0, 0, 12, Color.Yellow, Color.DarkGreen));
+        vertical.AddControl(new Button("ordersButton", "Orders", 0, 0, 12, Color.Yellow, Color.DarkGreen));
+        vertical.AddControl(new Button("settingsButton", "Settings", 0, 0, 12, Color.Yellow, Color.DarkGreen));
+        frame.AddContainer(vertical);
+
+        var horizontal = new StackPanel(
+            "horizontalStack", 26, 7, 23, 5,
+            LayoutOrientation.Horizontal, Color.Cyan, Color.Black)
+        {
+            Padding = 1,
+            Spacing = 1,
+            Alignment = LayoutAlignment.Center
+        };
+        horizontal.AddControl(new Button("yesButton", "Yes", 0, 0, 6, Color.Yellow, Color.DarkGreen));
+        horizontal.AddControl(new Button("noButton", "No", 0, 0, 6, Color.Yellow, Color.DarkRed));
+        horizontal.AddControl(new Button("helpButton", "Help", 0, 0, 7, Color.Yellow, Color.DarkBlue));
+        frame.AddContainer(horizontal);
+
+        frame.AddControl(new Label(
+            "stackHint", "Resize panels; children keep order.",
+            3, 18, 46, Color.Cyan, Color.DarkBlue));
+        screen.SetFocus("profileButton");
+        return screen;
+    }
+}

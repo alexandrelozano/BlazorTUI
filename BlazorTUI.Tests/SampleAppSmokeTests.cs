@@ -56,6 +56,11 @@ public class SampleAppSmokeTests : IClassFixture<WebApplicationFactory<Program>>
     [InlineData("/examples/tree-view", "TreeView example")]
     [InlineData("/examples/sliders", "Slider example")]
     [InlineData("/examples/split-panels", "SplitPanel example")]
+    [InlineData("/examples/stack-panel", "StackPanel example")]
+    [InlineData("/examples/grid-panel", "GridPanel example")]
+    [InlineData("/examples/dock-panel", "DockPanel example")]
+    [InlineData("/examples/wrap-panel", "WrapPanel example")]
+    [InlineData("/examples/scroll-viewer", "ScrollViewer example")]
     [InlineData("/examples/breadcrumbs", "Breadcrumb example")]
     [InlineData("/examples/themes", "Themes example")]
     public async Task FocusedExampleStartsAndRendersTerminal(string route, string title)

@@ -1,0 +1,56 @@
+@page "/examples/wrap-panel"
+@using global::BlazorTUI.TUI
+@using Color = System.Drawing.Color
+
+<PageTitle>WrapPanel example</PageTitle>
+
+<BlazorTUI.BlazorTUI
+    screen="@screen"
+    AriaLabel="WrapPanel example"
+    AriaDescription="Shows children flowing across lines when the row is full." />
+
+@code {
+    private readonly Screen screen = CreateScreen();
+
+    private static Screen CreateScreen()
+    {
+        var screen = new Screen(60, 30);
+        var frame = new Frame(
+            "wrapFrame", "WRAPPANEL", 4, 3, 52, 22,
+            Frame.BorderStyle.Line, Color.Yellow, Color.DarkBlue);
+        screen.TopContainer.AddContainer(frame);
+
+        frame.AddControl(new Label(
+            "wrapDescription", "Items wrap automatically when width is exhausted.",
+            3, 2, 46, Color.White, Color.DarkBlue));
+
+        var tags = new WrapPanel(
+            "tagWrap", 3, 5, 43, 10,
+            LayoutOrientation.Horizontal, Color.Cyan, Color.Black)
+        {
+            Padding = 1,
+            ItemSpacing = 1,
+            LineSpacing = 1
+        };
+
+        string[] values =
+        {
+            "Open", "Ready", "Cooking", "Hold", "Assigned",
+            "Late", "Paid", "VIP", "Online", "Archived"
+        };
+
+        foreach (string value in values)
+        {
+            tags.AddControl(new Button(
+                $"tag{value}", value, 0, 0, (short)(value.Length + 4),
+                Color.Yellow, Color.DarkGreen));
+        }
+
+        frame.AddContainer(tags);
+        frame.AddControl(new Label(
+            "wrapHint", "Use it for tags, chips, command groups.",
+            3, 18, 46, Color.Cyan, Color.DarkBlue));
+        screen.SetFocus("tagOpen");
+        return screen;
+    }
+}

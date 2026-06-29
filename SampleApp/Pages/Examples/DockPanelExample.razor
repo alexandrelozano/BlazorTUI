@@ -1,0 +1,64 @@
+@page "/examples/dock-panel"
+@using global::BlazorTUI.TUI
+@using Color = System.Drawing.Color
+
+<PageTitle>DockPanel example</PageTitle>
+
+<BlazorTUI.BlazorTUI
+    screen="@screen"
+    AriaLabel="DockPanel example"
+    AriaDescription="Shows top, left, right, bottom, and fill docking." />
+
+@code {
+    private readonly Screen screen = CreateScreen();
+
+    private static Screen CreateScreen()
+    {
+        var screen = new Screen(60, 30);
+        var frame = new Frame(
+            "dockFrame", "DOCKPANEL", 4, 3, 52, 22,
+            Frame.BorderStyle.Line, Color.Yellow, Color.DarkBlue);
+        screen.TopContainer.AddContainer(frame);
+
+        var dock = new DockPanel(
+            "mainDock", 3, 3, 46, 16,
+            Color.Cyan, Color.Black);
+        frame.AddContainer(dock);
+
+        dock.AddControl(new Label(
+            "dockHeader", "Top: page title and commands", 0, 0, 28,
+            Color.Black, Color.Cyan), DockPanelDock.Top);
+
+        var navigation = new StackPanel(
+            "dockNavigation", 0, 0, 13, 1,
+            LayoutOrientation.Vertical, Color.White, Color.DarkBlue)
+        {
+            Padding = 1,
+            Spacing = 1,
+            Alignment = LayoutAlignment.Stretch
+        };
+        navigation.AddControl(new Button("dockHomeButton", "Home", 0, 0, 9, Color.Yellow, Color.DarkBlue));
+        navigation.AddControl(new Button("dockUsersButton", "Users", 0, 0, 9, Color.Yellow, Color.DarkBlue));
+        navigation.AddControl(new Button("dockLogsButton", "Logs", 0, 0, 9, Color.Yellow, Color.DarkBlue));
+        dock.AddContainer(navigation, DockPanelDock.Left);
+
+        dock.AddControl(new Label(
+            "dockActions", "Right", 0, 0, 6,
+            Color.Yellow, Color.DarkMagenta), DockPanelDock.Right);
+
+        dock.AddControl(new StatusBar(
+            "dockStatus", "Bottom: status", 0, 0, 20,
+            Color.Black, Color.Cyan), DockPanelDock.Bottom);
+
+        dock.AddControl(new TextArea(
+            "dockContent", "Fill area receives the remaining space.",
+            0, 0, 18, 4, 30, 5,
+            Color.Yellow, Color.Black), DockPanelDock.Fill);
+
+        frame.AddControl(new Label(
+            "dockHint", "Dock order consumes space around the fill area.",
+            3, 20, 46, Color.Cyan, Color.DarkBlue));
+        screen.SetFocus("dockHomeButton");
+        return screen;
+    }
+}
