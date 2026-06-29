@@ -7,12 +7,30 @@ namespace BlazorTUI.TUI
     {
         private readonly List<TreeNode> nodes = new();
         private readonly Dictionary<string, TreeNode> nodesByName = new(StringComparer.Ordinal);
+        private readonly IVirtualTreeViewDataProvider? virtualNodes;
         private TreeNode? selectedNode;
+        private string? selectedVirtualNodeKey;
         private int scrollIndex;
 
         public IReadOnlyList<TreeNode> Nodes => nodes;
 
         public TreeNode? SelectedNode => selectedNode;
+
+        public bool IsVirtualized => virtualNodes is not null;
+
+        public string? SelectedNodeKey => virtualNodes is null ? selectedNode?.Name : selectedVirtualNodeKey;
+
+        public VirtualTreeViewNode? SelectedVirtualNode
+        {
+            get
+            {
+                if (virtualNodes is null || selectedVirtualNodeKey is null)
+                    return null;
+
+                int index = virtualNodes.FindVisibleIndexByKey(selectedVirtualNodeKey);
+                return index >= 0 ? virtualNodes.GetVisibleNode(index) : null;
+            }
+        }
 
         public event EventHandler<TreeNodeSelectionChangedEventArgs>? SelectedNodeChanged;
 
@@ -44,8 +62,25 @@ namespace BlazorTUI.TUI
             TabStop = true;
         }
 
+        public TreeView(
+            string name,
+            IVirtualTreeViewDataProvider nodes,
+            short X,
+            short Y,
+            short width,
+            short height,
+            Color foreColor,
+            Color backgroundColor)
+            : this(name, X, Y, width, height, foreColor, backgroundColor)
+        {
+            ArgumentNullException.ThrowIfNull(nodes);
+            virtualNodes = nodes;
+            EnsureVirtualSelection();
+        }
+
         public TreeNode AddNode(string name, string text, bool isExpanded = false)
         {
+            EnsureMaterializedTree();
             var node = new TreeNode(name, text, isExpanded);
             AddNode(node);
             return node;
@@ -53,6 +88,7 @@ namespace BlazorTUI.TUI
 
         public void AddNode(TreeNode node)
         {
+            EnsureMaterializedTree();
             ArgumentNullException.ThrowIfNull(node);
             if (node.Parent is not null || node.Owner is not null)
                 throw new InvalidOperationException("The node already belongs to a tree.");
@@ -64,6 +100,7 @@ namespace BlazorTUI.TUI
 
         public bool RemoveNode(TreeNode node)
         {
+            EnsureMaterializedTree();
             ArgumentNullException.ThrowIfNull(node);
             if (node.Owner != this)
                 return false;
@@ -79,6 +116,7 @@ namespace BlazorTUI.TUI
 
         public void ClearNodes()
         {
+            EnsureMaterializedTree();
             foreach (TreeNode node in nodes.ToArray())
                 RemoveNode(node);
         }
@@ -86,18 +124,28 @@ namespace BlazorTUI.TUI
         public TreeNode? GetNode(string name)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(name);
+            if (virtualNodes is not null)
+                return null;
+
             return nodesByName.GetValueOrDefault(name);
         }
 
         public void SelectNode(string name)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(name);
+            if (virtualNodes is not null)
+            {
+                SelectNodeKey(name);
+                return;
+            }
+
             SelectNode(GetNode(name) ?? throw new ArgumentException(
                 $"A node named '{name}' does not exist.", nameof(name)));
         }
 
         public void SelectNode(TreeNode node)
         {
+            EnsureMaterializedTree();
             ArgumentNullException.ThrowIfNull(node);
             ValidateOwnedNode(node);
 
@@ -112,6 +160,7 @@ namespace BlazorTUI.TUI
 
         public void ToggleNode(TreeNode node)
         {
+            EnsureMaterializedTree();
             ArgumentNullException.ThrowIfNull(node);
             ValidateOwnedNode(node);
             if (node.HasChildren)
@@ -120,6 +169,7 @@ namespace BlazorTUI.TUI
 
         public void ExpandAll()
         {
+            EnsureMaterializedTree();
             foreach (TreeNode node in nodes.SelectMany(node => node.EnumerateSubtree()))
             {
                 if (node.HasChildren)
@@ -129,16 +179,41 @@ namespace BlazorTUI.TUI
 
         public void CollapseAll()
         {
+            EnsureMaterializedTree();
             foreach (TreeNode node in nodes.SelectMany(node => node.EnumerateSubtree()).Reverse())
             {
                 if (node.HasChildren)
-                    SetNodeExpanded(node, false);
+                SetNodeExpanded(node, false);
             }
+        }
+
+        public void SelectNodeKey(string key)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(key);
+            if (virtualNodes is null)
+            {
+                SelectNode(key);
+                return;
+            }
+
+            int index = virtualNodes.FindVisibleIndexByKey(key);
+            if (index < 0)
+                throw new ArgumentException("The key is not visible in this TreeView.", nameof(key));
+
+            SetSelectedVirtualNodeKey(key);
         }
 
         internal void ExportTreeViewState(TuiElementState state)
         {
             ArgumentNullException.ThrowIfNull(state);
+
+            if (virtualNodes is not null)
+            {
+                if (selectedVirtualNodeKey is not null)
+                    state.SetString("SelectedNodeKey", selectedVirtualNodeKey);
+                state.SetInteger("ScrollIndex", scrollIndex);
+                return;
+            }
 
             if (selectedNode is not null)
                 state.SetString("SelectedNode", selectedNode.Name);
@@ -153,6 +228,23 @@ namespace BlazorTUI.TUI
         internal void RestoreTreeViewState(TuiElementState state)
         {
             ArgumentNullException.ThrowIfNull(state);
+
+            if (virtualNodes is not null)
+            {
+                if (state.TryGetString("SelectedNodeKey", out string restoredSelectedKey))
+                {
+                    int index = virtualNodes.FindVisibleIndexByKey(restoredSelectedKey);
+                    if (index >= 0)
+                        selectedVirtualNodeKey = restoredSelectedKey;
+                }
+
+                scrollIndex = state.TryGetInteger("ScrollIndex", out int restoredVirtualScrollIndex)
+                    ? Math.Clamp(restoredVirtualScrollIndex, 0, Math.Max(0, virtualNodes.VisibleCount - Height))
+                    : 0;
+                EnsureVirtualSelection();
+                EnsureVirtualSelectionVisible();
+                return;
+            }
 
             if (state.TryGetStringList("ExpandedNodes", out IReadOnlyList<string> restoredExpandedNodes))
             {
@@ -173,6 +265,9 @@ namespace BlazorTUI.TUI
 
         public override bool KeyDown(string key, bool shiftKey)
         {
+            if (virtualNodes is not null)
+                return KeyDownVirtual(key);
+
             if (!Visible || selectedNode is null)
                 return false;
 
@@ -219,6 +314,9 @@ namespace BlazorTUI.TUI
 
         public override bool Click(short X, short Y)
         {
+            if (virtualNodes is not null)
+                return ClickVirtual(X, Y);
+
             if (!Visible || X < 0 || X >= Width || Y < 0 || Y >= Height)
                 return false;
 
@@ -254,6 +352,12 @@ namespace BlazorTUI.TUI
             if (!Visible)
                 return;
 
+            if (virtualNodes is not null)
+            {
+                RenderVirtual(rows);
+                return;
+            }
+
             IReadOnlyList<VisibleNode> visibleNodes = GetVisibleNodes();
             scrollIndex = Math.Clamp(scrollIndex, 0, Math.Max(0, visibleNodes.Count - Height));
             for (int row = 0; row < Height; row++)
@@ -280,7 +384,8 @@ namespace BlazorTUI.TUI
             }
         }
 
-        protected override object? GetValidationValue() => selectedNode;
+        protected override object? GetValidationValue()
+            => virtualNodes is null ? selectedNode : selectedVirtualNodeKey;
 
         internal void RegisterSubtree(TreeNode node)
         {
@@ -344,6 +449,237 @@ namespace BlazorTUI.TUI
             if (visibleNodes.Count == 0)
                 return;
             SetSelectedNode(visibleNodes[index].Node, true);
+        }
+
+        private bool KeyDownVirtual(string key)
+        {
+            if (!Visible || virtualNodes is null)
+                return false;
+
+            EnsureVirtualSelection();
+            if (selectedVirtualNodeKey is null)
+                return false;
+
+            int selectedIndex = virtualNodes.FindVisibleIndexByKey(selectedVirtualNodeKey);
+            if (selectedIndex < 0)
+            {
+                EnsureVirtualSelection();
+                selectedIndex = selectedVirtualNodeKey is null
+                    ? -1
+                    : virtualNodes.FindVisibleIndexByKey(selectedVirtualNodeKey);
+                if (selectedIndex < 0)
+                    return false;
+            }
+
+            switch (key)
+            {
+                case "ArrowUp":
+                    MoveVirtualSelection(Math.Max(0, selectedIndex - 1));
+                    return true;
+                case "ArrowDown":
+                    MoveVirtualSelection(Math.Min(virtualNodes.VisibleCount - 1, selectedIndex + 1));
+                    return true;
+                case "ArrowRight":
+                    ExpandOrMoveIntoVirtualNode(selectedIndex);
+                    return true;
+                case "ArrowLeft":
+                    CollapseOrMoveToVirtualParent(selectedIndex);
+                    return true;
+                case "Home":
+                    MoveVirtualSelection(0);
+                    return true;
+                case "End":
+                    MoveVirtualSelection(virtualNodes.VisibleCount - 1);
+                    return true;
+                case "Enter":
+                case "Space":
+                case " ":
+                    ToggleVirtualNode(selectedIndex);
+                    NotifyClicked();
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        private bool ClickVirtual(short X, short Y)
+        {
+            if (!Visible || virtualNodes is null || X < 0 || X >= Width || Y < 0 || Y >= Height)
+                return false;
+
+            container.TopContainer().SetFocus(Name);
+            int visibleNodeCount = virtualNodes.VisibleCount;
+            if (X == Width - 1 && visibleNodeCount > Height)
+            {
+                if (Y == 0)
+                    scrollIndex = Math.Max(0, scrollIndex - 1);
+                else if (Y == Height - 1)
+                    scrollIndex = Math.Min(visibleNodeCount - Height, scrollIndex + 1);
+
+                NotifyClicked();
+                return true;
+            }
+
+            int index = scrollIndex + Y;
+            if (index < 0 || index >= visibleNodeCount)
+                return false;
+
+            VirtualTreeViewNode node = virtualNodes.GetVisibleNode(index);
+            SetSelectedVirtualNodeKey(node.Key);
+            if (X == node.Depth * 2 && node.HasChildren)
+                ToggleVirtualNode(index);
+
+            NotifyClicked();
+            return true;
+        }
+
+        private void RenderVirtual(IList<Row> rows)
+        {
+            if (virtualNodes is null)
+                return;
+
+            EnsureVirtualSelection();
+            int visibleNodeCount = virtualNodes.VisibleCount;
+            scrollIndex = Math.Clamp(scrollIndex, 0, Math.Max(0, visibleNodeCount - Height));
+            for (int row = 0; row < Height; row++)
+            {
+                int visibleIndex = scrollIndex + row;
+                VirtualTreeViewNode? visibleNode = visibleIndex < visibleNodeCount
+                    ? virtualNodes.GetVisibleNode(visibleIndex)
+                    : null;
+                string content = visibleNode is null ? string.Empty : BuildVirtualNodeText(visibleNode);
+                bool highlighted = Focus &&
+                    visibleNode is not null &&
+                    string.Equals(visibleNode.Key, selectedVirtualNodeKey, StringComparison.Ordinal);
+
+                for (int x = 0; x < Width; x++)
+                {
+                    if (!TryGetCell(rows, x, row, out Cell cell))
+                        continue;
+
+                    PrepareCell(
+                        cell,
+                        highlighted ? BackgroundColor : ForeColor,
+                        highlighted ? ForeColor : BackgroundColor);
+                    cell.Character = x == Width - 1
+                        ? GetScrollCharacter(row, visibleNodeCount)
+                        : TuiText.CellAt(content, x);
+                }
+            }
+        }
+
+        private void EnsureVirtualSelection()
+        {
+            if (virtualNodes is null || virtualNodes.VisibleCount == 0)
+            {
+                selectedVirtualNodeKey = null;
+                scrollIndex = 0;
+                return;
+            }
+
+            if (selectedVirtualNodeKey is not null &&
+                virtualNodes.FindVisibleIndexByKey(selectedVirtualNodeKey) >= 0)
+            {
+                EnsureVirtualSelectionVisible();
+                return;
+            }
+
+            selectedVirtualNodeKey = virtualNodes.GetVisibleNode(0).Key;
+            EnsureVirtualSelectionVisible();
+        }
+
+        private void MoveVirtualSelection(int index)
+        {
+            if (virtualNodes is null || virtualNodes.VisibleCount == 0)
+                return;
+
+            int clampedIndex = Math.Clamp(index, 0, virtualNodes.VisibleCount - 1);
+            SetSelectedVirtualNodeKey(virtualNodes.GetVisibleNode(clampedIndex).Key);
+        }
+
+        private void SetSelectedVirtualNodeKey(string? key)
+        {
+            if (string.Equals(selectedVirtualNodeKey, key, StringComparison.Ordinal))
+            {
+                EnsureVirtualSelectionVisible();
+                return;
+            }
+
+            selectedVirtualNodeKey = key;
+            EnsureVirtualSelectionVisible();
+        }
+
+        private void EnsureVirtualSelectionVisible()
+        {
+            if (virtualNodes is null)
+                return;
+
+            int maximumScroll = Math.Max(0, virtualNodes.VisibleCount - Height);
+            if (selectedVirtualNodeKey is not null)
+            {
+                int selectedIndex = virtualNodes.FindVisibleIndexByKey(selectedVirtualNodeKey);
+                if (selectedIndex >= 0)
+                {
+                    if (selectedIndex < scrollIndex)
+                        scrollIndex = selectedIndex;
+                    else if (selectedIndex >= scrollIndex + Height)
+                        scrollIndex = selectedIndex - Height + 1;
+                }
+            }
+
+            scrollIndex = Math.Clamp(scrollIndex, 0, maximumScroll);
+        }
+
+        private void ExpandOrMoveIntoVirtualNode(int selectedIndex)
+        {
+            if (virtualNodes is null || selectedIndex < 0 || selectedIndex >= virtualNodes.VisibleCount)
+                return;
+
+            VirtualTreeViewNode node = virtualNodes.GetVisibleNode(selectedIndex);
+            if (node.HasChildren && !node.IsExpanded)
+            {
+                virtualNodes.SetExpanded(node.Key, true);
+                SetSelectedVirtualNodeKey(node.Key);
+                return;
+            }
+
+            int nextIndex = selectedIndex + 1;
+            if (node.IsExpanded && nextIndex < virtualNodes.VisibleCount)
+            {
+                VirtualTreeViewNode nextNode = virtualNodes.GetVisibleNode(nextIndex);
+                if (nextNode.Depth > node.Depth)
+                    SetSelectedVirtualNodeKey(nextNode.Key);
+            }
+        }
+
+        private void CollapseOrMoveToVirtualParent(int selectedIndex)
+        {
+            if (virtualNodes is null || selectedIndex < 0 || selectedIndex >= virtualNodes.VisibleCount)
+                return;
+
+            VirtualTreeViewNode node = virtualNodes.GetVisibleNode(selectedIndex);
+            if (node.HasChildren && node.IsExpanded)
+            {
+                virtualNodes.SetExpanded(node.Key, false);
+                SetSelectedVirtualNodeKey(node.Key);
+                return;
+            }
+
+            if (node.ParentKey is not null)
+                SetSelectedVirtualNodeKey(node.ParentKey);
+        }
+
+        private void ToggleVirtualNode(int selectedIndex)
+        {
+            if (virtualNodes is null || selectedIndex < 0 || selectedIndex >= virtualNodes.VisibleCount)
+                return;
+
+            VirtualTreeViewNode node = virtualNodes.GetVisibleNode(selectedIndex);
+            if (!node.HasChildren)
+                return;
+
+            virtualNodes.SetExpanded(node.Key, !node.IsExpanded);
+            SetSelectedVirtualNodeKey(node.Key);
         }
 
         private void SetSelectedNode(TreeNode? node, bool raiseEvent)
@@ -419,6 +755,14 @@ namespace BlazorTUI.TUI
             return $"{new string(' ', visibleNode.Depth * 2)}{marker}{visibleNode.Node.Text}";
         }
 
+        private static string BuildVirtualNodeText(VirtualTreeViewNode visibleNode)
+        {
+            string marker = visibleNode.HasChildren
+                ? visibleNode.IsExpanded ? "▼ " : "▶ "
+                : "• ";
+            return $"{new string(' ', visibleNode.Depth * 2)}{marker}{visibleNode.Text}";
+        }
+
         private string GetScrollCharacter(int row, int visibleNodeCount)
         {
             if (visibleNodeCount <= Height)
@@ -470,6 +814,12 @@ namespace BlazorTUI.TUI
         {
             if (node.Owner != this)
                 throw new ArgumentException("The node does not belong to this TreeView.", nameof(node));
+        }
+
+        private void EnsureMaterializedTree()
+        {
+            if (virtualNodes is not null)
+                throw new InvalidOperationException("Tree nodes cannot be mutated when TreeView uses a virtual data provider.");
         }
 
         private static bool IsDescendantOrSelf(TreeNode node, TreeNode possibleAncestor)

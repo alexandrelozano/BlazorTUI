@@ -7,16 +7,24 @@ namespace BlazorTUI.TUI
     {
         private readonly List<CommandPaletteItem> commands;
         private readonly List<CommandPaletteItem> filteredCommands = new();
+        private readonly IVirtualCommandPaletteDataProvider? virtualCommands;
         private string searchText = "";
         private string title = "Command";
         private string placeholder = "Type a command";
         private short maxVisibleCommands;
         private int highlightedIndex;
         private int scrollIndex;
+        private int filteredCommandCount;
 
         public IReadOnlyList<CommandPaletteItem> Commands => commands;
 
         public IReadOnlyList<CommandPaletteItem> FilteredCommands => filteredCommands;
+
+        public bool IsVirtualized => virtualCommands is not null;
+
+        public int CommandCount => virtualCommands?.Count ?? commands.Count;
+
+        public int FilteredCommandCount => filteredCommandCount;
 
         public bool IsOpen { get; private set; }
 
@@ -56,8 +64,8 @@ namespace BlazorTUI.TUI
         public int HighlightedIndex => highlightedIndex;
 
         public CommandPaletteItem? HighlightedCommand
-            => highlightedIndex >= 0 && highlightedIndex < filteredCommands.Count
-                ? filteredCommands[highlightedIndex]
+            => highlightedIndex >= 0 && highlightedIndex < filteredCommandCount
+                ? GetFilteredCommand(highlightedIndex)
                 : null;
 
         public event EventHandler<CommandPaletteExecutedEventArgs>? CommandExecuted;
@@ -95,6 +103,36 @@ namespace BlazorTUI.TUI
             LostFocus += (_, _) => Close();
         }
 
+        public CommandPalette(
+            string name,
+            IVirtualCommandPaletteDataProvider commands,
+            short X,
+            short Y,
+            short width,
+            Color foreColor,
+            Color backgroundColor,
+            short maxVisibleCommands = 5)
+        {
+            ArgumentNullException.ThrowIfNull(commands);
+            ArgumentOutOfRangeException.ThrowIfLessThan(width, (short)12);
+            ArgumentOutOfRangeException.ThrowIfLessThan(maxVisibleCommands, (short)1);
+
+            this.commands = new List<CommandPaletteItem>();
+            virtualCommands = commands;
+            Name = name;
+            this.X = X;
+            this.Y = Y;
+            Width = width;
+            Height = 1;
+            ForeColor = foreColor;
+            BackgroundColor = backgroundColor;
+            TabStop = true;
+            this.maxVisibleCommands = maxVisibleCommands;
+
+            RefreshFilteredCommands();
+            LostFocus += (_, _) => Close();
+        }
+
         public CommandPaletteItem AddCommand(
             string name,
             string title,
@@ -108,6 +146,7 @@ namespace BlazorTUI.TUI
 
         public void AddCommand(CommandPaletteItem command)
         {
+            EnsureStaticCommands();
             ArgumentNullException.ThrowIfNull(command);
             if (commands.Any(existing => existing.Name == command.Name))
                 throw new InvalidOperationException($"A command named '{command.Name}' already exists.");
@@ -118,6 +157,7 @@ namespace BlazorTUI.TUI
 
         public bool RemoveCommand(string name)
         {
+            EnsureStaticCommands();
             ArgumentException.ThrowIfNullOrWhiteSpace(name);
             int index = commands.FindIndex(command => command.Name == name);
             if (index < 0)
@@ -136,6 +176,7 @@ namespace BlazorTUI.TUI
 
         public void ClearCommands()
         {
+            EnsureStaticCommands();
             if (commands.Count == 0)
                 return;
 
@@ -146,7 +187,7 @@ namespace BlazorTUI.TUI
         public CommandPaletteItem? GetCommand(string name)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(name);
-            return commands.FirstOrDefault(command => command.Name == name);
+            return virtualCommands?.GetCommand(name) ?? commands.FirstOrDefault(command => command.Name == name);
         }
 
         public void Open()
@@ -222,7 +263,7 @@ namespace BlazorTUI.TUI
             RefreshFilteredCommands();
 
             highlightedIndex = state.TryGetInteger("HighlightedIndex", out int restoredHighlightedIndex)
-                ? Math.Clamp(restoredHighlightedIndex, -1, Math.Max(-1, filteredCommands.Count - 1))
+                ? Math.Clamp(restoredHighlightedIndex, -1, Math.Max(-1, filteredCommandCount - 1))
                 : highlightedIndex;
             scrollIndex = state.TryGetInteger("ScrollIndex", out int restoredScrollIndex)
                 ? Math.Max(0, restoredScrollIndex)
@@ -262,19 +303,19 @@ namespace BlazorTUI.TUI
                 case "Enter":
                     ExecuteHighlightedCommand();
                     NotifyClicked();
-                    return filteredCommands.Count > 0;
+                    return filteredCommandCount > 0;
                 case "ArrowDown":
                     MoveHighlight(1);
-                    return filteredCommands.Count > 0;
+                    return filteredCommandCount > 0;
                 case "ArrowUp":
                     MoveHighlight(-1);
-                    return filteredCommands.Count > 0;
+                    return filteredCommandCount > 0;
                 case "Home":
                     MoveHighlightTo(0);
-                    return filteredCommands.Count > 0;
+                    return filteredCommandCount > 0;
                 case "End":
-                    MoveHighlightTo(filteredCommands.Count - 1);
-                    return filteredCommands.Count > 0;
+                    MoveHighlightTo(filteredCommandCount - 1);
+                    return filteredCommandCount > 0;
                 case "Backspace":
                     RemoveLastSearchCharacter();
                     return true;
@@ -376,7 +417,7 @@ namespace BlazorTUI.TUI
             for (int row = 0; row < visibleCount; row++)
             {
                 int commandIndex = scrollIndex + row;
-                CommandPaletteItem command = filteredCommands[commandIndex];
+                CommandPaletteItem command = GetFilteredCommand(commandIndex);
                 string text = command.Description.Length == 0
                     ? command.Title
                     : $"{command.Title} - {command.Description}";
@@ -404,14 +445,14 @@ namespace BlazorTUI.TUI
         private string GetScrollCharacter(int visibleRow, int commandIndex)
         {
             int visibleCount = VisibleCommandCount;
-            if (filteredCommands.Count <= visibleCount)
+            if (filteredCommandCount <= visibleCount)
                 return " ";
             if (visibleCount <= 1)
                 return "↕";
             if (visibleRow == 0)
                 return scrollIndex > 0 ? "↑" : "│";
             if (visibleRow == visibleCount - 1)
-                return commandIndex < filteredCommands.Count - 1 ? "↓" : "│";
+                return commandIndex < filteredCommandCount - 1 ? "↓" : "│";
 
             return "│";
         }
@@ -433,18 +474,18 @@ namespace BlazorTUI.TUI
 
         private void MoveHighlight(int direction)
         {
-            if (filteredCommands.Count == 0)
+            if (filteredCommandCount == 0)
                 return;
 
-            MoveHighlightTo(Math.Clamp(highlightedIndex + direction, 0, filteredCommands.Count - 1));
+            MoveHighlightTo(Math.Clamp(highlightedIndex + direction, 0, filteredCommandCount - 1));
         }
 
         private void MoveHighlightTo(int index)
         {
-            if (filteredCommands.Count == 0)
+            if (filteredCommandCount == 0)
                 return;
 
-            highlightedIndex = Math.Clamp(index, 0, filteredCommands.Count - 1);
+            highlightedIndex = Math.Clamp(index, 0, filteredCommandCount - 1);
             EnsureHighlightedCommandVisible();
         }
 
@@ -468,10 +509,18 @@ namespace BlazorTUI.TUI
         private void RefreshFilteredCommands()
         {
             filteredCommands.Clear();
-            foreach (CommandPaletteItem command in commands.Where(CommandMatchesSearch))
-                filteredCommands.Add(command);
+            if (virtualCommands is null)
+            {
+                foreach (CommandPaletteItem command in commands.Where(CommandMatchesSearch))
+                    filteredCommands.Add(command);
+                filteredCommandCount = filteredCommands.Count;
+            }
+            else
+            {
+                filteredCommandCount = virtualCommands.GetFilteredCount(searchText);
+            }
 
-            highlightedIndex = filteredCommands.Count == 0 ? -1 : Math.Clamp(highlightedIndex, 0, filteredCommands.Count - 1);
+            highlightedIndex = filteredCommandCount == 0 ? -1 : Math.Clamp(highlightedIndex, 0, filteredCommandCount - 1);
             EnsureHighlightedCommandVisible();
         }
 
@@ -499,7 +548,7 @@ namespace BlazorTUI.TUI
             else if (highlightedIndex >= scrollIndex + visibleCount)
                 scrollIndex = highlightedIndex - visibleCount + 1;
 
-            scrollIndex = Math.Clamp(scrollIndex, 0, Math.Max(0, filteredCommands.Count - visibleCount));
+            scrollIndex = Math.Clamp(scrollIndex, 0, Math.Max(0, filteredCommandCount - visibleCount));
         }
 
         private int VisibleCommandCount
@@ -507,8 +556,19 @@ namespace BlazorTUI.TUI
             get
             {
                 int availableRows = container is null ? maxVisibleCommands : Math.Max(0, container.Height - Y - 1);
-                return Math.Min(filteredCommands.Count, Math.Min(maxVisibleCommands, availableRows));
+                return Math.Min(filteredCommandCount, Math.Min(maxVisibleCommands, availableRows));
             }
+        }
+
+        private CommandPaletteItem GetFilteredCommand(int index)
+            => virtualCommands is null
+                ? filteredCommands[index]
+                : virtualCommands.GetFilteredCommand(searchText, index);
+
+        private void EnsureStaticCommands()
+        {
+            if (virtualCommands is not null)
+                throw new InvalidOperationException("Commands cannot be mutated when CommandPalette uses a virtual data provider.");
         }
 
         private bool TryGetCell(IList<Row> rows, int localX, int localY, out Cell cell)

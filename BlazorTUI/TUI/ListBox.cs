@@ -9,13 +9,26 @@ namespace BlazorTUI.TUI
         public IReadOnlyList<string> Items => items;
         public List<string> itemsSelected = new List<string>();
         public IReadOnlyList<string> SelectedItems => itemsSelected;
+        private readonly IVirtualListBoxDataProvider? virtualItems;
+        private readonly List<string> selectedKeys = new();
 
         private bool multipleSelection;
 
         public bool AllowsMultipleSelection => multipleSelection;
 
-        private short cursorY;
-        private short scrollY;
+        public bool IsVirtualized => virtualItems is not null;
+
+        public int ItemCount => virtualItems?.Count ?? items.Count;
+
+        public IReadOnlyList<string> SelectedKeys => selectedKeys;
+
+        public int SelectedIndex => cursorY;
+
+        public string? SelectedKey
+            => cursorY >= 0 && cursorY < ItemCount ? GetItemKey(cursorY) : null;
+
+        private int cursorY;
+        private int scrollY;
 
         public ListBox(string name, List<string> items, bool multipleSelection, short X, short Y, short width, short height, Color forecolor, Color backgroundcolor)
         {
@@ -40,11 +53,33 @@ namespace BlazorTUI.TUI
             this.TabStop = true;
         }
 
+        public ListBox(string name, IVirtualListBoxDataProvider items, bool multipleSelection, short X, short Y, short width, short height, Color forecolor, Color backgroundcolor)
+        {
+            ArgumentNullException.ThrowIfNull(items);
+
+            Name = name;
+            this.X = X;
+            this.Y = Y;
+            this.width = width;
+            this.height = height;
+            virtualItems = items;
+            this.multipleSelection = multipleSelection;
+            this.foreColor = forecolor;
+            this.backgroundColor = backgroundcolor;
+
+            scrollY = 0;
+            cursorY = 0;
+
+            Focus = false;
+            TabStop = true;
+        }
+
         internal void ExportListBoxState(TuiElementState state)
         {
             ArgumentNullException.ThrowIfNull(state);
 
             state.SetStringList("SelectedItems", itemsSelected);
+            state.SetStringList("SelectedKeys", selectedKeys);
             state.SetInteger("CursorY", cursorY);
             state.SetInteger("ScrollY", scrollY);
         }
@@ -63,13 +98,23 @@ namespace BlazorTUI.TUI
                 }
             }
 
-            int maximumIndex = Math.Max(0, items.Count - 1);
+            if (state.TryGetStringList("SelectedKeys", out IReadOnlyList<string> restoredSelectedKeys))
+            {
+                selectedKeys.Clear();
+                foreach (string key in restoredSelectedKeys)
+                {
+                    if (!selectedKeys.Contains(key))
+                        selectedKeys.Add(key);
+                }
+            }
+
+            int maximumIndex = Math.Max(0, ItemCount - 1);
             cursorY = state.TryGetInteger("CursorY", out int restoredCursorY)
-                ? (short)Math.Clamp(restoredCursorY, 0, maximumIndex)
-                : (short)0;
+                ? Math.Clamp(restoredCursorY, 0, maximumIndex)
+                : 0;
             scrollY = state.TryGetInteger("ScrollY", out int restoredScrollY)
-                ? (short)Math.Clamp(restoredScrollY, 0, Math.Max(0, items.Count - height))
-                : (short)0;
+                ? Math.Clamp(restoredScrollY, 0, Math.Max(0, ItemCount - height))
+                : 0;
         }
 
         public override bool KeyDown(string key, bool shiftKey)
@@ -89,7 +134,7 @@ namespace BlazorTUI.TUI
                     case "Space":
                     case " ":
                         if (multipleSelection)
-                            SelectItem(items[cursorY]);
+                            SelectItem(cursorY);
                         container.TopContainer().SetFocus(name);
                         handled = true;
                         break;
@@ -99,24 +144,22 @@ namespace BlazorTUI.TUI
                         if (cursorY > 0)
                         {
                             cursorY--;
-
-                            if (cursorY < scrollY)
-                                Click((short)(width - 1), 0);
+                            EnsureCursorVisible();
 
                             if (!multipleSelection)
-                                SelectItem(items[cursorY]);
+                                SelectItem(cursorY);
+                            handled = true;
                         }
                         break;
                     case "ArrowDown":
-                        if (cursorY < items.Count() - 1)
+                        if (cursorY < ItemCount - 1)
                         {
                             cursorY++;
-
-                            if (cursorY >= height)
-                                Click((short)(width - 1), (short)(height - 1));
+                            EnsureCursorVisible();
 
                             if (!multipleSelection)
-                                SelectItem(items[cursorY]);
+                                SelectItem(cursorY);
+                            handled = true;
                         }
                         break;
                     default:
@@ -130,19 +173,49 @@ namespace BlazorTUI.TUI
             return handled;
         }
 
-        private void SelectItem(string item)
+        public void SelectKey(string key)
         {
+            ArgumentException.ThrowIfNullOrWhiteSpace(key);
+            for (int index = 0; index < ItemCount; index++)
+            {
+                if (GetItemKey(index) == key)
+                {
+                    cursorY = index;
+                    SelectItem(index);
+                    EnsureCursorVisible();
+                    return;
+                }
+            }
+
+            throw new ArgumentException("The key does not belong to this ListBox.", nameof(key));
+        }
+
+        private void SelectItem(int index)
+        {
+            if (index < 0 || index >= ItemCount)
+                return;
+
+            string item = GetItem(index);
+            string key = GetItemKey(index);
+
             if (multipleSelection)
             {
                 if (itemsSelected.Contains(item))
                     itemsSelected.Remove(item);
                 else
                     itemsSelected.Add(item);
+
+                if (selectedKeys.Contains(key))
+                    selectedKeys.Remove(key);
+                else
+                    selectedKeys.Add(key);
             }
             else
             {
                 itemsSelected.Clear();
                 itemsSelected.Add(item);
+                selectedKeys.Clear();
+                selectedKeys.Add(key);
             }
         }
 
@@ -161,16 +234,18 @@ namespace BlazorTUI.TUI
                     }
                     else if (Y == height -1)
                     {
-                        if (scrollY < items.Count - height)
+                    if (scrollY < ItemCount - height)
                             scrollY++;
                     }
                 }
                 else
                 {
-                    string item = items[Y + scrollY];
+                    int itemIndex = Y + scrollY;
+                    if (itemIndex < 0 || itemIndex >= ItemCount)
+                        return false;
 
-                    cursorY = (short)(Y + scrollY);
-                    SelectItem(item);
+                    cursorY = itemIndex;
+                    SelectItem(itemIndex);
                 }       
                 
                 container.TopContainer().SetFocus(name);
@@ -189,16 +264,15 @@ namespace BlazorTUI.TUI
             {
                 for (short Yn = 0; Yn < height; Yn++)
                 {
+                    int itemIndex = Yn + scrollY;
+                    string item = itemIndex < ItemCount ? GetItem(itemIndex) : "";
                     for (short n = 0; n < width; n++)
                     {
                         if (container.YOffset() + Y + Yn < container.YOffset() + container.height && container.YOffset() + Y + Yn < rows.Count)
                         {
-                            if (container.XOffset() + X + n < container.XOffset() + container.width && container.XOffset() + X + n < rows[Y].Cells.Count)
+                            int absoluteY = container.YOffset() + Y + Yn;
+                            if (container.XOffset() + X + n < container.XOffset() + container.width && container.XOffset() + X + n < rows[absoluteY].Cells.Count)
                             {
-                                string item = "";
-                                if ((Yn + scrollY) < items.Count) 
-                                    item = items[Yn + scrollY];
-
                                 string ch = " ";
 
                                 Color foreColorTmp = foreColor;
@@ -206,7 +280,7 @@ namespace BlazorTUI.TUI
 
                                 if (n == 0)
                                 {
-                                    if (itemsSelected.Contains(item))
+                                    if (itemIndex < ItemCount && IsItemSelected(itemIndex, item))
                                     {
                                         ch = "●";
                                     }
@@ -248,5 +322,26 @@ namespace BlazorTUI.TUI
         }
 
         protected override object? GetValidationValue() => SelectedItems;
+
+        private string GetItem(int index)
+            => virtualItems is null ? items[index] : virtualItems.GetItem(index);
+
+        private string GetItemKey(int index)
+            => virtualItems is null ? GetItem(index) : virtualItems.GetKey(index);
+
+        private bool IsItemSelected(int index, string item)
+            => virtualItems is null
+                ? itemsSelected.Contains(item)
+                : selectedKeys.Contains(GetItemKey(index));
+
+        private void EnsureCursorVisible()
+        {
+            if (cursorY < scrollY)
+                scrollY = cursorY;
+            else if (cursorY >= scrollY + height)
+                scrollY = cursorY - height + 1;
+
+            scrollY = Math.Clamp(scrollY, 0, Math.Max(0, ItemCount - height));
+        }
     }
 }

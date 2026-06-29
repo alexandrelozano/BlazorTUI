@@ -185,6 +185,53 @@
         _ = terminal.GetInvalidControls();
         terminal.ApplyTheme(TuiTheme.Dark);
         _ = terminal.Theme.Resolve(TuiThemeRole.Input, TuiThemeState.Error);
+        var virtualList = new ListBox(
+            "virtualList",
+            new VirtualListBoxDataProvider(1000, index => $"Item {index}", index => $"item-{index}"),
+            multipleSelection: false,
+            0, 0, 12, 3,
+            System.Drawing.Color.White,
+            System.Drawing.Color.Black);
+        virtualList.SelectKey("item-10");
+        var virtualGrid = new GridView(
+            "virtualGrid",
+            new[]
+            {
+                new GridView.GridColumn { Title = "Id", Width = 6 },
+                new GridView.GridColumn { Title = "Name", Width = 10 }
+            },
+            new VirtualGridViewDataProvider(
+                1000,
+                index => new GridView.GridRow { Cells = new[] { index.ToString(), $"Row {index}" } },
+                index => $"row-{index}"),
+            0, 0, 20, 4,
+            System.Drawing.Color.White,
+            System.Drawing.Color.Black);
+        virtualGrid.SelectRowKey("row-10");
+        var virtualCommands = new CommandPalette(
+            "virtualCommands",
+            new VirtualCommandPaletteDataProvider(
+                () => 1000,
+                _ => 1000,
+                (_, index) => new CommandPaletteItem($"command-{index}", $"Command {index}")),
+            0, 0, 20,
+            System.Drawing.Color.White,
+            System.Drawing.Color.Black);
+        virtualCommands.Open();
+        var virtualTree = new TreeView(
+            "virtualTree",
+            new VirtualTreeViewDataProvider(
+                () => 1000,
+                index => new VirtualTreeViewNode($"node-{index}", $"Node {index}", 0),
+                key => key.StartsWith("node-") && int.TryParse(key["node-".Length..], out int index) ? index : -1),
+            0, 0, 20, 4,
+            System.Drawing.Color.White,
+            System.Drawing.Color.Black);
+        virtualTree.SelectNodeKey("node-10");
+        _ = virtualList.SelectedKey;
+        _ = virtualGrid.SelectedRowKey;
+        _ = virtualCommands.HighlightedCommand;
+        _ = virtualTree.SelectedNodeKey;
         terminal.SetFocus("priority");
         TuiScreenState state = terminal.ExportState();
         string serializedState = terminal.ExportStateJson();

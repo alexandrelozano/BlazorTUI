@@ -16,6 +16,7 @@ BlazorTUI is a Razor Class Library for building retro text user interfaces in Bl
 - Menu bars with shortcuts and keyboard navigation.
 - Modal dialogs and configurable message boxes.
 - Status bars for persistent messages, shortcuts, and context.
+- Optional virtual data providers for large lists, grids, trees, and command palettes.
 - Responsive terminal scaling.
 
 ## Requirements
@@ -253,7 +254,7 @@ string json = screen.ExportStateJson(indented: true);
 screen.RestoreStateJson(json);
 ```
 
-The snapshot restores current control values, focus, text selections, selected items, active tabs, split-panel position, tree expansion and selection, grid row values, grid sorting, text/exact grid filters, grid pagination, and command-palette search state. Predicate-based grid filters and row filters keep their exported description metadata, but their delegate functions are not restored because arbitrary delegates are not serializable.
+The snapshot restores current control values, focus, text selections, selected items, active tabs, split-panel position, tree expansion and selection, grid row values, grid sorting, text/exact grid filters, grid pagination, and command-palette search state. Predicate-based grid filters and row filters keep their exported description metadata, but their delegate functions are not restored because arbitrary delegates are not serializable. Virtual providers remain application-owned; state persistence restores keys, focus, paging, and search where applicable, not the provider's backing data.
 
 ## Keyboard and mouse interaction
 
@@ -458,6 +459,47 @@ frame.AddControl(orders);
 ```
 
 Use `SortByColumn(columnIndex)` to toggle ascending/descending sorting, or `SortByColumn(columnIndex, direction)` for an explicit `GridSortDirection`. `ClearSort` restores the original row order. Use `SetTextFilter`, `SetExactFilter`, `SetColumnFilter`, `SetRowFilter`, `ClearFilter`, `ClearRowFilter`, and `ClearFilters` to control filtering. `Filters`, `RowFilter`, `HasActiveFilters`, and `FilteredRowCount` expose the current filtered state. Filtered columns show a `◊` marker in the header; sorted columns show `▲` or `▼`. `NextPage`, `PreviousPage`, `GoToPage`, `PageIndex`, `PageSize`, and `PageCount` manage pagination. `SelectedRow`, `SelectedRowIndex`, `SelectedSourceRowIndex`, `SelectedColumnIndex`, `SelectRow`, `SelectSourceRow`, and `SelectCell` manage selection. Use `BeginEdit`, `CommitEdit`, and `CancelEdit` for programmatic cell editing; users can start editing an editable cell with `Enter`, commit with `Enter`, and cancel with `Escape`. Column editors support `TextBox`, `ComboBox`, `CheckBox`, `NumericBox`, and `DateBox` modes through `GridViewCellEditorKind`, plus per-column validation rules and typed `CellEditStarted`, `CellEditCommitted`, and `CellEditCanceled` events. Clicking a column header sorts it, clicking the up/down glyphs changes pages, and `PageUp`/`PageDown` work from the keyboard.
+
+## Large data virtualization
+
+For data-heavy screens, use virtual data providers instead of passing a fully materialized list. The control keeps the same terminal rendering model but asks the provider only for the visible rows or items it needs:
+
+```csharp
+var virtualOrders = new GridView(
+    "ordersGrid",
+    new[]
+    {
+        new GridView.GridColumn { Title = "Order", Width = 8 },
+        new GridView.GridColumn { Title = "Status", Width = 10 }
+    },
+    new VirtualGridViewDataProvider(
+        count: 50_000,
+        getRow: index => new GridView.GridRow
+        {
+            Cells = new[] { index.ToString("D5"), index % 2 == 0 ? "Open" : "Closed" }
+        },
+        getRowKey: index => $"order-{index}"),
+    2,
+    17,
+    24,
+    6,
+    Color.Yellow,
+    Color.Black);
+
+virtualOrders.SelectRowKey("order-1000");
+frame.AddControl(virtualOrders);
+```
+
+The virtual provider types are:
+
+- `VirtualGridViewDataProvider` / `IVirtualGridViewDataProvider`
+- `VirtualListBoxDataProvider` / `IVirtualListBoxDataProvider`
+- `VirtualTreeViewDataProvider` / `IVirtualTreeViewDataProvider`
+- `VirtualCommandPaletteDataProvider` / `IVirtualCommandPaletteDataProvider`
+
+Virtual controls expose stable key-based helpers such as `SelectedRowKey`, `SelectRowKey`, `SelectedKey`, `SelectKey`, `SelectedNodeKey`, and `SelectNodeKey`. Existing non-virtual constructors continue to work unchanged.
+
+`GridView` can still sort and filter virtual rows, but those operations must enumerate source row indexes to build the sorted or filtered view. For very large remote datasets, prefer applying server-side query logic in your provider and keep the grid's built-in sorting/filtering for local or moderate data.
 
 ## Radio groups
 
@@ -696,12 +738,18 @@ Run `dotnet run --project SampleApp` from the repository root and open `/` or `/
 
 ## Changelog
 
+### 0.8.12 — 2026-06-29
+
+- Added optional virtual data providers for `GridView`, `ListBox`, `TreeView`, and `CommandPalette`.
+- Added key-based virtual selection helpers such as `SelectedRowKey`, `SelectRowKey`, `SelectedKey`, `SelectKey`, `SelectedNodeKey`, and `SelectNodeKey`.
+- Preserved existing non-virtual constructors while allowing large controls to fetch only visible rows, nodes, items, or commands during normal rendering.
+- Added virtualization regression tests and NuGet consumer coverage for the new public API.
+
 ### 0.8.11 — 2026-06-28
 
 - Added `Screen.ExportState`, `Screen.RestoreState`, `Screen.ExportStateJson`, and `Screen.RestoreStateJson` for saving and restoring terminal state.
 - Added serializable `TuiScreenState` and `TuiElementState` snapshots covering focus, text selections, values, selected items, active tabs, split-panel positions, tree expansion, command-palette search, and GridView state.
 - Added state-persistence regression tests and NuGet consumer coverage for the new public API.
-- Incremented the package version to `0.8.11`.
 
 ### 0.8.10 — 2026-06-28
 
