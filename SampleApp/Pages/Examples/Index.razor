@@ -29,6 +29,7 @@
         new("wrapPanelExample", "WrapPanel", "Flow layout", "/examples/wrap-panel"),
         new("scrollViewerExample", "ScrollViewer", "Clipped content", "/examples/scroll-viewer"),
         new("datePickerExample", "DatePicker", "Popup calendar", "/examples/date-picker"),
+        new("monthPickerExample", "MonthPicker", "Popup months", "/examples/month-picker"),
         new("breadcrumbExample", "Breadcrumb", "Hierarchical navigation", "/examples/breadcrumbs"),
         new("themesExample", "Themes", "Runtime palettes", "/examples/themes"),
         new("showcaseExample", "Complete showcase", "All controls", "/examples/showcase")
@@ -56,8 +57,8 @@
         for (int index = 0; index < Destinations.Length; index++)
         {
             ExampleDestination destination = Destinations[index];
-            short column = (short)(3 + (index / 6) * 25);
-            short row = (short)(6 + (index % 6) * 4);
+            short column = (short)(3 + (index / 7) * 25);
+            short row = (short)(6 + (index % 7) * 3);
             var button = new Button(
                 destination.ControlName, destination.Title,
                 column, row, 21, Color.Yellow, Color.Black);

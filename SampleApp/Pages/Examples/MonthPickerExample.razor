@@ -1,0 +1,59 @@
+@page "/examples/month-picker"
+@using global::BlazorTUI.TUI
+@using Color = System.Drawing.Color
+
+<PageTitle>MonthPicker example</PageTitle>
+
+<BlazorTUI.BlazorTUI
+    screen="@screen"
+    AriaLabel="MonthPicker example"
+    AriaDescription="Shows a compact month input with a popup month grid." />
+
+@code {
+    private readonly Screen screen = CreateScreen();
+
+    private static Screen CreateScreen()
+    {
+        var screen = new Screen(60, 30);
+        var frame = new Frame(
+            "monthPickerFrame", "MONTHPICKER", 4, 3, 52, 22,
+            Frame.BorderStyle.Line, Color.Yellow, Color.DarkBlue);
+        screen.TopContainer.AddContainer(frame);
+
+        frame.AddControl(new Label(
+            "monthPickerDescription", "Compact month input with a popup month grid.",
+            3, 2, 46, Color.White, Color.DarkBlue));
+
+        frame.AddControl(new Label(
+            "billingMonthLabel", "Billing:", 3, 5, 10,
+            Color.Cyan, Color.DarkBlue));
+
+        var billingMonth = new MonthPicker(
+            "billingMonthPicker",
+            new DateOnly(2026, 6, 1),
+            MonthPicker.MonthFormat.YYYYMM,
+            14, 5,
+            Color.Yellow,
+            Color.Black);
+        frame.AddControl(billingMonth);
+
+        var status = new StatusBar(
+            "monthPickerStatus", "Choose a billing month",
+            3, 18, 46,
+            Color.Black, Color.Cyan);
+        frame.AddControl(status);
+
+        billingMonth.ValueChanged += (_, args) =>
+            status.Value = args.Value.HasValue
+                ? $"Selected: {args.Value:yyyy-MM}"
+                : "No month selected";
+
+        frame.AddControl(new Label(
+            "monthPickerHint", "F4/Enter opens. Arrows move. Enter selects.",
+            3, 16, 46, Color.Cyan, Color.DarkBlue));
+
+        billingMonth.OpenMonthGrid();
+        screen.SetFocus("billingMonthPicker");
+        return screen;
+    }
+}

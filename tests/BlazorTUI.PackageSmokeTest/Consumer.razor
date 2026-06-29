@@ -39,6 +39,15 @@
             System.Drawing.Color.Black);
         datePicker.ValueChanged += (_, args) => _ = args.Value;
         datePicker.Value = new DateOnly(2026, 6, 30);
+        var monthPicker = new MonthPicker(
+            "monthPicker",
+            new DateOnly(2026, 6, 15),
+            MonthPicker.MonthFormat.YYYYMM,
+            0, 0,
+            System.Drawing.Color.White,
+            System.Drawing.Color.Black);
+        monthPicker.ValueChanged += (_, args) => _ = args.Value;
+        monthPicker.Value = new DateOnly(2026, 7, 15);
         IClipboardControl clipboard = input;
         IClipboardPermissions passwordClipboard = password;
         IUndoableControl editHistory = input;

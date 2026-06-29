@@ -117,6 +117,10 @@ namespace BlazorTUI.TUI
                     var datePickerState = new TuiElementState(nameof(DatePicker));
                     datePicker.ExportDatePickerState(datePickerState);
                     return datePickerState;
+                case MonthPicker monthPicker:
+                    var monthPickerState = new TuiElementState(nameof(MonthPicker));
+                    monthPicker.ExportMonthPickerState(monthPickerState);
+                    return monthPickerState;
                 case TimeBox timeBox:
                     var timeState = new TuiElementState(nameof(TimeBox));
                     timeBox.ExportTextInputState(timeState);
@@ -266,6 +270,9 @@ namespace BlazorTUI.TUI
                     break;
                 case DatePicker datePicker:
                     datePicker.RestoreDatePickerState(state);
+                    break;
+                case MonthPicker monthPicker:
+                    monthPicker.RestoreMonthPickerState(state);
                     break;
                 case TimeBox timeBox:
                     timeBox.RestoreTextInputState(state);

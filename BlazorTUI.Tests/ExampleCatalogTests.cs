@@ -36,6 +36,7 @@ public class ExampleCatalogTests : BunitContext
         Assert.Contains("WrapPanel", accessibleText);
         Assert.Contains("ScrollViewer", accessibleText);
         Assert.Contains("DatePicker", accessibleText);
+        Assert.Contains("MonthPicker", accessibleText);
         Assert.Contains("Breadcrumb", accessibleText);
         Assert.Contains("Themes", accessibleText);
         Assert.Contains("Complete showcase", accessibleText);
@@ -57,6 +58,7 @@ public class ExampleCatalogTests : BunitContext
     [InlineData("wrapPanelExample", "/examples/wrap-panel")]
     [InlineData("scrollViewerExample", "/examples/scroll-viewer")]
     [InlineData("datePickerExample", "/examples/date-picker")]
+    [InlineData("monthPickerExample", "/examples/month-picker")]
     [InlineData("breadcrumbExample", "/examples/breadcrumbs")]
     [InlineData("themesExample", "/examples/themes")]
     [InlineData("showcaseExample", "/examples/showcase")]
