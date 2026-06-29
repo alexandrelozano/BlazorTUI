@@ -61,6 +61,7 @@ public class SampleAppSmokeTests : IClassFixture<WebApplicationFactory<Program>>
     [InlineData("/examples/dock-panel", "DockPanel example")]
     [InlineData("/examples/wrap-panel", "WrapPanel example")]
     [InlineData("/examples/scroll-viewer", "ScrollViewer example")]
+    [InlineData("/examples/date-picker", "DatePicker example")]
     [InlineData("/examples/breadcrumbs", "Breadcrumb example")]
     [InlineData("/examples/themes", "Themes example")]
     public async Task FocusedExampleStartsAndRendersTerminal(string route, string title)

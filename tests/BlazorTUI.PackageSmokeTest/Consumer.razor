@@ -30,6 +30,15 @@
         var password = new PasswordBox(
             "password", "secret", 2, 3, 10,
             System.Drawing.Color.White, System.Drawing.Color.Black);
+        var datePicker = new DatePicker(
+            "datePicker",
+            new DateOnly(2026, 6, 29),
+            DateBox.DateFormat.YYYYMMDD,
+            0, 0,
+            System.Drawing.Color.White,
+            System.Drawing.Color.Black);
+        datePicker.ValueChanged += (_, args) => _ = args.Value;
+        datePicker.Value = new DateOnly(2026, 6, 30);
         IClipboardControl clipboard = input;
         IClipboardPermissions passwordClipboard = password;
         IUndoableControl editHistory = input;

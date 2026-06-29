@@ -1,0 +1,59 @@
+@page "/examples/date-picker"
+@using global::BlazorTUI.TUI
+@using Color = System.Drawing.Color
+
+<PageTitle>DatePicker example</PageTitle>
+
+<BlazorTUI.BlazorTUI
+    screen="@screen"
+    AriaLabel="DatePicker example"
+    AriaDescription="Shows a compact date input with a popup calendar." />
+
+@code {
+    private readonly Screen screen = CreateScreen();
+
+    private static Screen CreateScreen()
+    {
+        var screen = new Screen(60, 30);
+        var frame = new Frame(
+            "datePickerFrame", "DATEPICKER", 4, 3, 52, 22,
+            Frame.BorderStyle.Line, Color.Yellow, Color.DarkBlue);
+        screen.TopContainer.AddContainer(frame);
+
+        frame.AddControl(new Label(
+            "datePickerDescription", "Compact date input with a popup calendar.",
+            3, 2, 46, Color.White, Color.DarkBlue));
+
+        frame.AddControl(new Label(
+            "deliveryDateLabel", "Delivery:", 3, 5, 10,
+            Color.Cyan, Color.DarkBlue));
+
+        var deliveryDate = new DatePicker(
+            "deliveryDatePicker",
+            new DateOnly(2026, 6, 29),
+            DateBox.DateFormat.YYYYMMDD,
+            14, 5,
+            Color.Yellow,
+            Color.Black);
+        frame.AddControl(deliveryDate);
+
+        var status = new StatusBar(
+            "datePickerStatus", "Choose a delivery date",
+            3, 18, 46,
+            Color.Black, Color.Cyan);
+        frame.AddControl(status);
+
+        deliveryDate.ValueChanged += (_, args) =>
+            status.Value = args.Value.HasValue
+                ? $"Selected: {args.Value:yyyy-MM-dd}"
+                : "No date selected";
+
+        frame.AddControl(new Label(
+            "datePickerHint", "F4/Enter opens. Arrows move. Enter selects.",
+            3, 16, 46, Color.Cyan, Color.DarkBlue));
+
+        deliveryDate.OpenCalendar();
+        screen.SetFocus("deliveryDatePicker");
+        return screen;
+    }
+}
