@@ -48,6 +48,18 @@
             System.Drawing.Color.Black);
         monthPicker.ValueChanged += (_, args) => _ = args.Value;
         monthPicker.Value = new DateOnly(2026, 7, 15);
+        var dateRangePicker = new DateRangePicker(
+            "dateRangePicker",
+            new DateOnly(2026, 6, 10),
+            new DateOnly(2026, 6, 14),
+            DateBox.DateFormat.YYYYMMDD,
+            0, 0,
+            System.Drawing.Color.White,
+            System.Drawing.Color.Black);
+        dateRangePicker.ValueChanged += (_, args) => _ = (args.StartValue, args.EndValue);
+        dateRangePicker.SetRange(new DateOnly(2026, 6, 11), new DateOnly(2026, 6, 15));
+        DateRangePickerValue dateRange = new(dateRangePicker.StartValue!.Value, dateRangePicker.EndValue!.Value);
+        _ = dateRange;
         IClipboardControl clipboard = input;
         IClipboardPermissions passwordClipboard = password;
         IUndoableControl editHistory = input;

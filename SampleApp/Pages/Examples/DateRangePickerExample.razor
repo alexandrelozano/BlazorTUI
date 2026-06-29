@@ -1,0 +1,60 @@
+@page "/examples/date-range-picker"
+@using global::BlazorTUI.TUI
+@using Color = System.Drawing.Color
+
+<PageTitle>DateRangePicker example</PageTitle>
+
+<BlazorTUI.BlazorTUI
+    screen="@screen"
+    AriaLabel="DateRangePicker example"
+    AriaDescription="Shows a compact date range input with a popup calendar." />
+
+@code {
+    private readonly Screen screen = CreateScreen();
+
+    private static Screen CreateScreen()
+    {
+        var screen = new Screen(60, 30);
+        var frame = new Frame(
+            "dateRangePickerFrame", "DATERANGEPICKER", 4, 3, 52, 22,
+            Frame.BorderStyle.Line, Color.Yellow, Color.DarkBlue);
+        screen.TopContainer.AddContainer(frame);
+
+        frame.AddControl(new Label(
+            "dateRangePickerDescription", "Select a start and end date from one calendar.",
+            3, 2, 46, Color.White, Color.DarkBlue));
+
+        frame.AddControl(new Label(
+            "travelRangeLabel", "Travel:", 3, 5, 10,
+            Color.Cyan, Color.DarkBlue));
+
+        var travelRange = new DateRangePicker(
+            "travelRangePicker",
+            new DateOnly(2026, 6, 10),
+            new DateOnly(2026, 6, 14),
+            DateBox.DateFormat.YYYYMMDD,
+            14, 5,
+            Color.Yellow,
+            Color.Black);
+        frame.AddControl(travelRange);
+
+        var status = new StatusBar(
+            "dateRangePickerStatus", "Choose a travel range",
+            3, 18, 46,
+            Color.Black, Color.Cyan);
+        frame.AddControl(status);
+
+        travelRange.ValueChanged += (_, args) =>
+            status.Value = args.StartValue.HasValue && args.EndValue.HasValue
+                ? $"Selected: {args.StartValue:yyyy-MM-dd} to {args.EndValue:yyyy-MM-dd}"
+                : "Select the end date";
+
+        frame.AddControl(new Label(
+            "dateRangePickerHint", "First Enter starts. Second Enter completes.",
+            3, 16, 46, Color.Cyan, Color.DarkBlue));
+
+        travelRange.OpenCalendar();
+        screen.SetFocus("travelRangePicker");
+        return screen;
+    }
+}
