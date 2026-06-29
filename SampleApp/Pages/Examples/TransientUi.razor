@@ -1,0 +1,155 @@
+@page "/examples/transient-ui"
+@using global::BlazorTUI.TUI
+@using Color = System.Drawing.Color
+
+<PageTitle>Transient UI example</PageTitle>
+
+<BlazorTUI.BlazorTUI
+    screen="@screen"
+    AriaLabel="Transient UI example"
+    AriaDescription="Shows context menus, tooltips, toasts, popovers, and modal panels." />
+
+@code {
+    private Screen screen = null!;
+    private StatusBar status = null!;
+    private Toast toast = null!;
+    private Popover popover = null!;
+    private ModalPanel detailsModal = null!;
+    private int toastSequence;
+
+    protected override void OnInitialized()
+    {
+        screen = new Screen(60, 30);
+
+        var frame = new Frame(
+            "transientFrame", "TRANSIENT UI", 4, 3, 52, 22,
+            Frame.BorderStyle.Line, Color.Yellow, Color.DarkBlue);
+        screen.TopContainer.AddContainer(frame);
+
+        frame.AddControl(new Label(
+            "transientDescription",
+            "Right-click Actions or press Shift+F10.",
+            3, 2, 44, Color.White, Color.DarkBlue));
+
+        var actionsButton = new Button(
+            "actionsButton", "Actions", 4, 5, 12,
+            Color.White, Color.DarkGreen);
+        actionsButton.Clicked += (_, _) => AddNotice("Button activated");
+        frame.AddControl(actionsButton);
+
+        frame.AddControl(new Tooltip(
+            "actionsTooltip",
+            "Tooltip: right-click for actions",
+            "actionsButton",
+            18, 5, 30,
+            Color.Black, Color.Cyan));
+
+        var contextMenu = new ContextMenu(
+            "actionsContextMenu",
+            new[]
+            {
+                new ContextMenuItem("refresh", "Refresh") { OnClick = () => AddNotice("Refresh selected") },
+                new ContextMenuItem("separator", "", ContextMenuItemType.Separator),
+                new ContextMenuItem("showPopover", "Show popover") { OnClick = ShowPopover },
+                new ContextMenuItem("showModal", "Open modal") { OnClick = ShowDetailsModal },
+                new ContextMenuItem("disabledAction", "Disabled") { Enabled = false }
+            },
+            4, 7, 16,
+            Color.Yellow, Color.Black,
+            new[] { "actionsButton" });
+        contextMenu.ItemClicked += (_, args) => status.Value = $"Menu: {args.Item.Text}";
+        frame.AddControl(contextMenu);
+
+        var modalButton = new Button(
+            "modalButton", "Modal", 4, 9, 12,
+            Color.White, Color.DarkMagenta);
+        modalButton.Clicked += (_, _) => ShowDetailsModal();
+        frame.AddControl(modalButton);
+
+        var popoverButton = new Button(
+            "popoverButton", "Popover", 19, 9, 12,
+            Color.White, Color.DarkCyan);
+        popoverButton.Clicked += (_, _) => ShowPopover();
+        frame.AddControl(popoverButton);
+
+        popover = new Popover(
+            "summaryPopover", "POPOVER",
+            "Anchored short text\nwith outside-click close.",
+            29, 8, 20, 6,
+            Color.Yellow, Color.DarkGreen);
+        popover.Show();
+        frame.AddControl(popover);
+
+        frame.AddControl(new Label(
+            "toastLabel",
+            "Toast notifications:",
+            4, 15, 22, Color.Cyan, Color.DarkBlue));
+
+        toast = new Toast(
+            "notificationToast",
+            4, 16, 44, 2,
+            Color.Black, Color.Cyan);
+        toast.AddToast("initialToast", "Toast: saved draft", TimeSpan.FromSeconds(30));
+        frame.AddControl(toast);
+
+        status = new StatusBar(
+            "transientStatus",
+            "Tab focus. Right-click Actions.",
+            4, 20, 44,
+            Color.Black, Color.Cyan);
+        status.AddItem("menuHint", "Shift+F10 context");
+        status.AddItem("escapeHint", "Escape closes");
+        frame.AddControl(status);
+
+        CreateModalPanel();
+
+        screen.SetFocus("actionsButton");
+    }
+
+    private void CreateModalPanel()
+    {
+        detailsModal = new ModalPanel(
+            "detailsModal", "MODAL PANEL", 38, 10,
+            BorderStyle.Line, Color.Yellow, Color.DarkMagenta, screen);
+
+        detailsModal.AddControl(new Label(
+            "modalDescription",
+            "ModalPanel can host custom controls.",
+            4, 3, 30,
+            Color.White, Color.DarkMagenta));
+
+        var closeButton = new Button(
+            "closeTransientModal", "Close", 14, 6, 10,
+            Color.White, Color.DarkBlue);
+        closeButton.Clicked += (_, _) => detailsModal.Close("Button");
+        detailsModal.AddControl(closeButton);
+
+        detailsModal.Closed += (_, args) =>
+        {
+            status.Value = string.IsNullOrWhiteSpace(args.Reason)
+                ? "Modal closed"
+                : $"Modal closed: {args.Reason}";
+        };
+    }
+
+    private void ShowPopover()
+    {
+        popover.Show();
+        AddNotice("Popover opened");
+    }
+
+    private void ShowDetailsModal()
+    {
+        if (!detailsModal.Visible)
+            detailsModal.Show();
+
+        status.Value = "Modal opened";
+        screen.SetFocus("closeTransientModal");
+    }
+
+    private void AddNotice(string message)
+    {
+        status.Value = message;
+        toast.AddToast($"notice{toastSequence++}", $"Toast: {message}", TimeSpan.FromSeconds(30));
+    }
+}

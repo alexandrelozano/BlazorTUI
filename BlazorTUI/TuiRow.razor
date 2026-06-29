@@ -7,7 +7,13 @@
 {
     if (cell.visible)
     {
-        <div @key="cell" class="tilefs" aria-hidden="true" @onclick="() => CellClicked.InvokeAsync(cell)" style="@cell.CssStyle">@cell.character</div>
+        <div @key="cell"
+             class="tilefs"
+             aria-hidden="true"
+             @onclick="() => CellClicked.InvokeAsync(cell)"
+             @oncontextmenu="() => CellContextClicked.InvokeAsync(cell)"
+             @oncontextmenu:preventDefault="true"
+             style="@cell.CssStyle">@cell.character</div>
     }
 }
 
@@ -17,6 +23,9 @@
 
     [Parameter]
     public EventCallback<Cell> CellClicked { get; set; }
+
+    [Parameter]
+    public EventCallback<Cell> CellContextClicked { get; set; }
 
     private Row? _renderedRow;
     private long _renderedRevision = -1;

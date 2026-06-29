@@ -184,9 +184,9 @@ Use `FirstPanel` and `SecondPanel` as normal containers for controls or nested c
 | Layout | `Frame`, `StackPanel`, `GridPanel`, `DockPanel`, `WrapPanel`, `ScrollViewer`, `SplitPanel`, `TabControl`, `TabPage` |
 | Text and input | `Label`, `TextBox`, `PasswordBox`, `TextArea`, `NumericBox`, `DateBox`, `Calendar`, `DatePicker`, `DateRangePicker`, `MonthPicker`, `TimeBox` |
 | Selection | `CheckBox`, `RadioButton`, `RadioGroup`, `ComboBox`, `ListBox`, `TreeView`, `Slider`, `ColorPicker` |
-| Actions and navigation | `Breadcrumb`, `BreadcrumbItem`, `Button`, `CommandPalette`, `CommandPaletteItem`, `MenuBar`, `Menu`, `MenuItem` |
-| Data and feedback | `GridView`, `Sparkline`, `BarChart`, `Gauge`, `Timeline`, `KeyValueList`, `ProgressBar`, `Spinner`, `StatusBar`, `PictureBox` |
-| Modal UI | `Dialog`, `MessageBox` |
+| Actions and navigation | `Breadcrumb`, `BreadcrumbItem`, `Button`, `CommandPalette`, `CommandPaletteItem`, `ContextMenu`, `ContextMenuItem`, `MenuBar`, `Menu`, `MenuItem` |
+| Data and feedback | `GridView`, `Sparkline`, `BarChart`, `Gauge`, `Timeline`, `KeyValueList`, `ProgressBar`, `Spinner`, `StatusBar`, `Toast`, `PictureBox` |
+| Modal and transient UI | `Dialog`, `MessageBox`, `ModalPanel`, `Popover`, `Tooltip` |
 
 Control constructors accept `System.Drawing.Color` values for foreground and background colors.
 
@@ -528,6 +528,64 @@ bool confirmed = await screen.DialogService.ConfirmAsync(
 ```
 
 `ShowMessageAsync` returns the selected `MessageBox.Result`. `ConfirmAsync` returns `true` for confirmation and `false` for rejection. The dialog is still modal: while it is open, keyboard and mouse input are routed to the top dialog until it closes. Both APIs accept an optional `CancellationToken`; cancellation closes the dialog and cancels the returned task.
+
+## Transient and contextual UI
+
+Use transient controls for short-lived interactions that should not become permanent layout. `ContextMenu` can be attached to one or more controls and opened with a right click or with `Shift+F10` / the keyboard menu key when the target control has focus:
+
+```csharp
+var actions = new Button(
+    "actionsButton", "Actions", 3, 4, 12,
+    Color.White, Color.DarkGreen);
+frame.AddControl(actions);
+
+var menu = new ContextMenu(
+    "actionsMenu",
+    new[]
+    {
+        new ContextMenuItem("refresh", "Refresh") { OnClick = () => status.Value = "Refresh" },
+        new ContextMenuItem("separator", "", ContextMenuItemType.Separator),
+        new ContextMenuItem("archive", "Archive") { OnClick = () => status.Value = "Archive" }
+    },
+    3,
+    5,
+    14,
+    Color.Yellow,
+    Color.Black,
+    new[] { "actionsButton" });
+
+menu.ItemClicked += (_, args) =>
+    status.Value = $"Selected: {args.Item.Text}";
+
+frame.AddControl(menu);
+```
+
+`Tooltip` renders compact help text when its target has focus, or when you call `Show()`. `Popover` is a small floating panel that can be shown, hidden, and closed by outside clicks. `Toast` displays a non-modal notification stack with optional per-item timeouts. `ModalPanel` is a reusable modal `Dialog` subclass for custom content:
+
+```csharp
+frame.AddControl(new Tooltip(
+    "actionsTip", "Right-click for actions", "actionsButton",
+    17, 4, 24,
+    Color.Black, Color.Cyan));
+
+var toast = new Toast(
+    "notifications", 3, 18, 40, 2,
+    Color.Black, Color.Cyan);
+toast.AddToast("saved", "Order saved", TimeSpan.FromSeconds(5));
+frame.AddControl(toast);
+
+var details = new Popover(
+    "detailsPopover", "DETAILS", "Short contextual text",
+    26, 8, 24, 5,
+    Color.Yellow, Color.DarkGreen);
+details.Show();
+frame.AddControl(details);
+
+var panel = new ModalPanel(
+    "editPanel", "EDIT ORDER", 34, 10, BorderStyle.Line,
+    Color.Yellow, Color.DarkMagenta, screen);
+panel.Closed += (_, args) => status.Value = $"Closed: {args.Reason}";
+```
 
 ## Command palettes
 
@@ -948,6 +1006,7 @@ The repository contains focused pages that can be run directly:
 | [MonthPicker](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/MonthPickerExample.razor) | Compact month input with popup month-grid navigation and typed value-change events |
 | [Breadcrumb](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/Breadcrumbs.razor) | Hierarchical path navigation, keyboard selection, mouse activation, item mutation, and activation events |
 | [Themes](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/Themes.razor) | Runtime theme switching, predefined palettes, control roles, and visual states |
+| [Transient UI](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/TransientUi.razor) | Context menus, tooltips, toast notifications, popovers, and reusable modal panels |
 | [Complete showcase](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Index.razor) | All controls, nested frames, z-order, callbacks, and animation |
 
 Run `dotnet run --project SampleApp` from the repository root and open `/` or `/examples` to browse them. The example routes are exercised by the automated test suite so API changes cannot silently leave the documentation out of date.
@@ -969,6 +1028,8 @@ Run `dotnet run --project SampleApp` from the repository root and open `/` or `/
 - Added a focused executable Calendar example and NuGet consumer coverage for the new public API.
 - Added data visualization controls: `Sparkline`, `BarChart`, `Gauge`, `Timeline`, and `KeyValueList`.
 - Added clipping, theme integration, state persistence, focused executable examples, regression tests, and NuGet consumer coverage for the visualization controls.
+- Added transient and contextual UI controls: `ContextMenu`, `Tooltip`, `Toast`, `Popover`, and `ModalPanel`.
+- Added right-click and keyboard context-menu opening, popup outside-click closing, theme integration, state persistence, focused executable examples, regression tests, and NuGet consumer coverage for the transient UI controls.
 
 ### 0.8.12 — 2026-06-29
 

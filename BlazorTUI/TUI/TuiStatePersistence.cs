@@ -194,6 +194,22 @@ namespace BlazorTUI.TUI
                     var commandState = new TuiElementState(nameof(CommandPalette));
                     commandPalette.ExportCommandPaletteState(commandState);
                     return commandState;
+                case ContextMenu contextMenu:
+                    var contextMenuState = new TuiElementState(nameof(ContextMenu));
+                    contextMenu.ExportContextMenuState(contextMenuState);
+                    return contextMenuState;
+                case Tooltip tooltip:
+                    var tooltipState = new TuiElementState(nameof(Tooltip));
+                    tooltip.ExportTooltipState(tooltipState);
+                    return tooltipState;
+                case Popover popover:
+                    var popoverState = new TuiElementState(nameof(Popover));
+                    popover.ExportPopoverState(popoverState);
+                    return popoverState;
+                case Toast toast:
+                    var toastState = new TuiElementState(nameof(Toast));
+                    toast.ExportToastState(toastState);
+                    return toastState;
                 case ColorPicker colorPicker:
                     var colorState = new TuiElementState(nameof(ColorPicker));
                     colorState.SetInteger("ColorArgb", colorPicker.Color.ToArgb());
@@ -362,6 +378,18 @@ namespace BlazorTUI.TUI
                     break;
                 case CommandPalette commandPalette:
                     commandPalette.RestoreCommandPaletteState(state);
+                    break;
+                case ContextMenu contextMenu:
+                    contextMenu.RestoreContextMenuState(state);
+                    break;
+                case Tooltip tooltip:
+                    tooltip.RestoreTooltipState(state);
+                    break;
+                case Popover popover:
+                    popover.RestorePopoverState(state);
+                    break;
+                case Toast toast:
+                    toast.RestoreToastState(state);
                     break;
                 case ColorPicker colorPicker:
                     RestoreColorPickerState(colorPicker, state);

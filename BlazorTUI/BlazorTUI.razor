@@ -32,7 +32,7 @@
          @onkeydown="HandleKeyDown">
         @foreach (Row row in screen.rows)
         {
-            <TuiRow @key="row" Row="row" CellClicked="OnClickCell" />
+            <TuiRow @key="row" Row="row" CellClicked="OnClickCell" CellContextClicked="OnContextClickCell" />
         }
     </div>
 </div>
@@ -504,6 +504,21 @@
         {
             Dialog dialog = screen.dialogs[^1];
             dialog.Click((short)(cell.x - dialog.X), (short)(cell.y - dialog.Y));
+        }
+
+        screen.Render();
+    }
+
+    private void OnContextClickCell(Cell cell)
+    {
+        if (screen.dialogs.Count == 0)
+        {
+            screen.topContainer.ContextClick(cell.x, cell.y);
+        }
+        else
+        {
+            Dialog dialog = screen.dialogs[^1];
+            dialog.ContextClick((short)(cell.x - dialog.X), (short)(cell.y - dialog.Y));
         }
 
         screen.Render();

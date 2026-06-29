@@ -64,6 +64,8 @@ public class PackageTests
         Assert.Contains("SelectNextTab", keyboardScript);
         Assert.Contains("SelectPreviousTab", keyboardScript);
         Assert.Contains("\"F4\"", keyboardScript);
+        Assert.Contains("\"F10\"", keyboardScript);
+        Assert.Contains("\"ContextMenu\"", keyboardScript);
         string normalizedKeyboardScript = keyboardScript.Replace("\r\n", "\n", StringComparison.Ordinal);
         Assert.Contains("\"End\",\n    \"PageUp\",\n    \"PageDown\"", normalizedKeyboardScript);
 

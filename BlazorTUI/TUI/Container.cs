@@ -106,9 +106,51 @@ namespace BlazorTUI.TUI
             }
         }
 
+        public virtual bool ContextClick(short X, short Y)
+        {
+            if (TryClickOpenPopup(X, Y))
+                return true;
+
+            foreach (Container container in containers
+                .Where(container => container.Visible)
+                .OrderByDescending(container => container.ZOrder))
+            {
+                if (X >= container.X && X < container.X + container.Width &&
+                    Y >= container.Y && Y < container.Y + container.Height &&
+                    container.ContextClick((short)(X - container.X), (short)(Y - container.Y)))
+                {
+                    return true;
+                }
+            }
+
+            foreach (Control control in controls
+                .Where(control => control.Visible)
+                .OrderByDescending(control => control.ZOrder))
+            {
+                if (control is ContextMenu)
+                    continue;
+
+                if (control.X <= X && control.X + control.Width > X &&
+                    control.Y <= Y && control.Y + control.Height > Y &&
+                    TryOpenContextMenuFor(control, X, Y))
+                {
+                    return true;
+                }
+            }
+
+            CloseOpenContextMenus();
+            return false;
+        }
+
         public virtual void KeyDown(string key, bool shiftKey)
         {
             ArgumentException.ThrowIfNullOrEmpty(key);
+
+            if (TryRouteOpenContextMenuKey(key, shiftKey))
+                return;
+
+            if ((key == "ContextMenu" || (key == "F10" && shiftKey)) && TryOpenContextMenuForFocusedControl())
+                return;
 
             if (key == "Tab")
             {
@@ -273,6 +315,66 @@ namespace BlazorTUI.TUI
             }
 
             return false;
+        }
+
+        private bool TryRouteOpenContextMenuKey(string key, bool shiftKey)
+        {
+            foreach (ContextMenu contextMenu in controls
+                .OfType<ContextMenu>()
+                .Where(menu => menu.IsOpen)
+                .OrderByDescending(menu => menu.ZOrder))
+            {
+                if (contextMenu.KeyDown(key, shiftKey))
+                    return true;
+            }
+
+            foreach (Container container in containers
+                .Where(container => container.Visible)
+                .OrderByDescending(container => container.ZOrder))
+            {
+                if (container.TryRouteOpenContextMenuKey(key, shiftKey))
+                    return true;
+            }
+
+            return false;
+        }
+
+        private bool TryOpenContextMenuForFocusedControl()
+        {
+            Control? focusedControl = TopContainer().GetCurrentFocusControl();
+            if (focusedControl?.ParentContainer is null)
+                return false;
+
+            return focusedControl.ParentContainer.TryOpenContextMenuFor(
+                focusedControl,
+                focusedControl.X,
+                (short)(focusedControl.Y + focusedControl.Height));
+        }
+
+        private bool TryOpenContextMenuFor(Control targetControl, short X, short Y)
+        {
+            foreach (ContextMenu contextMenu in controls
+                .OfType<ContextMenu>()
+                .Where(menu => menu.Visible)
+                .OrderByDescending(menu => menu.ZOrder))
+            {
+                if (!contextMenu.IsAttachedTo(targetControl.Name))
+                    continue;
+
+                contextMenu.OpenAt(X, Y);
+                return true;
+            }
+
+            return false;
+        }
+
+        private void CloseOpenContextMenus()
+        {
+            foreach (ContextMenu contextMenu in controls.OfType<ContextMenu>())
+                contextMenu.Close();
+
+            foreach (Container container in containers.Where(container => container.Visible))
+                container.CloseOpenContextMenus();
         }
 
         public Container GetTopContainer() => TopContainer();

@@ -119,6 +119,53 @@
         terminal.TopContainer.AddControl(input);
         terminal.TopContainer.AddControl(password);
         terminal.TopContainer.AddControl(button);
+        var contextMenu = new ContextMenu(
+            "consumerContextMenu",
+            new[]
+            {
+                new ContextMenuItem("refresh", "Refresh", ContextMenuItemType.Item),
+                new ContextMenuItem("separator", "", ContextMenuItemType.Separator),
+                new ContextMenuItem("disabled", "Disabled") { Enabled = false }
+            },
+            0, 0, 12,
+            System.Drawing.Color.White,
+            System.Drawing.Color.Black,
+            new[] { "save" });
+        contextMenu.ItemClicked += (_, args) => _ = args.Item.Name;
+        terminal.TopContainer.AddControl(contextMenu);
+        _ = terminal.TopContainer.ContextClick(2, 2);
+        _ = contextMenu.KeyDown("Escape", false);
+        var tooltip = new Tooltip(
+            "consumerTooltip", "Save changes", "save", 0, 0, 14,
+            System.Drawing.Color.Black,
+            System.Drawing.Color.Cyan)
+        {
+            AutoShowOnFocus = false
+        };
+        tooltip.Show();
+        terminal.TopContainer.AddControl(tooltip);
+        var popover = new Popover(
+            "consumerPopover", "INFO", "Popover text", 0, 0, 16, 4,
+            System.Drawing.Color.White,
+            System.Drawing.Color.DarkBlue);
+        popover.Show();
+        popover.Hide();
+        terminal.TopContainer.AddControl(popover);
+        var toast = new Toast(
+            "consumerToast", 0, 0, 16, 2,
+            System.Drawing.Color.Black,
+            System.Drawing.Color.Cyan);
+        toast.AddToast("saved", "Saved");
+        _ = toast.Dismiss("missing");
+        terminal.TopContainer.AddControl(toast);
+        var modal = new ModalPanel(
+            "consumerModal", "MODAL", 20, 8, BorderStyle.Line,
+            System.Drawing.Color.White,
+            System.Drawing.Color.DarkMagenta,
+            terminal);
+        modal.Closed += (_, args) => _ = args.Reason;
+        modal.Show();
+        modal.Close("smoke");
         var priority = new ComboBox(
             "priority", new[] { "Low", "High" }, 11, 1, 9,
             System.Drawing.Color.White, System.Drawing.Color.Black);

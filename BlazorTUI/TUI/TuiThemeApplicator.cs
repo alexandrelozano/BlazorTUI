@@ -60,11 +60,11 @@ namespace BlazorTUI.TUI
             => control switch
             {
                 TextBox or PasswordBox or TextArea or NumericBox or DateBox or Calendar or DatePicker or DateRangePicker or MonthPicker or TimeBox or ComboBox or ListBox => TuiThemeRole.Input,
-                Button or CommandPalette => TuiThemeRole.Action,
+                Button or CommandPalette or ContextMenu => TuiThemeRole.Action,
                 CheckBox or RadioButton or RadioGroup or TreeView or Slider or ColorPicker or Breadcrumb => TuiThemeRole.Selection,
-                StatusBar => TuiThemeRole.Status,
+                StatusBar or Toast => TuiThemeRole.Status,
                 ProgressBar or Spinner or PictureBox or Sparkline or BarChart or Gauge => TuiThemeRole.Accent,
-                GridView or Timeline or KeyValueList => TuiThemeRole.Surface,
+                GridView or Timeline or KeyValueList or Tooltip or Popover => TuiThemeRole.Surface,
                 _ => TuiThemeRole.Surface
             };
 

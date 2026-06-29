@@ -13,10 +13,12 @@ const handledKeys = new Set([
     "Escape",
     "F2",
     "F4",
+    "F10",
     "Home",
     "End",
     "PageUp",
-    "PageDown"
+    "PageDown",
+    "ContextMenu"
 ]);
 
 const clipboardKeys = new Set(["a", "c", "x", "v"]);

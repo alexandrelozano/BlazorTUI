@@ -42,6 +42,7 @@ public class ExampleCatalogTests : BunitContext
         Assert.Contains("MonthPicker", accessibleText);
         Assert.Contains("Breadcrumb", accessibleText);
         Assert.Contains("Themes", accessibleText);
+        Assert.Contains("Transient UI", accessibleText);
         Assert.Contains("Complete showcase", accessibleText);
     }
 
@@ -67,6 +68,7 @@ public class ExampleCatalogTests : BunitContext
     [InlineData("monthPickerExample", "/examples/month-picker")]
     [InlineData("breadcrumbExample", "/examples/breadcrumbs")]
     [InlineData("themesExample", "/examples/themes")]
+    [InlineData("transientUiExample", "/examples/transient-ui")]
     [InlineData("showcaseExample", "/examples/showcase")]
     public void CatalogButtonsNavigateToTheirExample(string controlName, string expectedPath)
     {
