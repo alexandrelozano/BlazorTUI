@@ -1,6 +1,6 @@
 @using global::BlazorTUI.TUI
 
-<BlazorTUI.BlazorTUI screen="@terminal" />
+<BlazorTUI.BlazorTUI screen="@terminal" AriaLabel="Consumer smoke terminal" />
 
 @code {
     private readonly Screen terminal = CreateTerminal();
@@ -8,6 +8,7 @@
     private static Screen CreateTerminal()
     {
         var terminal = new Screen(30, 22);
+        terminal.TopContainer.ScreenReaderDescription = "Consumer package smoke test terminal.";
         terminal.Shortcuts.SetBindings(TuiShortcutAction.ToggleCommandPalette, "F9", "Control+J");
         terminal.Shortcuts.SetBindings(TuiShortcutAction.SelectNextTab, "Alt+N");
         terminal.Shortcuts.SetBindings(TuiShortcutAction.SelectPreviousTab, "Alt+P");
@@ -15,14 +16,17 @@
         var button = new Button(
             "save", "Save", 2, 2, 8,
             System.Drawing.Color.White, System.Drawing.Color.DarkGreen);
+        button.ScreenReaderSummary = "Save button";
         var input = new TextBox(
             "name", "Alex", 2, 1, 10,
             System.Drawing.Color.White, System.Drawing.Color.Black)
         {
             ThemeState = TuiThemeState.Error,
             IsRequired = true,
-            RequiredMessage = "Name required"
+            RequiredMessage = "Name required",
+            ScreenReaderDescription = "Customer name used on the order."
         };
+        _ = input.GetAccessibilitySummary();
         input.ValidationRules.Add(
             value => value is string text && text.Length >= 2,
             "Name must contain at least two characters");
@@ -30,6 +34,7 @@
         var password = new PasswordBox(
             "password", "secret", 2, 3, 10,
             System.Drawing.Color.White, System.Drawing.Color.Black);
+        password.ScreenReaderDescription = "Private account password.";
         var datePicker = new DatePicker(
             "datePicker",
             new DateOnly(2026, 6, 29),

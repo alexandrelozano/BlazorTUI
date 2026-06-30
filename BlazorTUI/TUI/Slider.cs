@@ -73,6 +73,9 @@ namespace BlazorTUI.TUI
 
         public event EventHandler<SliderValueChangedEventArgs>? ValueChanged;
 
+        public override string GetAccessibilitySummary()
+            => FormatAccessibilitySummary($"Slider {Name}: value {Value}, range {Minimum} to {Maximum}, step {Step}.");
+
         public Slider(
             string name,
             int minimum,

@@ -66,6 +66,9 @@ namespace BlazorTUI.TUI
 
         public void ClearItems() => items.Clear();
 
+        public override string GetAccessibilitySummary()
+            => FormatAccessibilitySummary($"Timeline {Name}: {items.Count} events.");
+
         internal void ExportTimelineState(TuiElementState state)
         {
             ArgumentNullException.ThrowIfNull(state);

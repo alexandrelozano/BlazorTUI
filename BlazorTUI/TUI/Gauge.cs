@@ -50,6 +50,10 @@ namespace BlazorTUI.TUI
 
         public bool ShowPercentage { get; set; } = true;
 
+        public override string GetAccessibilitySummary()
+            => FormatAccessibilitySummary(
+                $"Gauge {Name}: value {Value.ToString("R", CultureInfo.InvariantCulture)}, range {Minimum.ToString("R", CultureInfo.InvariantCulture)} to {Maximum.ToString("R", CultureInfo.InvariantCulture)}.");
+
         public Gauge(
             string name,
             double minimum,

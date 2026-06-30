@@ -83,6 +83,9 @@ namespace BlazorTUI.TUI
 
         public void ClearItems() => items.Clear();
 
+        public override string GetAccessibilitySummary()
+            => FormatAccessibilitySummary($"KeyValueList {Name}: {items.Count} items.");
+
         internal void ExportKeyValueListState(TuiElementState state)
         {
             ArgumentNullException.ThrowIfNull(state);

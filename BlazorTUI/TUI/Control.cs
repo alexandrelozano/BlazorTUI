@@ -93,6 +93,10 @@ namespace BlazorTUI.TUI
 
         public bool HasValidationError => !isValid;
 
+        public string ScreenReaderSummary { get; set; } = "";
+
+        public string ScreenReaderDescription { get; set; } = "";
+
         public TuiValidationRuleCollection ValidationRules { get; } = new();
 
         public bool ShowValidationMessage { get; set; } = true;
@@ -120,6 +124,9 @@ namespace BlazorTUI.TUI
         public event EventHandler<TuiValidationChangedEventArgs>? ValidationChanged;
 
         public abstract void Render(IList<Row> rows);
+
+        public virtual string GetAccessibilitySummary()
+            => FormatAccessibilitySummary($"{GetType().Name} {Name}");
 
         public virtual bool KeyDown(string key, bool shiftKey) => false;
 
@@ -172,6 +179,23 @@ namespace BlazorTUI.TUI
         }
 
         protected virtual object? GetValidationValue() => null;
+
+        protected string FormatAccessibilitySummary(string fallback)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(fallback);
+
+            string summary = string.IsNullOrWhiteSpace(ScreenReaderSummary)
+                ? fallback.Trim()
+                : ScreenReaderSummary.Trim();
+
+            if (!string.IsNullOrWhiteSpace(ScreenReaderDescription))
+                summary = $"{summary}. {ScreenReaderDescription.Trim()}";
+
+            if (!IsValid && !string.IsNullOrWhiteSpace(ValidationMessage))
+                summary = $"{summary}. Invalid: {ValidationMessage}";
+
+            return summary;
+        }
 
         protected virtual bool IsEmptyValidationValue(object? value)
             => value switch

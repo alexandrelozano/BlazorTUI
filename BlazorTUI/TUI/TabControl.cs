@@ -27,6 +27,12 @@ namespace BlazorTUI.TUI
 
         public event EventHandler? SelectedTabChanged;
 
+        public override string GetAccessibilitySummary()
+        {
+            string selected = SelectedTab?.Title ?? "no tab selected";
+            return FormatAccessibilitySummary($"TabControl {Name}: selected tab {selected}, {tabs.Count} tabs.");
+        }
+
         public TabControl(
             string name,
             short X,

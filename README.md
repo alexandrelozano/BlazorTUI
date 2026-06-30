@@ -665,6 +665,41 @@ The component exposes the terminal as a labelled interactive region and provides
     AriaDescription="Enter customer and delivery details, then submit the order." />
 ```
 
+BlazorTUI also exposes hidden semantic summaries for the controls in the screen. Simple controls report their type and name; complex controls add state such as the selected combo-box item, active tab, GridView page/filter/sort state, selected tree node, calendar month, chart range, or status-bar message.
+
+Use `ScreenReaderDescription` when a visual label is not enough, and `ScreenReaderSummary` when you want to replace the generated summary:
+
+```csharp
+var orders = new GridView(
+    "ordersGrid",
+    columns,
+    rows,
+    1, 3, 48, 10,
+    Color.White,
+    Color.Black)
+{
+    ScreenReaderDescription = "Open orders awaiting delivery."
+};
+
+var submit = new Button(
+    "submitOrder", "Submit", 1, 15, 10,
+    Color.White,
+    Color.DarkGreen)
+{
+    ScreenReaderSummary = "Submit order button"
+};
+```
+
+Focus changes are announced through a polite live region. The component also keeps the latest focus announcements in `FocusHistoryAnnouncements`, which is useful for tests, diagnostics, or custom assistive UI.
+
+Recommended accessibility patterns:
+
+- Set a meaningful `AriaLabel` on every terminal instance.
+- Add `AriaDescription` for the task-level workflow, not implementation details.
+- Add `ScreenReaderDescription` to dense controls such as `GridView`, `TreeView`, calendars, charts, and command palettes.
+- Do not rely only on color to communicate validation or state; use visible labels, validation messages, status text, or summaries.
+- Keep shortcuts configurable and avoid replacing browser or assistive-technology shortcuts unless the user explicitly opts in.
+
 Clipboard and edit-history shortcuts are intercepted only while a compatible `TextBox` or `TextArea` has focus. Other browser and assistive-technology shortcuts that use `Ctrl`, `Command`, or modified `Alt` combinations remain available to the browser. Clipboard access follows browser security and permission rules; use HTTPS outside local development.
 
 Shortcuts are configurable through `screen.Shortcuts`. Use `TuiKeyGesture.Parse` or shortcut strings to replace or add bindings:
@@ -1219,6 +1254,14 @@ The sample app also includes a documentation site at `/docs`. It summarizes the 
 Run `dotnet run --project SampleApp` from the repository root and open `/`, `/examples`, or `/docs` to browse them. The example and documentation routes are exercised by the automated test suite so API changes cannot silently leave the documentation out of date.
 
 ## Changelog
+
+### 0.8.15 — 2026-06-30
+
+- Added optional `ScreenReaderSummary` and `ScreenReaderDescription` metadata to controls and containers.
+- Added semantic accessibility summaries for complex controls, including combo boxes, multi-select combo boxes, radio groups, breadcrumbs, sliders, tabs, lists, trees, grids, date/month/range pickers, calendars, command palettes, status bars, charts, gauges, timelines, key/value lists, toggle switches, and progress bars.
+- Added a hidden control-summary region to the Blazor component and included it in the terminal's accessibility description.
+- Added polite focus-change announcements and a bounded `FocusHistoryAnnouncements` list for diagnostics and automated tests.
+- Documented accessible terminal patterns for consumer applications and added regression coverage for semantic summaries, custom descriptions, validation summaries, and focus announcements.
 
 ### 0.8.14 — 2026-06-30
 

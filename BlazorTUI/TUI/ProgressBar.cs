@@ -24,6 +24,14 @@ namespace BlazorTUI.TUI
 
         public bool ShowPercentage { get => showPercent; set => showPercent = value; }
 
+        public override string GetAccessibilitySummary()
+        {
+            string percentage = MaxValue == 0
+                ? "percentage unavailable"
+                : $"{Math.Clamp(value / MaxValue, 0, 1) * 100:0}%";
+            return FormatAccessibilitySummary($"ProgressBar {Name}: value {Value}, maximum {Maximum}, {percentage}.");
+        }
+
         public ProgressBar(string name, ProgressBarType progessBarType, short X, short Y, short width, Double value, Double maxValue, bool showPercent, Color forecolor, Color backgroundcolor)
         {
             this.Name = name;

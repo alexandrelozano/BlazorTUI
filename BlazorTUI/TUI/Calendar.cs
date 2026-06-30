@@ -63,6 +63,14 @@ namespace BlazorTUI.TUI
 
         public event EventHandler<CalendarDateSelectedEventArgs>? ValueChanged;
 
+        public override string GetAccessibilitySummary()
+        {
+            string selected = Value.HasValue
+                ? $"selected date {Value.Value.ToString("D", CultureInfo.CurrentCulture)}"
+                : "no date selected";
+            return FormatAccessibilitySummary($"Calendar {Name}: {selected}, showing {DisplayedMonth.ToString("MMMM yyyy", CultureInfo.CurrentCulture)}, highlighted {HighlightedDate.ToString("D", CultureInfo.CurrentCulture)}.");
+        }
+
         public Calendar(
             string name,
             DateOnly? value,

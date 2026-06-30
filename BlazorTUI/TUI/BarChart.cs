@@ -86,6 +86,14 @@ namespace BlazorTUI.TUI
 
         public void ClearItems() => items.Clear();
 
+        public override string GetAccessibilitySummary()
+        {
+            string maximumSummary = Maximum.HasValue
+                ? $", maximum {Maximum.Value.ToString("R", CultureInfo.InvariantCulture)}"
+                : "";
+            return FormatAccessibilitySummary($"BarChart {Name}: {items.Count} items, {Orientation} orientation{maximumSummary}.");
+        }
+
         internal void ExportBarChartState(TuiElementState state)
         {
             ArgumentNullException.ThrowIfNull(state);

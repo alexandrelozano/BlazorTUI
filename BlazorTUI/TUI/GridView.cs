@@ -247,6 +247,27 @@ namespace BlazorTUI.TUI
 
         public event EventHandler<GridViewCellEditCanceledEventArgs>? CellEditCanceled;
 
+        public override string GetAccessibilitySummary()
+        {
+            string rowSummary = HasActiveFilters
+                ? $"{FilteredRowCount} filtered rows out of {RowCount}"
+                : $"{RowCount} rows";
+            string mode = IsVirtualized ? "virtualized" : "materialized";
+            string pageSummary = $"page {PageIndex + 1} of {PageCount}";
+            string selectedSummary = SelectedSourceRowIndex >= 0
+                ? $", selected row {SelectedSourceRowIndex + 1}"
+                : "";
+            string sortSummary = SortColumnIndex >= 0 && SortColumnIndex < columns.Length
+                ? $", sorted by {columns[SortColumnIndex].Title} {SortDirection}"
+                : "";
+            string editSummary = IsEditing
+                ? ", editing a cell"
+                : "";
+
+            return FormatAccessibilitySummary(
+                $"GridView {Name}: {mode}, {rowSummary}, {columns.Length} columns, {pageSummary}{selectedSummary}{sortSummary}{editSummary}.");
+        }
+
         public GridView(
             string name,
             GridColumn[] columns,

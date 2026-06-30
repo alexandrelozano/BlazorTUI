@@ -72,6 +72,13 @@ namespace BlazorTUI.TUI
 
         bool IPopupControl.IsPopupOpen => IsOpen;
 
+        public override string GetAccessibilitySummary()
+        {
+            string mode = IsVirtualized ? "virtualized" : "materialized";
+            string openState = IsOpen ? "open" : "closed";
+            return FormatAccessibilitySummary($"CommandPalette {Name}: {Title}, {mode}, {FilteredCommandCount} matching commands out of {CommandCount}, {openState}.");
+        }
+
         public CommandPalette(
             string name,
             IEnumerable<CommandPaletteItem> commands,

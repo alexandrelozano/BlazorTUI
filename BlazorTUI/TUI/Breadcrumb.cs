@@ -41,6 +41,14 @@ namespace BlazorTUI.TUI
 
         public event EventHandler<BreadcrumbItemActivatedEventArgs>? ItemActivated;
 
+        public override string GetAccessibilitySummary()
+        {
+            string selected = SelectedItem is null
+                ? "no item selected"
+                : $"selected item {SelectedItem.Text}";
+            return FormatAccessibilitySummary($"Breadcrumb {Name}: {selected}, {items.Count} levels.");
+        }
+
         public Breadcrumb(
             string name,
             IEnumerable<string> items,

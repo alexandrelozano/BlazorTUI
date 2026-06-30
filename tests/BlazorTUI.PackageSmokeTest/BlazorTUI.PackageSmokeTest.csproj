@@ -5,7 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <BlazorTUIVersion Condition="'$(BlazorTUIVersion)' == ''">0.8.14</BlazorTUIVersion>
+    <BlazorTUIVersion Condition="'$(BlazorTUIVersion)' == ''">0.8.15</BlazorTUIVersion>
   </PropertyGroup>
 
   <ItemGroup>

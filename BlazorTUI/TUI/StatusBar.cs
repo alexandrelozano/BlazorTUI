@@ -37,6 +37,12 @@ namespace BlazorTUI.TUI
 
         public event EventHandler<StatusBarMessageChangedEventArgs>? MessageChanged;
 
+        public override string GetAccessibilitySummary()
+        {
+            string itemSummary = items.Count == 0 ? "no items" : $"{items.Count} items";
+            return FormatAccessibilitySummary($"StatusBar {Name}: {Message}, {itemSummary}.");
+        }
+
         public StatusBar(
             string name,
             string message,

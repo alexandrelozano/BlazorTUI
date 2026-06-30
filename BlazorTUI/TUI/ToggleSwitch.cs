@@ -49,6 +49,9 @@ namespace BlazorTUI.TUI
 
         public event EventHandler<ToggleSwitchValueChangedEventArgs>? ValueChanged;
 
+        public override string GetAccessibilitySummary()
+            => FormatAccessibilitySummary($"ToggleSwitch {Name}: {Text}, {(Value ? "on" : "off")}.");
+
         public void Toggle()
             => Value = !Value;
 

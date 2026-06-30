@@ -78,6 +78,14 @@ namespace BlazorTUI.TUI
 
         public void ClearValues() => values.Clear();
 
+        public override string GetAccessibilitySummary()
+        {
+            string range = values.Count == 0
+                ? "no values"
+                : $"minimum {(minimum ?? values.Min()).ToString("R", CultureInfo.InvariantCulture)}, maximum {(maximum ?? values.Max()).ToString("R", CultureInfo.InvariantCulture)}";
+            return FormatAccessibilitySummary($"Sparkline {Name}: {values.Count} values, {range}.");
+        }
+
         internal void ExportSparklineState(TuiElementState state)
         {
             ArgumentNullException.ThrowIfNull(state);

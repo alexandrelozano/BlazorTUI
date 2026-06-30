@@ -101,6 +101,100 @@ public class BlazorTUIComponentTests : BunitContext
     }
 
     [Fact]
+    public void ComponentExposesSemanticControlSummaries()
+    {
+        var screen = new Screen(45, 12);
+        var grid = new GridView(
+            "ordersGrid",
+            new[]
+            {
+                new GridView.GridColumn { Title = "Order", Width = 8 },
+                new GridView.GridColumn { Title = "Status", Width = 10 }
+            },
+            new[]
+            {
+                new GridView.GridRow { Cells = new[] { "1", "Open" } }
+            },
+            0, 0, 28, 4,
+            Color.White,
+            Color.Black)
+        {
+            ScreenReaderDescription = "Orders awaiting delivery."
+        };
+        var priority = new ComboBox(
+            "priority",
+            new[] { "Normal", "High" },
+            0, 5, 12,
+            Color.White,
+            Color.Black)
+        {
+            ScreenReaderSummary = "Priority selector"
+        };
+        var tabs = new TabControl("tabs", 20, 5, 20, 6, Color.White, Color.Black);
+        tabs.AddTab("details", "Details");
+        tabs.AddTab("history", "History");
+
+        screen.TopContainer.AddControl(grid);
+        screen.TopContainer.AddControl(priority);
+        screen.TopContainer.AddContainer(tabs);
+
+        var component = Render<global::BlazorTUI.BlazorTUI>(parameters =>
+            parameters.Add(instance => instance.screen, screen));
+
+        string summaries = component.Find("[aria-label=\"Control summaries\"]").TextContent;
+        Assert.Contains("GridView ordersGrid: materialized, 1 rows, 2 columns, page 1 of 1", summaries);
+        Assert.Contains("Orders awaiting delivery.", summaries);
+        Assert.Contains("Priority selector", summaries);
+        Assert.Contains("TabControl tabs: selected tab Details, 2 tabs.", summaries);
+        Assert.Contains("-controls", component.Find(".gridfs").GetAttribute("aria-describedby"));
+    }
+
+    [Fact]
+    public void FocusChangesAreAnnouncedAndStored()
+    {
+        var screen = new Screen(12, 4);
+        var first = new TextBox("first", "", 0, 0, 4, Color.White, Color.Black)
+        {
+            ScreenReaderSummary = "First name field"
+        };
+        var second = new TextBox("second", "", 0, 1, 4, Color.White, Color.Black)
+        {
+            ScreenReaderDescription = "Customer surname input."
+        };
+        screen.TopContainer.AddControl(first);
+        screen.TopContainer.AddControl(second);
+        screen.SetFocus("first");
+
+        var component = Render<global::BlazorTUI.BlazorTUI>(parameters =>
+            parameters.Add(instance => instance.screen, screen));
+
+        component.Find(".gridfs").KeyDown(new KeyboardEventArgs { Key = "Tab" });
+
+        string focusStatus = component.FindAll("[role=status]")[^1].TextContent;
+        Assert.Contains("Focus moved to TextBox second. Customer surname input.", focusStatus);
+        Assert.Contains("Focus moved to TextBox second. Customer surname input.", component.Instance.FocusHistoryAnnouncements[^1]);
+    }
+
+    [Fact]
+    public void ControlAccessibilitySummaryCanBeCustomizedAndIncludesValidation()
+    {
+        var input = new TextBox("name", "", 0, 0, 8, Color.White, Color.Black)
+        {
+            ScreenReaderSummary = "Customer name field",
+            ScreenReaderDescription = "Required for delivery labels.",
+            IsRequired = true,
+            RequiredMessage = "Name required"
+        };
+
+        input.Validate();
+
+        string summary = input.GetAccessibilitySummary();
+        Assert.Contains("Customer name field", summary);
+        Assert.Contains("Required for delivery labels.", summary);
+        Assert.Contains("Invalid: Name required", summary);
+    }
+
+    [Fact]
     public void ComponentSupportsArbitraryScreenDimensions()
     {
         var screen = new Screen(10, 50);

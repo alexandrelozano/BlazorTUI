@@ -30,6 +30,16 @@ namespace BlazorTUI.TUI
         private int cursorY;
         private int scrollY;
 
+        public override string GetAccessibilitySummary()
+        {
+            string selection = multipleSelection
+                ? $"{Math.Max(itemsSelected.Count, selectedKeys.Count)} selected"
+                : SelectedKey is null ? "no item selected" : $"selected item {GetItem(cursorY)}";
+            string mode = IsVirtualized ? "virtualized" : "materialized";
+
+            return FormatAccessibilitySummary($"ListBox {Name}: {mode}, {ItemCount} items, {selection}.");
+        }
+
         public ListBox(string name, List<string> items, bool multipleSelection, short X, short Y, short width, short height, Color forecolor, Color backgroundcolor)
         {
             ArgumentNullException.ThrowIfNull(items);

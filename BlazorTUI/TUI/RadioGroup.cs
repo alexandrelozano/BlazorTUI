@@ -39,6 +39,14 @@ namespace BlazorTUI.TUI
 
         public event EventHandler<RadioGroupSelectionChangedEventArgs>? SelectionChanged;
 
+        public override string GetAccessibilitySummary()
+        {
+            string selected = SelectedOption is null
+                ? "no option selected"
+                : $"selected option {SelectedOption.Text}";
+            return FormatAccessibilitySummary($"RadioGroup {Name}: {selected}, {options.Count} options, {Orientation} orientation.");
+        }
+
         public RadioGroup(
             string name,
             IEnumerable<string> options,

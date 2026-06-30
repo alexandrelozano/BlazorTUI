@@ -51,6 +51,15 @@ namespace BlazorTUI.TUI
 
         bool IPopupControl.IsPopupOpen => IsDropDownOpen;
 
+        public override string GetAccessibilitySummary()
+        {
+            string selected = Value.HasValue
+                ? $"selected month {Value.Value.ToString("MMMM yyyy", CultureInfo.CurrentCulture)}"
+                : "no month selected";
+            string popupState = IsDropDownOpen ? "month grid open" : "month grid closed";
+            return FormatAccessibilitySummary($"MonthPicker {Name}: {selected}, showing {DisplayedYear}, {popupState}.");
+        }
+
         public MonthPicker(
             string name,
             DateOnly? value,

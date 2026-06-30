@@ -65,6 +65,15 @@ namespace BlazorTUI.TUI
 
         bool IPopupControl.IsPopupOpen => IsDropDownOpen;
 
+        public override string GetAccessibilitySummary()
+        {
+            string selected = selectedItems.Count == 0
+                ? "no items selected"
+                : $"{selectedItems.Count} selected";
+            string popupState = IsDropDownOpen ? "drop-down open" : "drop-down closed";
+            return FormatAccessibilitySummary($"MultiSelectComboBox {Name}: {selected}, {items.Count} options, {popupState}.");
+        }
+
         public void OpenDropDown()
         {
             if (items.Count == 0)

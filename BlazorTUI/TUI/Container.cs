@@ -34,6 +34,10 @@ namespace BlazorTUI.TUI
 
         public short ZOrder { get; set; }
 
+        public string ScreenReaderSummary { get; set; } = "";
+
+        public string ScreenReaderDescription { get; set; } = "";
+
         public List<Control> controls { get; set; } = new List<Control>();
 
         public IReadOnlyList<Control> Controls => controls;
@@ -84,6 +88,17 @@ namespace BlazorTUI.TUI
             {
                 container.SetFocus(name);
             }
+        }
+
+        public virtual string GetAccessibilitySummary()
+        {
+            if (string.IsNullOrWhiteSpace(ScreenReaderSummary) &&
+                string.IsNullOrWhiteSpace(ScreenReaderDescription))
+            {
+                return "";
+            }
+
+            return FormatAccessibilitySummary($"{GetType().Name} {Name}");
         }
 
         public virtual void Click(short X, short Y)
@@ -378,6 +393,20 @@ namespace BlazorTUI.TUI
         }
 
         public Container GetTopContainer() => TopContainer();
+
+        protected string FormatAccessibilitySummary(string fallback)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(fallback);
+
+            string summary = string.IsNullOrWhiteSpace(ScreenReaderSummary)
+                ? fallback.Trim()
+                : ScreenReaderSummary.Trim();
+
+            if (!string.IsNullOrWhiteSpace(ScreenReaderDescription))
+                summary = $"{summary}. {ScreenReaderDescription.Trim()}";
+
+            return summary;
+        }
 
         public void BringToBottom(Control control)
         {

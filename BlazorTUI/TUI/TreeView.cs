@@ -40,6 +40,17 @@ namespace BlazorTUI.TUI
 
         public event EventHandler<TreeNodeEventArgs>? NodeActivated;
 
+        public override string GetAccessibilitySummary()
+        {
+            int visibleCount = virtualNodes?.VisibleCount ?? GetVisibleNodes().Count;
+            string selected = SelectedVirtualNode?.Text ??
+                selectedNode?.Text ??
+                "no node selected";
+            string mode = IsVirtualized ? "virtualized" : "materialized";
+
+            return FormatAccessibilitySummary($"TreeView {Name}: {mode}, {visibleCount} visible nodes, selected node {selected}.");
+        }
+
         public TreeView(
             string name,
             short X,

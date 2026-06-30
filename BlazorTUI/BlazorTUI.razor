@@ -11,7 +11,9 @@
         <span id="@DescriptionId" class="blazortui-visually-hidden">@AriaDescription</span>
     }
     <pre id="@ScreenTextId" class="blazortui-visually-hidden">@AccessibleScreenText</pre>
+    <div id="@ControlSummariesId" class="blazortui-visually-hidden" aria-label="Control summaries">@SemanticControlText</div>
     <span class="blazortui-visually-hidden" role="status" aria-live="polite" aria-atomic="true">@AccessibilityStatusText</span>
+    <span class="blazortui-visually-hidden" role="status" aria-live="polite" aria-atomic="true">@_focusAnnouncement</span>
 
     <div @ref="_gridElement"
          tabindex="0"
@@ -50,6 +52,8 @@
     [Parameter]
     public string? KeyboardInstructions { get; set; }
 
+    public IReadOnlyList<string> FocusHistoryAnnouncements => _focusHistoryAnnouncements;
+
     private readonly System.Timers.Timer _timer = new(250);
     private readonly string _accessibilityId = $"blazortui-{Guid.NewGuid():N}";
     private ElementReference _gridElement;
@@ -62,6 +66,11 @@
     private TabControl? _renderedTabControl;
     private CommandPalette? _renderedCommandPalette;
     private long _renderedRevision = -1;
+    private string _renderedSemanticControlText = "";
+    private string _focusAnnouncement = "";
+    private string _renderedFocusAnnouncement = "";
+    private string? _announcedFocusControlName;
+    private readonly List<string> _focusHistoryAnnouncements = new();
     private Screen? _accessibleScreen;
     private long _accessibleRevision = -1;
     private string _accessibleScreenText = "";
@@ -73,10 +82,12 @@
 
     private string ScreenTextId => $"{_accessibilityId}-screen";
 
+    private string ControlSummariesId => $"{_accessibilityId}-controls";
+
     private string DescriptionIds
         => string.IsNullOrWhiteSpace(AriaDescription)
-            ? $"{InstructionsId} {ScreenTextId}"
-            : $"{InstructionsId} {DescriptionId} {ScreenTextId}";
+            ? $"{InstructionsId} {ScreenTextId} {ControlSummariesId}"
+            : $"{InstructionsId} {DescriptionId} {ScreenTextId} {ControlSummariesId}";
 
     private string EffectiveKeyboardInstructions
         => KeyboardInstructions ?? BuildKeyboardInstructions();
@@ -125,6 +136,11 @@
             return _accessibleScreenText;
         }
     }
+
+    private string SemanticControlText
+        => screen is null
+            ? ""
+            : string.Join(Environment.NewLine, EnumerateAccessibilitySummaries());
 
     private string AccessibilityStatusText
     {
@@ -267,6 +283,8 @@
     protected override bool ShouldRender()
         => !ReferenceEquals(_renderedScreen, screen) ||
             _renderedRevision != screen.Revision ||
+            _renderedSemanticControlText != SemanticControlText ||
+            _renderedFocusAnnouncement != _focusAnnouncement ||
             !ReferenceEquals(_renderedClipboardControl, ActiveClipboardControl) ||
             _renderedClipboardCopyEnabled != ClipboardCopyEnabled ||
             _renderedClipboardPasteEnabled != ClipboardPasteEnabled ||
@@ -278,6 +296,8 @@
     {
         _renderedScreen = screen;
         _renderedRevision = screen.Revision;
+        _renderedSemanticControlText = SemanticControlText;
+        _renderedFocusAnnouncement = _focusAnnouncement;
         _renderedClipboardControl = ActiveClipboardControl;
         _renderedClipboardCopyEnabled = ClipboardCopyEnabled;
         _renderedClipboardPasteEnabled = ClipboardPasteEnabled;
@@ -361,7 +381,7 @@
         else
             tabControl.SelectNextTab();
 
-        RenderAfterControlChange();
+        RenderAfterControlChange(updateFocusAnnouncement: true);
     }
 
     [JSInvokable("BlazorTUIToggleCommandPalette")]
@@ -382,6 +402,8 @@
             return;
 
         ExecuteShortcut(shortcutAction);
+        UpdateFocusAnnouncement();
+        StateHasChanged();
     }
 
     private void TimeElapsed(object? sender, System.Timers.ElapsedEventArgs e)
@@ -411,6 +433,7 @@
                 return;
 
             ExecuteShortcut(action);
+            UpdateFocusAnnouncement();
             return;
         }
 
@@ -419,6 +442,7 @@
 
         screen.KeyDown(e.Key, e.ShiftKey);
         screen.Render();
+        UpdateFocusAnnouncement();
     }
 
     private void ExecuteShortcut(TuiShortcutAction action)
@@ -453,7 +477,7 @@
                 break;
             default:
                 if (screen.ExecuteShortcut(action))
-                    RenderAfterControlChange();
+                    RenderAfterControlChange(updateFocusAnnouncement: true);
                 break;
         }
     }
@@ -485,9 +509,11 @@
         return string.Join(" or ", bindings.Select(gesture => gesture.ToString().Replace("Meta", "Command", StringComparison.Ordinal)));
     }
 
-    private void RenderAfterControlChange()
+    private void RenderAfterControlChange(bool updateFocusAnnouncement = false)
     {
         screen.Render();
+        if (updateFocusAnnouncement)
+            UpdateFocusAnnouncement();
         StateHasChanged();
     }
 
@@ -510,6 +536,7 @@
         }
 
         screen.Render();
+        UpdateFocusAnnouncement();
     }
 
     private void OnContextClickCell(Cell cell)
@@ -525,6 +552,81 @@
         }
 
         screen.Render();
+        UpdateFocusAnnouncement();
+    }
+
+    private IEnumerable<string> EnumerateAccessibilitySummaries()
+    {
+        foreach (string summary in EnumerateContainerAccessibilitySummaries(screen.TopContainer))
+            yield return summary;
+
+        foreach (Dialog dialog in screen.Dialogs)
+        {
+            foreach (string summary in EnumerateContainerAccessibilitySummaries(dialog))
+                yield return summary;
+        }
+    }
+
+    private static IEnumerable<string> EnumerateContainerAccessibilitySummaries(Container container)
+    {
+        if (!container.Visible)
+            yield break;
+
+        string containerSummary = container.GetAccessibilitySummary();
+        if (!string.IsNullOrWhiteSpace(containerSummary))
+            yield return containerSummary;
+
+        foreach (Control control in container.Controls
+            .Where(control => control.Visible)
+            .OrderBy(control => control.TabIndex)
+            .ThenBy(control => control.Name, StringComparer.Ordinal))
+        {
+            string summary = control.GetAccessibilitySummary();
+            if (!string.IsNullOrWhiteSpace(summary))
+                yield return summary;
+        }
+
+        foreach (Container child in container.Containers
+            .Where(child => child.Visible)
+            .OrderBy(child => child.ZOrder)
+            .ThenBy(child => child.Name, StringComparer.Ordinal))
+        {
+            foreach (string summary in EnumerateContainerAccessibilitySummaries(child))
+                yield return summary;
+        }
+    }
+
+    private void UpdateFocusAnnouncement()
+    {
+        Control? focusedControl = GetActiveContainer().GetCurrentFocusControl();
+        string? focusedControlName = focusedControl?.Name;
+        if (string.Equals(focusedControlName, _announcedFocusControlName, StringComparison.Ordinal))
+            return;
+
+        _announcedFocusControlName = focusedControlName;
+        if (focusedControl is null)
+        {
+            _focusAnnouncement = "Focus cleared.";
+            AddFocusHistoryAnnouncement(_focusAnnouncement);
+            return;
+        }
+
+        _focusAnnouncement = $"Focus moved to {focusedControl.GetAccessibilitySummary()}";
+        AddFocusHistoryAnnouncement(_focusAnnouncement);
+    }
+
+    private Container GetActiveContainer()
+        => screen.Dialogs.Count == 0 ? screen.TopContainer : screen.Dialogs[^1];
+
+    private void AddFocusHistoryAnnouncement(string announcement)
+    {
+        if (string.IsNullOrWhiteSpace(announcement))
+            return;
+
+        _focusHistoryAnnouncements.Add(announcement);
+        const int maximumAnnouncements = 20;
+        if (_focusHistoryAnnouncements.Count > maximumAnnouncements)
+            _focusHistoryAnnouncements.RemoveAt(0);
     }
 
     public void Dispose()

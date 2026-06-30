@@ -52,6 +52,19 @@ namespace BlazorTUI.TUI
 
         bool IPopupControl.IsPopupOpen => IsDropDownOpen;
 
+        public override string GetAccessibilitySummary()
+        {
+            string selected = (StartValue, EndValue) switch
+            {
+                ({ } start, { } end) => $"selected range {start.ToString("D", CultureInfo.CurrentCulture)} to {end.ToString("D", CultureInfo.CurrentCulture)}",
+                ({ } start, null) => $"start date {start.ToString("D", CultureInfo.CurrentCulture)}, no end date",
+                (null, { } end) => $"end date {end.ToString("D", CultureInfo.CurrentCulture)}, no start date",
+                _ => "no date range selected"
+            };
+            string popupState = IsDropDownOpen ? "calendar open" : "calendar closed";
+            return FormatAccessibilitySummary($"DateRangePicker {Name}: {selected}, selecting {SelectionTarget}, showing {DisplayedMonth.ToString("MMMM yyyy", CultureInfo.CurrentCulture)}, {popupState}.");
+        }
+
         public DateRangePicker(
             string name,
             DateOnly? startValue,
