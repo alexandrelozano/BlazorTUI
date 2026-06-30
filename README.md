@@ -1213,6 +1213,7 @@ The sample app also includes a documentation site at `/docs`. It summarizes the 
 | [Breadcrumb](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/Breadcrumbs.razor) | Hierarchical path navigation, keyboard selection, mouse activation, item mutation, and activation events |
 | [Themes](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/Themes.razor) | Runtime theme switching, predefined palettes, control roles, and visual states |
 | [Transient UI](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/TransientUi.razor) | Context menus, tooltips, toast notifications, popovers, and reusable modal panels |
+| [State persistence](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/StatePersistenceExample.razor) | Full restore, partial restore, schema migrations, payload slots, protected payloads, and silent restore |
 | [Complete showcase](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Index.razor) | All controls, nested frames, z-order, callbacks, and animation |
 
 Run `dotnet run --project SampleApp` from the repository root and open `/`, `/examples`, or `/docs` to browse them. The example and documentation routes are exercised by the automated test suite so API changes cannot silently leave the documentation out of date.
@@ -1230,6 +1231,7 @@ Run `dotnet run --project SampleApp` from the repository root and open `/`, `/ex
 - Updated the GridView example, regression tests, and NuGet consumer coverage for the expanded GridView API.
 - Added a `/docs` documentation site in the sample app with README-derived guidance, runnable example links, terminal previews, API notes, common snippets, migration guidance, styling, and smoke-test coverage.
 - Added state-persistence extensions: `SchemaVersion`, `CurrentSchemaVersion`, opaque payload slots, protected payload slots, versioned migration hooks, partial restore options, focus restore control, and optional event suppression during restore.
+- Added a focused executable State persistence example covering full restore, partial restore, migration hooks, payloads, protected payloads, and silent restore.
 
 ### 0.8.13 — 2026-06-29
 

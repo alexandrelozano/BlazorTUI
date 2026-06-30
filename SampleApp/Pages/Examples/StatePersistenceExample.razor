@@ -1,0 +1,224 @@
+@page "/examples/state-persistence"
+@using global::BlazorTUI.TUI
+@using Color = System.Drawing.Color
+
+<PageTitle>State persistence example</PageTitle>
+
+<BlazorTUI.BlazorTUI
+    screen="@screen"
+    AriaLabel="State persistence example"
+    AriaDescription="Focused state persistence example with full restore, partial restore, migration hooks, payloads, and silent restore." />
+
+@code {
+    private Screen screen = null!;
+    private TextBox name = null!;
+    private ComboBox priority = null!;
+    private Slider volume = null!;
+    private ToggleSwitch notifications = null!;
+    private StatusBar status = null!;
+    private Label schemaLabel = null!;
+    private TuiScreenState? savedState;
+    private int eventCount;
+
+    protected override void OnInitialized()
+    {
+        screen = new Screen(60, 30);
+
+        var frame = new Frame(
+            "stateFrame", "STATE PERSISTENCE", 3, 3, 54, 24,
+            Frame.BorderStyle.Line, Color.Yellow, Color.DarkBlue);
+        screen.TopContainer.AddContainer(frame);
+
+        frame.AddControl(new Label(
+            "stateInstructions", "Save, mutate, restore, migrate, or restore silently.",
+            3, 2, 48, Color.White, Color.DarkBlue));
+
+        frame.AddControl(new Label("nameLabel", "Name:", 3, 5, 12, Color.White, Color.DarkBlue));
+        name = new TextBox("stateName", "Alex", 16, 5, 24, Color.Yellow, Color.Black);
+        frame.AddControl(name);
+
+        frame.AddControl(new Label("priorityLabel", "Priority:", 3, 7, 12, Color.White, Color.DarkBlue));
+        priority = new ComboBox(
+            "statePriority",
+            new[] { "Low", "Normal", "High" },
+            16, 7, 16,
+            Color.Yellow, Color.Black,
+            selectedIndex: 1);
+        priority.SelectedIndexChanged += (_, _) => CountEvent("Priority changed");
+        frame.AddControl(priority);
+
+        frame.AddControl(new Label("volumeLabel", "Volume:", 3, 9, 12, Color.White, Color.DarkBlue));
+        volume = new Slider(
+            "stateVolume",
+            0, 100, 50, 10,
+            16, 9, 18,
+            Color.Yellow, Color.Black);
+        volume.ValueChanged += (_, _) => CountEvent("Volume changed");
+        frame.AddControl(volume);
+
+        notifications = new ToggleSwitch(
+            "stateNotifications", "Notifications", true,
+            3, 11, 24,
+            Color.Yellow, Color.Black);
+        notifications.ValueChanged += (_, _) => CountEvent("Notifications changed");
+        frame.AddControl(notifications);
+
+        schemaLabel = new Label(
+            "schemaLabel", $"Schema: v{TuiScreenState.CurrentSchemaVersion}",
+            32, 11, 18, Color.Cyan, Color.DarkBlue);
+        frame.AddControl(schemaLabel);
+
+        AddButton(frame, "saveStateButton", "Save", 3, 14, SaveState);
+        AddButton(frame, "dirtyStateButton", "Dirty", 12, 14, MakeDirty);
+        AddButton(frame, "restoreStateButton", "Restore", 21, 14, RestoreAll);
+        AddButton(frame, "partialStateButton", "Partial", 33, 14, RestoreNameOnly);
+        AddButton(frame, "migrateStateButton", "Migrate", 3, 16, RestoreMigratedState);
+        AddButton(frame, "silentStateButton", "Silent", 14, 16, SilentRestore);
+        AddButton(frame, "payloadStateButton", "Payload", 25, 16, ShowPayload);
+
+        status = new StatusBar(
+            "stateStatus", "Ready. Press Save first, then Dirty.", 3, 20, 48,
+            Color.Black, Color.Cyan)
+        {
+            Separator = "  "
+        };
+        status.AddItem("events", "Events: 0");
+        frame.AddControl(status);
+
+        frame.AddControl(new Label(
+            "stateFooter", "Partial restores only Name; Silent restores without events.",
+            3, 22, 48, Color.White, Color.DarkBlue));
+
+        SaveState();
+        screen.SetFocus("stateName");
+    }
+
+    private void AddButton(Frame frame, string controlName, string text, short x, short y, Action action)
+    {
+        var button = new Button(
+            controlName, text, x, y, (short)Math.Max(8, text.Length + 2),
+            Color.White, Color.DarkGreen);
+        button.Clicked += (_, _) => action();
+        frame.AddControl(button);
+    }
+
+    private void SaveState()
+    {
+        savedState = screen.ExportState();
+        savedState.SetPayload("route", "/examples/state-persistence");
+        savedState.SetProtectedPayload("token", "sample-token", Protect);
+        status.Message = $"Saved schema v{savedState.SchemaVersion}";
+    }
+
+    private void MakeDirty()
+    {
+        name.Value = "Dirty value";
+        priority.SelectItem("Low");
+        volume.Value = 10;
+        notifications.Value = false;
+        schemaLabel.Text = "Schema: dirty";
+        status.Message = "Dirty state applied";
+    }
+
+    private void RestoreAll()
+    {
+        EnsureSavedState();
+        screen.RestoreState(savedState!);
+        schemaLabel.Text = $"Schema: v{savedState!.SchemaVersion}";
+        status.Message = "Full state restored";
+    }
+
+    private void RestoreNameOnly()
+    {
+        EnsureSavedState();
+        screen.RestoreState(
+            savedState!,
+            new TuiStateRestoreOptions
+            {
+                RestoreFocus = false,
+                ControlNames = new[] { "stateName" }
+            });
+        status.Message = "Only Name restored";
+    }
+
+    private void RestoreMigratedState()
+    {
+        EnsureSavedState();
+
+        TuiScreenState legacyState = savedState!;
+        legacyState.SchemaVersion = 0;
+        legacyState.Controls["legacyName"] = legacyState.Controls["stateName"];
+        legacyState.Controls.Remove("stateName");
+
+        name.Value = "Needs migration";
+        screen.RestoreState(
+            legacyState,
+            new TuiStateRestoreOptions
+            {
+                Migrations = new[]
+                {
+                    new TuiStateMigration(
+                        fromVersion: 0,
+                        toVersion: TuiScreenState.CurrentSchemaVersion,
+                        migrate: migrated =>
+                        {
+                            migrated.Controls["stateName"] = migrated.Controls["legacyName"];
+                            migrated.Controls.Remove("legacyName");
+                            return migrated;
+                        })
+                }
+            });
+
+        schemaLabel.Text = $"Schema: v{legacyState.SchemaVersion}";
+        status.Message = "Legacy state migrated";
+        SaveState();
+    }
+
+    private void SilentRestore()
+    {
+        EnsureSavedState();
+        MakeDirty();
+        eventCount = 0;
+        UpdateEventItem();
+        screen.RestoreState(
+            savedState!,
+            new TuiStateRestoreOptions { SuppressEvents = true });
+        status.Message = $"Silent restore events: {eventCount}";
+    }
+
+    private void ShowPayload()
+    {
+        EnsureSavedState();
+        bool hasRoute = savedState!.TryGetPayload("route", out string route);
+        bool hasToken = savedState.TryGetProtectedPayload("token", Unprotect, out string token);
+        status.Message = hasRoute && hasToken
+            ? $"Payload {route}, token {token.Length} chars"
+            : "Payload missing";
+    }
+
+    private void EnsureSavedState()
+    {
+        if (savedState is null)
+            SaveState();
+    }
+
+    private void CountEvent(string message)
+    {
+        eventCount++;
+        UpdateEventItem();
+        status.Message = message;
+    }
+
+    private void UpdateEventItem()
+    {
+        StatusBarItem? item = status.GetItem("events");
+        if (item is not null)
+            item.Text = $"Events: {eventCount}";
+    }
+
+    private static string Protect(string value)
+        => Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(value));
+
+    private static string Unprotect(string value)
+        => System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(value));
+}

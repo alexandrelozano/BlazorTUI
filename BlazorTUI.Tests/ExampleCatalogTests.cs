@@ -45,6 +45,7 @@ public class ExampleCatalogTests : BunitContext
         Assert.Contains("Breadcrumb", accessibleText);
         Assert.Contains("Themes", accessibleText);
         Assert.Contains("Transient UI", accessibleText);
+        Assert.Contains("State persistence", accessibleText);
         Assert.Contains("Complete showcase", accessibleText);
     }
 
@@ -73,6 +74,7 @@ public class ExampleCatalogTests : BunitContext
     [InlineData("breadcrumbExample", "/examples/breadcrumbs")]
     [InlineData("themesExample", "/examples/themes")]
     [InlineData("transientUiExample", "/examples/transient-ui")]
+    [InlineData("statePersistenceExample", "/examples/state-persistence")]
     [InlineData("showcaseExample", "/examples/showcase")]
     public void CatalogButtonsNavigateToTheirExample(string controlName, string expectedPath)
     {
