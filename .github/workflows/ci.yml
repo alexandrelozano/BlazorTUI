@@ -47,6 +47,8 @@ jobs:
           path: |
             BlazorTUI/bin/Release/*.nupkg
             BlazorTUI/bin/Release/*.snupkg
+            BlazorTUI.Analyzers/bin/Release/*.nupkg
+            BlazorTUI.Analyzers/bin/Release/*.snupkg
 
       - name: Upload coverage
         uses: actions/upload-artifact@v6

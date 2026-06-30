@@ -35,6 +35,12 @@ jobs:
             throw "Could not find the package version in BlazorTUI.csproj."
           }
 
+          [xml]$analyzerProject = Get-Content BlazorTUI.Analyzers/BlazorTUI.Analyzers.csproj -Raw
+          $analyzerVersion = $analyzerProject.Project.PropertyGroup.Version | Select-Object -First 1
+          if ($analyzerVersion -ne $version) {
+            throw "Analyzer package version '$analyzerVersion' does not match BlazorTUI package version '$version'."
+          }
+
           $expectedTag = "v$version"
           if ($env:GITHUB_REF_NAME -ne $expectedTag) {
             throw "Tag '$env:GITHUB_REF_NAME' does not match package version '$version'. Expected '$expectedTag'."
@@ -77,15 +83,20 @@ jobs:
           path: |
             BlazorTUI/bin/Release/*.nupkg
             BlazorTUI/bin/Release/*.snupkg
+            BlazorTUI.Analyzers/bin/Release/*.nupkg
 
       - name: Create GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$RELEASE_TAG" BlazorTUI/bin/Release/*.nupkg BlazorTUI/bin/Release/*.snupkg --verify-tag --title "BlazorTUI $PACKAGE_VERSION" --notes-file release-notes.md
+        run: gh release create "$RELEASE_TAG" BlazorTUI/bin/Release/*.nupkg BlazorTUI/bin/Release/*.snupkg BlazorTUI.Analyzers/bin/Release/*.nupkg --verify-tag --title "BlazorTUI $PACKAGE_VERSION" --notes-file release-notes.md
 
       - name: Publish to NuGet
         if: env.NUGET_API_KEY != ''
         run: dotnet nuget push BlazorTUI/bin/Release/*.nupkg --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate
+
+      - name: Publish analyzer to NuGet
+        if: env.NUGET_API_KEY != ''
+        run: dotnet nuget push BlazorTUI.Analyzers/bin/Release/*.nupkg --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate
 
       - name: Publish symbols to NuGet
         if: env.NUGET_API_KEY != ''

@@ -12,7 +12,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlazorTUI", "BlazorTUI\Blaz
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorTUI.Tests", "BlazorTUI.Tests\BlazorTUI.Tests.csproj", "{B50CBBD0-FD39-4D5D-94A1-35191FC6BE28}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F79EFBC}") = "BlazorTUI.Benchmarks", "tests\BlazorTUI.Benchmarks\BlazorTUI.Benchmarks.csproj", "{9E47D5E8-9F53-4E1D-8B26-110CB2E08FC0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlazorTUI.Benchmarks", "tests\BlazorTUI.Benchmarks\BlazorTUI.Benchmarks.csproj", "{9E47D5E8-9F53-4E1D-8B26-110CB2E08FC0}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlazorTUI.Analyzers", "BlazorTUI.Analyzers\BlazorTUI.Analyzers.csproj", "{1D8A9129-F751-4E1E-B6A3-64B307687238}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -36,6 +38,10 @@ Global
 		{9E47D5E8-9F53-4E1D-8B26-110CB2E08FC0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9E47D5E8-9F53-4E1D-8B26-110CB2E08FC0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9E47D5E8-9F53-4E1D-8B26-110CB2E08FC0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1D8A9129-F751-4E1E-B6A3-64B307687238}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1D8A9129-F751-4E1E-B6A3-64B307687238}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1D8A9129-F751-4E1E-B6A3-64B307687238}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1D8A9129-F751-4E1E-B6A3-64B307687238}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

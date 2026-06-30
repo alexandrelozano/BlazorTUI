@@ -32,6 +32,25 @@ Install BlazorTUI from NuGet:
 dotnet add package BlazorTUI
 ```
 
+Optionally add the analyzer package to catch common BlazorTUI mistakes while you code:
+
+```powershell
+dotnet add package BlazorTUI.Analyzers
+```
+
+For project files, keep it private so it does not flow transitively to consumers:
+
+```xml
+<PackageReference Include="BlazorTUI.Analyzers" Version="0.8.15" PrivateAssets="all" />
+```
+
+The analyzer package currently reports:
+
+- `BTUI001`: duplicate control or container names in the analyzed scope.
+- `BTUI002`: invalid width, height, or length literals.
+- `BTUI003`: duplicate menu, item, or tree node names in the analyzed scope.
+- `BTUI004`: `SetFocus` targets that do not match a control created in the analyzed scope.
+
 ## Quick start
 
 Add the BlazorTUI namespace to a Razor page, create a `Screen`, and render it with the component:
@@ -1262,6 +1281,8 @@ Run `dotnet run --project SampleApp` from the repository root and open `/`, `/ex
 - Added a hidden control-summary region to the Blazor component and included it in the terminal's accessibility description.
 - Added polite focus-change announcements and a bounded `FocusHistoryAnnouncements` list for diagnostics and automated tests.
 - Documented accessible terminal patterns for consumer applications and added regression coverage for semantic summaries, custom descriptions, validation summaries, and focus announcements.
+- Added `BlazorTUI.Analyzers`, an optional Roslyn analyzer package for duplicate control/container names, invalid dimensions, duplicate menu/item/node names, and missing static `SetFocus` targets.
+- Added analyzer package documentation, CI artifact publishing, and regression tests for diagnostics `BTUI001` through `BTUI004`.
 
 ### 0.8.14 — 2026-06-30
 

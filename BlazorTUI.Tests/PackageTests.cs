@@ -95,6 +95,43 @@ public class PackageTests
     }
 
     [Fact]
+    public void GeneratedAnalyzerPackageContainsExpectedMetadataAndAssets()
+    {
+        string root = FindRepositoryRoot();
+        string projectPath = Path.Combine(root, "BlazorTUI.Analyzers", "BlazorTUI.Analyzers.csproj");
+        XDocument project = XDocument.Load(projectPath);
+        string version = project.Descendants("Version").Single().Value;
+#if DEBUG
+        const string configuration = "Debug";
+#else
+        const string configuration = "Release";
+#endif
+        string packagePath = Path.Combine(root, "BlazorTUI.Analyzers", "bin", configuration, $"BlazorTUI.Analyzers.{version}.nupkg");
+        Assert.True(File.Exists(packagePath), $"Analyzer package was not found at {packagePath}.");
+
+        Assert.Equal("true", ReadProjectProperty(project, "GeneratePackageOnBuild"));
+        Assert.Equal("false", ReadProjectProperty(project, "IncludeBuildOutput"));
+        Assert.Equal("true", ReadProjectProperty(project, "SuppressDependenciesWhenPacking"));
+        Assert.Equal("true", ReadProjectProperty(project, "DevelopmentDependency"));
+        Assert.Equal("true", ReadProjectProperty(project, "EnforceExtendedAnalyzerRules"));
+
+        using ZipArchive package = ZipFile.OpenRead(packagePath);
+        Assert.Contains(package.Entries, entry => entry.FullName == "README.md");
+        Assert.Contains(package.Entries, entry => entry.FullName == "analyzers/dotnet/cs/BlazorTUI.Analyzers.dll");
+        Assert.DoesNotContain(package.Entries, entry => entry.FullName.StartsWith("lib/", StringComparison.Ordinal));
+
+        string nuspec = ReadEntry(package, "BlazorTUI.Analyzers.nuspec");
+        XDocument manifest = XDocument.Parse(nuspec);
+        XElement metadata = manifest.Descendants().Single(element => element.Name.LocalName == "metadata");
+        Assert.Equal(version, metadata.Elements().Single(element => element.Name.LocalName == "version").Value);
+        Assert.Equal("true", metadata.Elements().Single(element => element.Name.LocalName == "developmentDependency").Value);
+        XElement repository = metadata.Elements().Single(element => element.Name.LocalName == "repository");
+        Assert.Equal("git", repository.Attribute("type")?.Value);
+        Assert.Equal("https://github.com/alexandrelozano/BlazorTUI", repository.Attribute("url")?.Value);
+        Assert.DoesNotContain("Microsoft.CodeAnalysis.CSharp", nuspec, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public void ReleaseWorkflowVerifiesVersionGeneratesNotesAndPublishesArtifacts()
     {
         string root = FindRepositoryRoot();
@@ -103,13 +140,17 @@ public class PackageTests
         Assert.Contains("tags:", workflow);
         Assert.Contains("\"v*.*.*\"", workflow);
         Assert.Contains("BlazorTUI/BlazorTUI.csproj", workflow);
+        Assert.Contains("BlazorTUI.Analyzers/BlazorTUI.Analyzers.csproj", workflow);
+        Assert.Contains("Analyzer package version", workflow);
         Assert.Contains("GITHUB_REF_NAME", workflow);
         Assert.Contains("README.md", workflow);
         Assert.Contains("release-notes.md", workflow);
+        Assert.Contains("BlazorTUI.Analyzers/bin/Release/*.nupkg", workflow);
         Assert.Contains("*.nupkg", workflow);
         Assert.Contains("*.snupkg", workflow);
         Assert.Contains("gh release create", workflow);
         Assert.Contains("dotnet nuget push", workflow);
+        Assert.Contains("Publish analyzer to NuGet", workflow);
         Assert.Contains("Publish symbols to NuGet", workflow);
         Assert.Contains("NUGET_API_KEY", workflow);
     }
