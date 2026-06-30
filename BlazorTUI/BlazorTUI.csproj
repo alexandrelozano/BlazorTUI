@@ -14,9 +14,9 @@
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <EnablePackageValidation>true</EnablePackageValidation>
     <Title>BlazorTUI</Title>
-    <AssemblyVersion>0.8.13.0</AssemblyVersion>
-    <FileVersion>0.8.13.0</FileVersion>
-    <Version>0.8.13</Version>
+    <AssemblyVersion>0.8.14.0</AssemblyVersion>
+    <FileVersion>0.8.14.0</FileVersion>
+    <Version>0.8.14</Version>
     <Authors>Alexandre Lozano Vilanova</Authors>
     <Company>Alexandre Lozano Vilanova</Company>
     <Description>Blazor Server Text User Interface</Description>

@@ -1,0 +1,153 @@
+@page "/examples/data-form"
+@using global::BlazorTUI.TUI
+@using Color = System.Drawing.Color
+
+<PageTitle>DataForm example</PageTitle>
+
+<BlazorTUI.BlazorTUI
+    screen="@screen"
+    AriaLabel="DataForm example"
+    AriaDescription="Shows model-bound form fields, generated editors, validation summary, and submit-time model updates." />
+
+@code {
+    private Screen screen = null!;
+    private OrderModel order = null!;
+    private DataForm<OrderModel> form = null!;
+    private StatusBar status = null!;
+
+    protected override void OnInitialized()
+    {
+        order = new OrderModel
+        {
+            Customer = "",
+            Priority = "Normal",
+            DueDate = new DateOnly(2026, 7, 3),
+            SendEmail = true
+        };
+
+        screen = new Screen(60, 30);
+
+        form = new DataForm<OrderModel>(
+            "orderForm",
+            "DATA FORM",
+            order,
+            4, 3, 52, 23,
+            Frame.BorderStyle.Line,
+            Color.Yellow,
+            Color.DarkBlue)
+        {
+            LabelWidth = 12,
+            EditorWidth = 22,
+            FirstFieldY = 3
+        };
+        screen.TopContainer.AddContainer(form);
+
+        form.AddControl(new Label(
+            "formDescription",
+            "Generated editors update a typed model.",
+            3, 1, 44,
+            Color.White,
+            Color.DarkBlue));
+
+        var customer = new FormField<OrderModel>(
+            "customer",
+            "Customer:",
+            model => model.Customer,
+            (model, value) => model.Customer = Convert.ToString(value) ?? "")
+        {
+            IsRequired = true,
+            RequiredMessage = "Customer required"
+        };
+        customer.ValidationRules.Add(
+            value => value is string text && text.Trim().Length >= 3,
+            "Use at least 3 chars");
+        form.AddField(customer);
+
+        var priority = new FormField<OrderModel>(
+            "priority",
+            "Priority:",
+            model => model.Priority,
+            (model, value) => model.Priority = Convert.ToString(value) ?? "Normal",
+            FormFieldEditorKind.ComboBox)
+        {
+            Options = new[] { "Low", "Normal", "High" }
+        };
+        form.AddField(priority);
+
+        form.AddField(new FormField<OrderModel>(
+            "dueDate",
+            "Due date:",
+            model => model.DueDate,
+            (model, value) => model.DueDate = value is DateOnly date ? date : null,
+            FormFieldEditorKind.Date)
+        {
+            IsRequired = true,
+            RequiredMessage = "Due date required"
+        });
+
+        form.AddField(new FormField<OrderModel>(
+            "sendEmail",
+            "Notify:",
+            model => model.SendEmail,
+            (model, value) => model.SendEmail = value is bool enabled && enabled,
+            FormFieldEditorKind.CheckBox));
+
+        form.SetValidationSummary(new global::BlazorTUI.TUI.ValidationSummary(
+            "formValidationSummary",
+            3, 13, 44, 3,
+            Color.White,
+            Color.DarkRed)
+        {
+            EmptyMessage = "All fields valid",
+            ShowWhenValid = true
+        });
+
+        var submit = new Button(
+            "submitDataForm",
+            "Submit",
+            3, 17, 12,
+            Color.White,
+            Color.DarkGreen);
+        submit.Clicked += (_, _) => Submit();
+        form.AddControl(submit);
+
+        status = new StatusBar(
+            "dataFormStatus",
+            "Model waits for valid submit.",
+            3, 20, 44,
+            Color.Black,
+            Color.Cyan)
+        {
+            Separator = "  "
+        };
+        status.AddItem("modelHint", "Submit updates");
+        form.AddControl(status);
+
+        form.ModelUpdated += (_, args) =>
+            status.Value = $"{args.FieldName}: {args.CurrentValue}";
+
+        screen.SetFocus("orderForm_customer_editor");
+    }
+
+    private void Submit()
+    {
+        if (!form.Submit())
+        {
+            status.Value = "Fix validation errors";
+            return;
+        }
+
+        status.Value = $"Saved {order.Customer} / {order.Priority}";
+    }
+
+    private sealed class OrderModel
+    {
+        public string Customer { get; set; } = "";
+
+        public string Priority { get; set; } = "Normal";
+
+        public DateOnly? DueDate { get; set; }
+
+        public bool SendEmail { get; set; }
+    }
+}

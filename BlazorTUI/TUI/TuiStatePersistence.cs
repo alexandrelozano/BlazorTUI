@@ -210,6 +210,10 @@ namespace BlazorTUI.TUI
                     var toastState = new TuiElementState(nameof(Toast));
                     toast.ExportToastState(toastState);
                     return toastState;
+                case ValidationSummary validationSummary:
+                    var summaryState = new TuiElementState(nameof(ValidationSummary));
+                    summaryState.SetStringList("Messages", validationSummary.Messages);
+                    return summaryState;
                 case ColorPicker colorPicker:
                     var colorState = new TuiElementState(nameof(ColorPicker));
                     colorState.SetInteger("ColorArgb", colorPicker.Color.ToArgb());
@@ -390,6 +394,10 @@ namespace BlazorTUI.TUI
                     break;
                 case Toast toast:
                     toast.RestoreToastState(state);
+                    break;
+                case ValidationSummary validationSummary:
+                    if (state.TryGetStringList("Messages", out IReadOnlyList<string> messages))
+                        validationSummary.SetMessages(messages);
                     break;
                 case ColorPicker colorPicker:
                     RestoreColorPickerState(colorPicker, state);

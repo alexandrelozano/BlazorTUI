@@ -411,6 +411,61 @@
         _ = virtualGrid.SelectedRowKey;
         _ = virtualCommands.HighlightedCommand;
         _ = virtualTree.SelectedNodeKey;
+        var formModel = new SmokeFormModel
+        {
+            Name = "Alex",
+            Priority = "Normal",
+            Notify = false
+        };
+        var dataForm = new DataForm<SmokeFormModel>(
+            "consumerDataForm",
+            "FORM",
+            formModel,
+            0, 0, 24, 8,
+            Frame.BorderStyle.Line,
+            System.Drawing.Color.White,
+            System.Drawing.Color.DarkBlue)
+        {
+            LabelWidth = 8,
+            EditorWidth = 10
+        };
+        var formName = new FormField<SmokeFormModel>(
+            "name",
+            "Name:",
+            model => model.Name,
+            (model, value) => model.Name = Convert.ToString(value) ?? "")
+        {
+            IsRequired = true,
+            RequiredMessage = "Name required"
+        };
+        formName.ValidationRules.Add(
+            value => value is string text && text.Length >= 2,
+            "Name too short");
+        dataForm.AddField(formName);
+        var formPriority = new FormField<SmokeFormModel>(
+            "priority",
+            "Priority:",
+            model => model.Priority,
+            (model, value) => model.Priority = Convert.ToString(value) ?? "Normal",
+            FormFieldEditorKind.ComboBox)
+        {
+            Options = new[] { "Low", "Normal", "High" }
+        };
+        dataForm.AddField(formPriority);
+        dataForm.AddField(new FormField<SmokeFormModel>(
+            "notify",
+            "Notify:",
+            model => model.Notify,
+            (model, value) => model.Notify = value is bool enabled && enabled,
+            FormFieldEditorKind.CheckBox));
+        dataForm.SetValidationSummary(new global::BlazorTUI.TUI.ValidationSummary(
+            "consumerDataFormSummary",
+            1, 6, 20, 1,
+            System.Drawing.Color.White,
+            System.Drawing.Color.DarkRed));
+        dataForm.ModelUpdated += (_, args) => _ = args.CurrentValue;
+        _ = dataForm.Submit(focusFirstInvalid: false);
+        terminal.TopContainer.AddContainer(dataForm);
         terminal.SetFocus("priority");
         TuiScreenState state = terminal.ExportState();
         string serializedState = terminal.ExportStateJson();
@@ -421,4 +476,13 @@
 
     private static Task<bool> ConfirmWithDialogServiceAsync(Screen terminal)
         => terminal.DialogService.ConfirmAsync("Continue?", "Confirm");
+
+    private sealed class SmokeFormModel
+    {
+        public string Name { get; set; } = "";
+
+        public string Priority { get; set; } = "";
+
+        public bool Notify { get; set; }
+    }
 }

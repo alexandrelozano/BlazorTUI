@@ -182,6 +182,7 @@ Use `FirstPanel` and `SecondPanel` as normal containers for controls or nested c
 | Category | Controls |
 | --- | --- |
 | Layout | `Frame`, `StackPanel`, `GridPanel`, `DockPanel`, `WrapPanel`, `ScrollViewer`, `SplitPanel`, `TabControl`, `TabPage` |
+| Forms | `DataForm<TModel>`, `FormField<TModel>`, `ValidationSummary` |
 | Text and input | `Label`, `TextBox`, `PasswordBox`, `TextArea`, `NumericBox`, `DateBox`, `Calendar`, `DatePicker`, `DateRangePicker`, `MonthPicker`, `TimeBox` |
 | Selection | `CheckBox`, `RadioButton`, `RadioGroup`, `ComboBox`, `ListBox`, `TreeView`, `Slider`, `ColorPicker` |
 | Actions and navigation | `Breadcrumb`, `BreadcrumbItem`, `Button`, `CommandPalette`, `CommandPaletteItem`, `ContextMenu`, `ContextMenuItem`, `MenuBar`, `Menu`, `MenuItem` |
@@ -233,6 +234,73 @@ saveButton.Clicked += (_, _) =>
 Validation messages are rendered inline beside the control when there is room, or below it when the right side is full. Use `ShowValidationMessage`, `ValidationMessageForeColor`, and `ValidationMessageBackgroundColor` to control that display. Use `GetInvalidControls()` when application code needs to inspect the current invalid controls after validation.
 
 `TextBox`, `PasswordBox`, `TextArea`, `DateBox`, `Calendar`, `DatePicker`, `DateRangePicker`, `MonthPicker`, `TimeBox`, `NumericBox`, `CheckBox`, `RadioButton`, `ComboBox`, `RadioGroup`, `ListBox`, `TreeView`, `Slider`, and `ColorPicker` expose their current value to validation rules. For checkboxes and radio buttons, a required field means the value must be selected.
+
+## Data forms
+
+`DataForm<TModel>` builds a form from `FormField<TModel>` definitions while still using normal BlazorTUI controls. Each field defines how to read and write a model property, which editor to create, and which validation rules apply:
+
+```csharp
+var order = new OrderModel
+{
+    Customer = "",
+    Priority = "Normal",
+    SendEmail = true
+};
+
+var form = new DataForm<OrderModel>(
+    "orderForm", "ORDER", order,
+    3, 3, 48, 18,
+    Frame.BorderStyle.Line,
+    Color.Yellow,
+    Color.DarkBlue)
+{
+    LabelWidth = 12,
+    EditorWidth = 20
+};
+
+var customer = new FormField<OrderModel>(
+    "customer",
+    "Customer:",
+    model => model.Customer,
+    (model, value) => model.Customer = Convert.ToString(value) ?? "")
+{
+    IsRequired = true,
+    RequiredMessage = "Customer required"
+};
+customer.ValidationRules.Add(
+    value => value is string text && text.Trim().Length >= 3,
+    "Use at least 3 chars");
+form.AddField(customer);
+
+form.AddField(new FormField<OrderModel>(
+    "priority",
+    "Priority:",
+    model => model.Priority,
+    (model, value) => model.Priority = Convert.ToString(value) ?? "Normal",
+    FormFieldEditorKind.ComboBox)
+{
+    Options = new[] { "Low", "Normal", "High" }
+});
+
+form.AddField(new FormField<OrderModel>(
+    "sendEmail",
+    "Notify:",
+    model => model.SendEmail,
+    (model, value) => model.SendEmail = value is bool enabled && enabled,
+    FormFieldEditorKind.CheckBox));
+
+form.SetValidationSummary(new BlazorTUI.TUI.ValidationSummary(
+    "orderSummary", 2, 11, 40, 3,
+    Color.White,
+    Color.DarkRed));
+
+form.ModelUpdated += (_, args) =>
+    status.Value = $"{args.FieldName}: {args.CurrentValue}";
+
+screen.TopContainer.AddContainer(form);
+```
+
+Call `form.Submit()` to validate the generated controls, focus the first invalid editor, update the `ValidationSummary`, and copy valid editor values back to the model. Use `UpdateModelFromControls()` when you need to copy values without validating. For custom editors, assign `FormField.EditorFactory`, pass an explicit `Control` to `AddField(field, editor)`, or provide `FormField.ValueReader` when the editor value is not one of the built-in control value types.
 
 ## Calendar
 
@@ -987,6 +1055,7 @@ The repository contains focused pages that can be run directly:
 | --- | --- |
 | [Controls and events](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/ControlsAndEvents.razor) | Text and password input, validation, combo-box and radio-group selection, command palette actions, checkbox state, callbacks, focus order, and status messages |
 | [Form validation](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/FormValidation.razor) | Required fields, custom validation rules, inline error messages, and first-invalid focus |
+| [DataForm](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/DataFormExample.razor) | Model-bound generated form fields, validation summary, submit-time updates, and editor factories |
 | [GridView](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/GridViewExample.razor) | Sorting, pagination, row selection, filters, filter indicators, editable cells, column editors, validation, and edit events |
 | [Data visualizations](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/DataVisualizations.razor) | Sparklines, bar charts, gauges, timelines, and aligned key/value details |
 | [Dialogs and menus](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/DialogsAndMenus.razor) | Menu shortcuts, custom modal dialogs, and message boxes |
@@ -1012,6 +1081,12 @@ The repository contains focused pages that can be run directly:
 Run `dotnet run --project SampleApp` from the repository root and open `/` or `/examples` to browse them. The example routes are exercised by the automated test suite so API changes cannot silently leave the documentation out of date.
 
 ## Changelog
+
+### 0.8.14 — 2026-06-30
+
+- Added `DataForm<TModel>` for model-bound form composition with generated field labels and editors.
+- Added `FormField<TModel>`, `FormFieldEditorKind`, `FormFieldEditorFactory<TModel>`, `FormFieldEditorContext<TModel>`, `DataFormModelUpdatedEventArgs<TModel>`, and `ValidationSummary`.
+- Added submit-time validation, first-invalid focus, validation-summary updates, model-update events, default editor generation, custom editor factories, explicit editor binding, focused executable examples, regression tests, and NuGet consumer coverage.
 
 ### 0.8.13 — 2026-06-29
 
