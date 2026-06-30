@@ -46,19 +46,52 @@ namespace BlazorTUI.TUI
             public TuiValidationRuleCollection ValidationRules { get; } = new();
         }
 
+        public sealed class GridAggregateFooter
+        {
+            private readonly Func<IReadOnlyList<GridRow>, string> valueProvider;
+
+            internal GridAggregateFooter(
+                string label,
+                int columnIndex,
+                Func<IReadOnlyList<GridRow>, string> valueProvider)
+            {
+                ArgumentException.ThrowIfNullOrWhiteSpace(label);
+                ArgumentNullException.ThrowIfNull(valueProvider);
+
+                Label = label;
+                ColumnIndex = columnIndex;
+                this.valueProvider = valueProvider;
+            }
+
+            public string Label { get; }
+
+            public int ColumnIndex { get; }
+
+            internal string GetValue(IReadOnlyList<GridRow> rows)
+                => valueProvider(rows) ?? "";
+        }
+
         private readonly GridColumn[] columns;
-        private readonly GridRow[] gridrows;
+        private GridRow[] gridrows;
         private readonly IVirtualGridViewDataProvider? virtualRows;
         private readonly ActiveColumnFilter?[] columnFilters;
+        private readonly List<int> columnOrder = new();
+        private readonly List<GridAggregateFooter> footerRows = new();
         private readonly List<int> viewRowIndexes = new();
         private ActiveRowFilter? rowFilter;
         private int pageIndex;
         private int pageSize;
         private int selectedViewRowIndex = -1;
         private int selectedColumnIndex = -1;
+        private int groupColumnIndex = -1;
+        private int filterEditColumnIndex = -1;
+        private string filterEditValue = "";
+        private int filterEditCursor;
         private int sortColumnIndex = -1;
         private GridSortDirection sortDirection = GridSortDirection.None;
         private bool isReadOnly = true;
+        private bool showFilterRow;
+        private bool isLoading;
         private CellEditState? editState;
 
         public IReadOnlyList<GridColumn> Columns => columns;
@@ -67,7 +100,41 @@ namespace BlazorTUI.TUI
 
         public bool IsVirtualized => virtualRows is not null;
 
+        public bool IsLoading => isLoading;
+
         public int RowCount => SourceRowCount;
+
+        public IReadOnlyList<int> VisibleColumnIndexes => columnOrder.AsReadOnly();
+
+        public IReadOnlyList<GridColumn> VisibleColumns
+            => columnOrder.Select(index => columns[index]).ToList();
+
+        public IReadOnlyList<GridAggregateFooter> AggregateFooters => footerRows.AsReadOnly();
+
+        public bool ShowFilterRow
+        {
+            get => showFilterRow;
+            set
+            {
+                if (showFilterRow == value)
+                    return;
+
+                showFilterRow = value;
+                if (!showFilterRow)
+                    CancelFilterEdit();
+
+                ClampPageSizeToVisibleCapacity();
+                ClampPageIndexAfterDataChange(forcePageChanged: true);
+            }
+        }
+
+        public bool IsFilterEditing => filterEditColumnIndex >= 0;
+
+        public int EditingFilterColumnIndex => filterEditColumnIndex;
+
+        public string EditingFilterValue => filterEditValue;
+
+        public int GroupColumnIndex => groupColumnIndex;
 
         public IReadOnlyList<GridViewFilterState> Filters
             => Enumerable.Range(0, columns.Length)
@@ -209,6 +276,7 @@ namespace BlazorTUI.TUI
             this.columns = columns;
             this.gridrows = gridrows;
             columnFilters = new ActiveColumnFilter?[columns.Length];
+            InitializeColumnOrder();
             TabStop = true;
             this.pageSize = pageSize == 0
                 ? DefaultPageSize
@@ -246,12 +314,296 @@ namespace BlazorTUI.TUI
             gridrows = Array.Empty<GridRow>();
             virtualRows = rows;
             columnFilters = new ActiveColumnFilter?[columns.Length];
+            InitializeColumnOrder();
             TabStop = true;
             this.pageSize = pageSize == 0
                 ? DefaultPageSize
                 : ValidatePageSize(pageSize);
 
             RebuildViewRowIndexes();
+        }
+
+        public bool IsColumnVisible(int columnIndex)
+        {
+            ValidateColumnIndex(columnIndex);
+            return columnOrder.Contains(columnIndex);
+        }
+
+        public void SetColumnVisible(int columnIndex, bool visible)
+        {
+            ValidateColumnIndex(columnIndex);
+            bool isVisible = IsColumnVisible(columnIndex);
+            if (isVisible == visible)
+                return;
+
+            if (!visible && columnOrder.Count == 1)
+                throw new InvalidOperationException("GridView must keep at least one visible column.");
+
+            CancelEdit(raiseEvent: false);
+            CancelFilterEdit();
+            if (visible)
+            {
+                columnOrder.Add(columnIndex);
+            }
+            else
+            {
+                columnOrder.Remove(columnIndex);
+                if (selectedColumnIndex == columnIndex)
+                    selectedColumnIndex = columnOrder[0];
+            }
+        }
+
+        public void ShowColumn(int columnIndex)
+            => SetColumnVisible(columnIndex, visible: true);
+
+        public void HideColumn(int columnIndex)
+            => SetColumnVisible(columnIndex, visible: false);
+
+        public void ShowAllColumns()
+        {
+            if (columnOrder.Count == columns.Length)
+                return;
+
+            CancelEdit(raiseEvent: false);
+            CancelFilterEdit();
+            columnOrder.Clear();
+            InitializeColumnOrder();
+        }
+
+        public void MoveColumn(int columnIndex, int visibleIndex)
+        {
+            ValidateColumnIndex(columnIndex);
+            if (!IsColumnVisible(columnIndex))
+                throw new ArgumentException("The column must be visible before it can be moved.", nameof(columnIndex));
+            if (visibleIndex < 0 || visibleIndex >= columnOrder.Count)
+                throw new ArgumentOutOfRangeException(nameof(visibleIndex));
+
+            int currentIndex = columnOrder.IndexOf(columnIndex);
+            if (currentIndex == visibleIndex)
+                return;
+
+            CancelEdit(raiseEvent: false);
+            CancelFilterEdit();
+            columnOrder.RemoveAt(currentIndex);
+            columnOrder.Insert(visibleIndex, columnIndex);
+        }
+
+        public void SetColumnOrder(IEnumerable<int> visibleColumnIndexes)
+        {
+            ArgumentNullException.ThrowIfNull(visibleColumnIndexes);
+
+            int[] indexes = visibleColumnIndexes.ToArray();
+            if (indexes.Length == 0)
+                throw new ArgumentException("GridView must keep at least one visible column.", nameof(visibleColumnIndexes));
+
+            var uniqueIndexes = new HashSet<int>();
+            foreach (int columnIndex in indexes)
+            {
+                ValidateColumnIndex(columnIndex);
+                if (!uniqueIndexes.Add(columnIndex))
+                    throw new ArgumentException("Visible column indexes cannot contain duplicates.", nameof(visibleColumnIndexes));
+            }
+
+            if (columnOrder.SequenceEqual(indexes))
+                return;
+
+            CancelEdit(raiseEvent: false);
+            CancelFilterEdit();
+            columnOrder.Clear();
+            columnOrder.AddRange(indexes);
+            if (selectedColumnIndex >= 0 && !IsColumnVisible(selectedColumnIndex))
+                selectedColumnIndex = columnOrder[0];
+        }
+
+        public void SetColumnWidth(int columnIndex, short width)
+        {
+            ValidateColumnIndex(columnIndex);
+            ArgumentOutOfRangeException.ThrowIfLessThan(width, (short)1);
+
+            columns[columnIndex].Width = width;
+            if (editState?.ColumnIndex == columnIndex)
+                CancelEdit(raiseEvent: false);
+        }
+
+        public void GroupByColumn(int columnIndex)
+        {
+            ValidateColumnIndex(columnIndex);
+            if (groupColumnIndex == columnIndex)
+                return;
+
+            CancelEdit(raiseEvent: false);
+            int previousSourceRowIndex = SelectedSourceRowIndex;
+            groupColumnIndex = columnIndex;
+            RebuildViewRowIndexes();
+            RestoreSelection(previousSourceRowIndex);
+            ClampPageIndexAfterDataChange();
+        }
+
+        public void ClearGrouping()
+        {
+            if (groupColumnIndex < 0)
+                return;
+
+            CancelEdit(raiseEvent: false);
+            int previousSourceRowIndex = SelectedSourceRowIndex;
+            groupColumnIndex = -1;
+            RebuildViewRowIndexes();
+            RestoreSelection(previousSourceRowIndex);
+            ClampPageIndexAfterDataChange();
+        }
+
+        public GridAggregateFooter AddAggregateFooter(
+            string label,
+            int columnIndex,
+            Func<IReadOnlyList<GridRow>, string> valueProvider)
+        {
+            ValidateColumnIndex(columnIndex);
+            var footer = new GridAggregateFooter(label, columnIndex, valueProvider);
+            footerRows.Add(footer);
+            ClampPageSizeToVisibleCapacity();
+            ClampPageIndexAfterDataChange(forcePageChanged: true);
+            return footer;
+        }
+
+        public GridAggregateFooter AddCountFooter(string label, int columnIndex)
+            => AddAggregateFooter(
+                label,
+                columnIndex,
+                rows => rows.Count.ToString(CultureInfo.InvariantCulture));
+
+        public GridAggregateFooter AddSumFooter(
+            string label,
+            int columnIndex,
+            string format = "0.##",
+            IFormatProvider? formatProvider = null)
+        {
+            ArgumentNullException.ThrowIfNull(format);
+            return AddAggregateFooter(
+                label,
+                columnIndex,
+                rows =>
+                {
+                    double sum = rows
+                        .Select(row => GetCellValue(row, columnIndex))
+                        .Where(value => double.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out _))
+                        .Sum(value => double.Parse(value, NumberStyles.Any, CultureInfo.InvariantCulture));
+                    return sum.ToString(format, formatProvider ?? CultureInfo.InvariantCulture);
+                });
+        }
+
+        public void ClearAggregateFooters()
+        {
+            if (footerRows.Count == 0)
+                return;
+
+            footerRows.Clear();
+            ClampPageSizeToVisibleCapacity();
+            ClampPageIndexAfterDataChange(forcePageChanged: true);
+        }
+
+        public bool BeginFilterEdit(int columnIndex)
+        {
+            ValidateColumnIndex(columnIndex);
+            if (!IsColumnVisible(columnIndex))
+                throw new ArgumentException("The column must be visible before its filter UI can be edited.", nameof(columnIndex));
+
+            CancelEdit(raiseEvent: false);
+            showFilterRow = true;
+            filterEditColumnIndex = columnIndex;
+            ActiveColumnFilter? filter = columnFilters[columnIndex];
+            filterEditValue = filter?.Kind == GridViewFilterKind.Text && filter.Values.Length > 0
+                ? filter.Values[0]
+                : "";
+            filterEditCursor = TuiText.TextElementCount(filterEditValue);
+            selectedColumnIndex = columnIndex;
+            ClampPageSizeToVisibleCapacity();
+            return true;
+        }
+
+        public bool CommitFilterEdit()
+        {
+            if (filterEditColumnIndex < 0)
+                return false;
+
+            int columnIndex = filterEditColumnIndex;
+            string value = filterEditValue;
+            filterEditColumnIndex = -1;
+            filterEditValue = "";
+            filterEditCursor = 0;
+
+            if (value.Length == 0)
+                ClearFilter(columnIndex);
+            else
+                SetTextFilter(columnIndex, value);
+
+            return true;
+        }
+
+        public bool CancelFilterEdit()
+        {
+            if (filterEditColumnIndex < 0)
+                return false;
+
+            filterEditColumnIndex = -1;
+            filterEditValue = "";
+            filterEditCursor = 0;
+            return true;
+        }
+
+        public string ExportCsv(bool includeHeaders = true, bool visibleColumnsOnly = true)
+            => ExportDelimited(",", includeHeaders, visibleColumnsOnly);
+
+        public string ExportTsv(bool includeHeaders = true, bool visibleColumnsOnly = true)
+            => ExportDelimited("\t", includeHeaders, visibleColumnsOnly);
+
+        public string ExportDelimited(
+            string delimiter,
+            bool includeHeaders = true,
+            bool visibleColumnsOnly = true)
+        {
+            ArgumentNullException.ThrowIfNull(delimiter);
+            int[] exportColumns = GetExportColumnIndexes(visibleColumnsOnly);
+            var builder = new StringBuilder();
+
+            if (includeHeaders)
+                AppendDelimitedLine(builder, exportColumns.Select(index => columns[index].Title), delimiter);
+
+            foreach (int rowIndex in GetAllViewIndexes())
+            {
+                GridRow row = GetSourceRow(GetSourceRowIndex(rowIndex));
+                AppendDelimitedLine(builder, exportColumns.Select(index => GetCellValue(row, index)), delimiter);
+            }
+
+            return builder.ToString();
+        }
+
+        public async Task LoadRowsAsync(
+            Func<CancellationToken, Task<IEnumerable<GridRow>>> loadRows,
+            CancellationToken cancellationToken = default)
+        {
+            ArgumentNullException.ThrowIfNull(loadRows);
+            if (virtualRows is not null)
+                throw new NotSupportedException("LoadRowsAsync can only replace materialized GridView rows.");
+
+            isLoading = true;
+            try
+            {
+                IEnumerable<GridRow> loadedRows = await loadRows(cancellationToken).ConfigureAwait(false) ??
+                    throw new InvalidOperationException("The async GridView row loader returned null.");
+                GridRow[] nextRows = loadedRows.ToArray();
+                ValidateRows(columns, nextRows);
+
+                CancelEdit(raiseEvent: false);
+                int previousSourceRowIndex = SelectedSourceRowIndex;
+                gridrows = nextRows;
+                RebuildViewRowIndexes();
+                RestoreSelection(previousSourceRowIndex);
+                ClampPageIndexAfterDataChange(forcePageChanged: true);
+            }
+            finally
+            {
+                isLoading = false;
+            }
         }
 
         public void SetTextFilter(
@@ -642,6 +994,13 @@ namespace BlazorTUI.TUI
             state.SetInteger("SelectedColumnIndex", selectedColumnIndex);
             state.SetInteger("SortColumnIndex", sortColumnIndex);
             state.SetInteger("SortDirection", (int)sortDirection);
+            state.SetBoolean("ShowFilterRow", showFilterRow);
+            state.SetInteger("GroupColumnIndex", groupColumnIndex);
+            state.SetStringList(
+                "VisibleColumnIndexes",
+                columnOrder.Select(index => index.ToString(CultureInfo.InvariantCulture)));
+            for (int columnIndex = 0; columnIndex < columns.Length; columnIndex++)
+                state.SetInteger($"Column:{columnIndex}:Width", columns[columnIndex].Width);
             state.SetBoolean("IsEditing", IsEditing);
             if (editState is not null)
             {
@@ -732,6 +1091,46 @@ namespace BlazorTUI.TUI
                 }
             }
 
+            InitializeColumnOrder();
+            if (state.TryGetStringList("VisibleColumnIndexes", out IReadOnlyList<string> visibleColumnIndexes))
+            {
+                var restoredIndexes = new List<int>();
+                foreach (string value in visibleColumnIndexes)
+                {
+                    if (int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out int columnIndex) &&
+                        columnIndex >= 0 &&
+                        columnIndex < columns.Length &&
+                        !restoredIndexes.Contains(columnIndex))
+                    {
+                        restoredIndexes.Add(columnIndex);
+                    }
+                }
+
+                if (restoredIndexes.Count > 0)
+                {
+                    columnOrder.Clear();
+                    columnOrder.AddRange(restoredIndexes);
+                }
+            }
+
+            for (int columnIndex = 0; columnIndex < columns.Length; columnIndex++)
+            {
+                if (state.TryGetInteger($"Column:{columnIndex}:Width", out int restoredWidth) &&
+                    restoredWidth >= 1 &&
+                    restoredWidth <= short.MaxValue)
+                {
+                    columns[columnIndex].Width = (short)restoredWidth;
+                }
+            }
+
+            showFilterRow = state.TryGetBoolean("ShowFilterRow", out bool restoredShowFilterRow) &&
+                restoredShowFilterRow;
+            groupColumnIndex = state.TryGetInteger("GroupColumnIndex", out int restoredGroupColumnIndex) &&
+                restoredGroupColumnIndex >= 0 &&
+                restoredGroupColumnIndex < columns.Length
+                    ? restoredGroupColumnIndex
+                    : -1;
+
             if (state.TryGetInteger("PageSize", out int restoredPageSize) &&
                 restoredPageSize >= 1 &&
                 (VisibleRowCapacity == 0 || restoredPageSize <= VisibleRowCapacity))
@@ -773,6 +1172,8 @@ namespace BlazorTUI.TUI
                 restoredColumnIndex < columns.Length
                     ? restoredColumnIndex
                     : -1;
+            if (selectedColumnIndex >= 0 && !IsColumnVisible(selectedColumnIndex))
+                selectedColumnIndex = columnOrder.Count > 0 ? columnOrder[0] : -1;
 
             pageIndex = state.TryGetInteger("PageIndex", out int restoredPageIndex)
                 ? Math.Clamp(restoredPageIndex, 0, PageCount - 1)
@@ -791,11 +1192,16 @@ namespace BlazorTUI.TUI
             if (!Visible)
                 return false;
 
+            if (filterEditColumnIndex >= 0)
+                return HandleFilterEditKeyDown(key);
+
             if (editState is not null)
                 return HandleEditKeyDown(key);
 
             switch (key)
             {
+                case "/" when selectedColumnIndex >= 0 && IsColumnVisible(selectedColumnIndex):
+                    return BeginFilterEdit(selectedColumnIndex);
                 case "ArrowLeft" when !IsReadOnly:
                     return MoveSelectedColumn(-1);
                 case "ArrowRight" when !IsReadOnly:
@@ -851,6 +1257,19 @@ namespace BlazorTUI.TUI
                 return pageChanged;
             }
 
+            if (showFilterRow && Y == 1)
+            {
+                int columnIndex = GetColumnIndexAt(X);
+                if (columnIndex < 0)
+                    return false;
+
+                BeginFilterEdit(columnIndex);
+                NotifyClicked();
+                return true;
+            }
+
+            CancelFilterEdit();
+
             if (Y == 0)
             {
                 int columnIndex = GetColumnIndexAt(X);
@@ -862,12 +1281,10 @@ namespace BlazorTUI.TUI
                 return true;
             }
 
-            if (Y < 2)
+            if (Y <= SeparatorLocalY)
                 return false;
 
-            int pageRowIndex = Y - 2;
-            int rowIndex = PageStartRowIndex + pageRowIndex;
-            if (pageRowIndex < 0 || pageRowIndex >= VisibleRowCapacity || rowIndex >= ViewRowCount)
+            if (!TryGetDataRowIndexAtLocalY(Y, out int rowIndex))
                 return false;
 
             selectedColumnIndex = GetColumnIndexAt(X);
@@ -885,6 +1302,11 @@ namespace BlazorTUI.TUI
             if (!Visible)
                 return;
 
+            string headerRow = BuildHeaderRow();
+            string filterRow = showFilterRow ? BuildFilterRow() : "";
+            IReadOnlyList<GridRenderLine> pageLines = BuildPageLines();
+            string[] renderedFooterRows = footerRows.Select(BuildFooterRow).ToArray();
+
             for (int localY = 0; localY < Height; localY++)
             {
                 for (int localX = 0; localX < Width; localX++)
@@ -892,16 +1314,26 @@ namespace BlazorTUI.TUI
                     if (!TryGetCell(rows, localX, localY, out Cell cell))
                         continue;
 
-                    string character = GetRenderedCharacter(localX, localY);
-                    bool selected = IsSelectedDataCell(localY);
-                    bool editingCell = IsEditingCell(localX, localY);
+                    string character = GetRenderedCharacter(
+                        localX,
+                        localY,
+                        headerRow,
+                        filterRow,
+                        pageLines,
+                        renderedFooterRows);
+                    bool selected = IsSelectedDataCell(localY, pageLines);
+                    bool editingCell = IsEditingCell(localX, localY, pageLines);
+                    bool filterEditingCell = IsFilterEditingCell(localX, localY);
                     PrepareCell(
                         cell,
-                        editingCell ? Color.White : selected ? BackgroundColor : ForeColor,
-                        editingCell ? Color.DarkGreen : selected ? ForeColor : BackgroundColor);
+                        editingCell || filterEditingCell ? Color.White : selected ? BackgroundColor : ForeColor,
+                        editingCell || filterEditingCell ? Color.DarkGreen : selected ? ForeColor : BackgroundColor);
                     cell.Character = character;
-                    if (editingCell && IsEditCursorCell(localX, localY))
+                    if ((editingCell && IsEditCursorCell(localX, localY, editingCell)) ||
+                        (filterEditingCell && IsFilterEditCursorCell(localX, localY)))
+                    {
                         cell.Decoration = Cell.TextDecoration.UnderLine;
+                    }
                 }
             }
         }
@@ -915,6 +1347,15 @@ namespace BlazorTUI.TUI
             CancelEdit(raiseEvent: false);
             pageSize = newPageSize;
             ClampPageIndexAfterDataChange(forcePageChanged: true);
+        }
+
+        private void ClampPageSizeToVisibleCapacity()
+        {
+            int capacity = VisibleRowCapacity;
+            if (capacity > 0 && pageSize > capacity)
+                pageSize = capacity;
+            if (pageSize < 1)
+                pageSize = 1;
         }
 
         private void SetPageIndex(int index)
@@ -1027,7 +1468,28 @@ namespace BlazorTUI.TUI
 
             IEnumerable<int> rowIndexes = Enumerable.Range(0, SourceRowCount)
                 .Where(RowMatchesFilters);
-            if (sortDirection != GridSortDirection.None && sortColumnIndex >= 0)
+            if (groupColumnIndex >= 0)
+            {
+                IOrderedEnumerable<int> orderedRowIndexes = rowIndexes
+                    .OrderBy(index => GetCellValue(GetSourceRow(index), groupColumnIndex), StringComparer.OrdinalIgnoreCase)
+                    .ThenBy(index => index);
+
+                if (sortDirection != GridSortDirection.None && sortColumnIndex >= 0)
+                {
+                    rowIndexes = sortDirection == GridSortDirection.Ascending
+                        ? orderedRowIndexes
+                            .ThenBy(index => GetCellValue(GetSourceRow(index), sortColumnIndex), StringComparer.OrdinalIgnoreCase)
+                            .ThenBy(index => index)
+                        : orderedRowIndexes
+                            .ThenByDescending(index => GetCellValue(GetSourceRow(index), sortColumnIndex), StringComparer.OrdinalIgnoreCase)
+                            .ThenBy(index => index);
+                }
+                else
+                {
+                    rowIndexes = orderedRowIndexes;
+                }
+            }
+            else if (sortDirection != GridSortDirection.None && sortColumnIndex >= 0)
             {
                 rowIndexes = sortDirection == GridSortDirection.Ascending
                     ? rowIndexes
@@ -1203,19 +1665,69 @@ namespace BlazorTUI.TUI
             }
         }
 
-        private bool MoveSelectedColumn(int direction)
+        private bool HandleFilterEditKeyDown(string key)
         {
-            if (selectedViewRowIndex < 0 || columns.Length == 0)
+            if (filterEditColumnIndex < 0)
                 return false;
 
-            int currentColumnIndex = selectedColumnIndex < 0 ? 0 : selectedColumnIndex;
-            selectedColumnIndex = Math.Clamp(currentColumnIndex + direction, 0, columns.Length - 1);
+            switch (key)
+            {
+                case "Enter":
+                    return CommitFilterEdit();
+                case "Escape":
+                    return CancelFilterEdit();
+                case "Home":
+                    filterEditCursor = 0;
+                    return true;
+                case "End":
+                    filterEditCursor = TuiText.TextElementCount(filterEditValue);
+                    return true;
+                case "ArrowLeft":
+                    filterEditCursor = TuiText.PreviousTextElementIndex(filterEditValue, filterEditCursor);
+                    return true;
+                case "ArrowRight":
+                    filterEditCursor = TuiText.NextTextElementIndex(filterEditValue, filterEditCursor);
+                    return true;
+                case "Backspace":
+                    if (filterEditCursor > 0)
+                    {
+                        filterEditValue = TuiText.RemoveTextElements(filterEditValue, filterEditCursor - 1, 1);
+                        filterEditCursor--;
+                    }
+                    return true;
+                case "Delete":
+                    if (filterEditCursor < TuiText.TextElementCount(filterEditValue))
+                        filterEditValue = TuiText.RemoveTextElements(filterEditValue, filterEditCursor, 1);
+                    return true;
+                default:
+                    if (TuiText.TextElementCount(key) == 1)
+                    {
+                        filterEditValue = TuiText.InsertAtTextElement(filterEditValue, filterEditCursor, key);
+                        filterEditCursor += TuiText.TextElementCount(key);
+                    }
+                    return true;
+            }
+        }
+
+        private bool MoveSelectedColumn(int direction)
+        {
+            if (selectedViewRowIndex < 0 || columnOrder.Count == 0)
+                return false;
+
+            int currentVisibleIndex = selectedColumnIndex < 0
+                ? 0
+                : columnOrder.IndexOf(selectedColumnIndex);
+            if (currentVisibleIndex < 0)
+                currentVisibleIndex = 0;
+
+            int nextVisibleIndex = Math.Clamp(currentVisibleIndex + direction, 0, columnOrder.Count - 1);
+            selectedColumnIndex = columnOrder[nextVisibleIndex];
             return true;
         }
 
         private int GetFirstEditableColumnIndex()
         {
-            for (int index = 0; index < columns.Length; index++)
+            foreach (int index in columnOrder)
             {
                 if (columns[index].IsEditable)
                     return index;
@@ -1376,24 +1888,34 @@ namespace BlazorTUI.TUI
             return true;
         }
 
-        private string GetRenderedCharacter(int localX, int localY)
+        private string GetRenderedCharacter(
+            int localX,
+            int localY,
+            string headerRow,
+            string filterRow,
+            IReadOnlyList<GridRenderLine> pageLines,
+            IReadOnlyList<string> renderedFooterRows)
         {
             if (localX == Width - 1)
                 return GetPageNavigationCharacter(localY);
 
             if (localY == 0)
-                return GetCharacterAt(BuildHeaderRow(), localX);
+                return GetCharacterAt(headerRow, localX);
 
-            if (localY == 1)
+            if (showFilterRow && localY == 1)
+                return GetCharacterAt(filterRow, localX);
+
+            if (localY == SeparatorLocalY)
                 return "─";
 
-            int pageRowIndex = localY - 2;
-            int rowIndex = PageStartRowIndex + pageRowIndex;
-            if (pageRowIndex < 0 || pageRowIndex >= VisibleRowCapacity || rowIndex >= ViewRowCount)
+            if (TryGetFooterIndexAtLocalY(localY, out int footerIndex))
+                return GetCharacterAt(renderedFooterRows[footerIndex], localX);
+
+            int pageLineIndex = localY - DataStartLocalY;
+            if (pageLineIndex < 0 || pageLineIndex >= pageLines.Count)
                 return " ";
 
-            int sourceRowIndex = GetSourceRowIndex(rowIndex);
-            return GetCharacterAt(BuildDataRow(GetSourceRow(sourceRowIndex), sourceRowIndex), localX);
+            return GetCharacterAt(pageLines[pageLineIndex].Text, localX);
         }
 
         private string GetPageNavigationCharacter(int localY)
@@ -1407,28 +1929,47 @@ namespace BlazorTUI.TUI
             return PageCount > 1 ? "│" : " ";
         }
 
-        private bool IsSelectedDataCell(int localY)
+        private bool IsSelectedDataCell(int localY, IReadOnlyList<GridRenderLine> pageLines)
         {
-            if (localY < 2 || selectedViewRowIndex < 0)
+            if (localY < DataStartLocalY || selectedViewRowIndex < 0)
                 return false;
 
-            int rowIndex = PageStartRowIndex + localY - 2;
-            return rowIndex == selectedViewRowIndex;
+            return TryGetDataRowIndexAtLocalY(localY, pageLines, out int rowIndex) &&
+                rowIndex == selectedViewRowIndex;
         }
 
         private string BuildHeaderRow()
         {
             var builder = new StringBuilder();
-            for (int index = 0; index < columns.Length; index++)
+            foreach (int index in columnOrder)
             {
                 GridColumn column = columns[index];
                 string title = column.Title;
                 string filterIndicator = columnFilters[index] is not null ? "◊" : "";
+                string groupIndicator = index == groupColumnIndex ? "◆" : "";
                 string sortIndicator = index == sortColumnIndex
                     ? sortDirection == GridSortDirection.Ascending ? "▲" : "▼"
                     : "";
-                string indicator = filterIndicator + sortIndicator;
+                string indicator = filterIndicator + groupIndicator + sortIndicator;
                 builder.Append(FormatCell(title, column.Width, indicator));
+            }
+
+            return builder.ToString();
+        }
+
+        private string BuildFilterRow()
+        {
+            var builder = new StringBuilder();
+            foreach (int index in columnOrder)
+            {
+                string value = index == filterEditColumnIndex
+                    ? filterEditValue
+                    : columnFilters[index]?.Kind == GridViewFilterKind.Text &&
+                        columnFilters[index]?.Values.Length > 0
+                            ? columnFilters[index]!.Values[0]
+                            : "";
+                string indicator = index == filterEditColumnIndex ? ">" : "";
+                builder.Append(FormatCell(value, columns[index].Width, indicator));
             }
 
             return builder.ToString();
@@ -1437,7 +1978,7 @@ namespace BlazorTUI.TUI
         private string BuildDataRow(GridRow row, int sourceRowIndex)
         {
             var builder = new StringBuilder();
-            for (int index = 0; index < columns.Length; index++)
+            foreach (int index in columnOrder)
             {
                 string value = editState is not null &&
                     editState.SourceRowIndex == sourceRowIndex &&
@@ -1445,6 +1986,29 @@ namespace BlazorTUI.TUI
                         ? GetEditDisplayValue(columns[index], editState.Value)
                         : GetCellValue(row, index);
                 builder.Append(FormatCell(value, columns[index].Width));
+            }
+
+            return builder.ToString();
+        }
+
+        private string BuildGroupRow(int columnIndex, string value)
+        {
+            string text = $"▸ {columns[columnIndex].Title}: {value}";
+            return TuiText.PadRightToVisualWidth(text, Math.Max(0, Width - 1));
+        }
+
+        private string BuildFooterRow(GridAggregateFooter footer)
+        {
+            IReadOnlyList<GridRow> rows = GetAllViewRows().ToList();
+            string value = footer.GetValue(rows);
+            var builder = new StringBuilder();
+            for (int visibleIndex = 0; visibleIndex < columnOrder.Count; visibleIndex++)
+            {
+                int columnIndex = columnOrder[visibleIndex];
+                string text = columnIndex == footer.ColumnIndex
+                    ? value
+                    : visibleIndex == 0 ? footer.Label : "";
+                builder.Append(FormatCell(text, columns[columnIndex].Width));
             }
 
             return builder.ToString();
@@ -1479,7 +2043,7 @@ namespace BlazorTUI.TUI
         private int GetColumnIndexAt(short localX)
         {
             int cursor = 0;
-            for (int index = 0; index < columns.Length; index++)
+            foreach (int index in columnOrder)
             {
                 int nextCursor = cursor + columns[index].Width;
                 if (localX >= cursor && localX < nextCursor - 1)
@@ -1494,8 +2058,14 @@ namespace BlazorTUI.TUI
         private int GetColumnStart(int columnIndex)
         {
             int cursor = 0;
-            for (int index = 0; index < columnIndex; index++)
+            foreach (int index in columnOrder)
+            {
+                if (index == columnIndex)
+                    return cursor;
+
                 cursor += columns[index].Width;
+            }
+
             return cursor;
         }
 
@@ -1503,6 +2073,95 @@ namespace BlazorTUI.TUI
         {
             for (int index = PageStartRowIndex; index <= PageEndRowIndex; index++)
                 yield return index;
+        }
+
+        private IEnumerable<int> GetAllViewIndexes()
+        {
+            for (int index = 0; index < ViewRowCount; index++)
+                yield return index;
+        }
+
+        private IEnumerable<GridRow> GetAllViewRows()
+            => GetAllViewIndexes().Select(index => GetSourceRow(GetSourceRowIndex(index)));
+
+        private IReadOnlyList<GridRenderLine> BuildPageLines()
+        {
+            var lines = new List<GridRenderLine>();
+            string? previousGroupValue = null;
+            for (int rowIndex = PageStartRowIndex; rowIndex <= PageEndRowIndex; rowIndex++)
+            {
+                if (rowIndex < 0 || rowIndex >= ViewRowCount || lines.Count >= VisibleRowCapacity)
+                    break;
+
+                int sourceRowIndex = GetSourceRowIndex(rowIndex);
+                GridRow row = GetSourceRow(sourceRowIndex);
+                if (groupColumnIndex >= 0)
+                {
+                    string groupValue = GetCellValue(row, groupColumnIndex);
+                    if (!string.Equals(previousGroupValue, groupValue, StringComparison.Ordinal))
+                    {
+                        lines.Add(new GridRenderLine(-1, BuildGroupRow(groupColumnIndex, groupValue)));
+                        previousGroupValue = groupValue;
+                        if (lines.Count >= VisibleRowCapacity)
+                            break;
+                    }
+                }
+
+                lines.Add(new GridRenderLine(rowIndex, BuildDataRow(row, sourceRowIndex)));
+            }
+
+            return lines;
+        }
+
+        private bool TryGetDataRowIndexAtLocalY(int localY, out int rowIndex)
+            => TryGetDataRowIndexAtLocalY(localY, BuildPageLines(), out rowIndex);
+
+        private bool TryGetDataRowIndexAtLocalY(
+            int localY,
+            IReadOnlyList<GridRenderLine> pageLines,
+            out int rowIndex)
+        {
+            rowIndex = -1;
+            int pageLineIndex = localY - DataStartLocalY;
+            if (pageLineIndex < 0)
+                return false;
+
+            if (pageLineIndex >= pageLines.Count || pageLines[pageLineIndex].ViewRowIndex < 0)
+                return false;
+
+            rowIndex = pageLines[pageLineIndex].ViewRowIndex;
+            return true;
+        }
+
+        private bool TryGetFooterIndexAtLocalY(int localY, out int footerIndex)
+        {
+            footerIndex = localY - FooterStartLocalY;
+            return footerIndex >= 0 && footerIndex < footerRows.Count;
+        }
+
+        private int[] GetExportColumnIndexes(bool visibleColumnsOnly)
+            => visibleColumnsOnly
+                ? columnOrder.ToArray()
+                : Enumerable.Range(0, columns.Length).ToArray();
+
+        private static void AppendDelimitedLine(StringBuilder builder, IEnumerable<string> values, string delimiter)
+        {
+            if (builder.Length > 0)
+                builder.AppendLine();
+
+            builder.Append(string.Join(delimiter, values.Select(value => EscapeDelimitedValue(value ?? "", delimiter))));
+        }
+
+        private static string EscapeDelimitedValue(string value, string delimiter)
+        {
+            bool mustQuote = value.Contains('"') ||
+                value.Contains('\r') ||
+                value.Contains('\n') ||
+                (delimiter.Length > 0 && value.Contains(delimiter, StringComparison.Ordinal));
+            if (!mustQuote)
+                return value;
+
+            return $"\"{value.Replace("\"", "\"\"", StringComparison.Ordinal)}\"";
         }
 
         private bool TryGetCell(IList<Row> rows, int localX, int localY, out Cell cell)
@@ -1533,12 +2192,14 @@ namespace BlazorTUI.TUI
             return true;
         }
 
-        private bool IsEditingCell(int localX, int localY)
+        private bool IsEditingCell(int localX, int localY, IReadOnlyList<GridRenderLine> pageLines)
         {
-            if (editState is null || localY < 2)
+            if (editState is null || localY < DataStartLocalY)
                 return false;
 
-            int rowIndex = PageStartRowIndex + localY - 2;
+            if (!TryGetDataRowIndexAtLocalY(localY, pageLines, out int rowIndex))
+                return false;
+
             if (rowIndex != editState.RowIndex)
                 return false;
 
@@ -1547,9 +2208,9 @@ namespace BlazorTUI.TUI
             return localX >= columnStart && localX < columnEnd;
         }
 
-        private bool IsEditCursorCell(int localX, int localY)
+        private bool IsEditCursorCell(int localX, int localY, bool isEditingCell)
         {
-            if (editState is null || !IsEditingCell(localX, localY))
+            if (editState is null || !isEditingCell)
                 return false;
 
             int columnStart = GetColumnStart(editState.ColumnIndex);
@@ -1559,11 +2220,39 @@ namespace BlazorTUI.TUI
             return localX == cursorColumn;
         }
 
+        private bool IsFilterEditingCell(int localX, int localY)
+        {
+            if (filterEditColumnIndex < 0 || !showFilterRow || localY != 1)
+                return false;
+
+            int columnStart = GetColumnStart(filterEditColumnIndex);
+            int columnEnd = columnStart + columns[filterEditColumnIndex].Width - 1;
+            return localX >= columnStart && localX < columnEnd;
+        }
+
+        private bool IsFilterEditCursorCell(int localX, int localY)
+        {
+            if (!IsFilterEditingCell(localX, localY))
+                return false;
+
+            int columnStart = GetColumnStart(filterEditColumnIndex);
+            int cursorColumn = columnStart + Math.Min(
+                TuiText.VisualWidth(filterEditValue, filterEditCursor),
+                Math.Max(0, columns[filterEditColumnIndex].Width - 2));
+            return localX == cursorColumn;
+        }
+
         private int PageStartRowIndex => Math.Min(pageIndex * PageSize, ViewRowCount);
 
         private int PageEndRowIndex => Math.Min(PageStartRowIndex + PageRowCapacity, ViewRowCount) - 1;
 
-        private int VisibleRowCapacity => Math.Max(0, Height - 2);
+        private int SeparatorLocalY => showFilterRow ? 2 : 1;
+
+        private int DataStartLocalY => SeparatorLocalY + 1;
+
+        private int FooterStartLocalY => Height - footerRows.Count;
+
+        private int VisibleRowCapacity => Math.Max(0, Height - DataStartLocalY - footerRows.Count);
 
         private int PageRowCapacity => Math.Min(PageSize, VisibleRowCapacity);
 
@@ -1574,7 +2263,10 @@ namespace BlazorTUI.TUI
         private int ViewRowCount => UsesSequentialVirtualView ? SourceRowCount : viewRowIndexes.Count;
 
         private bool UsesSequentialVirtualView
-            => virtualRows is not null && sortDirection == GridSortDirection.None && !HasActiveFilters;
+            => virtualRows is not null &&
+                sortDirection == GridSortDirection.None &&
+                groupColumnIndex < 0 &&
+                !HasActiveFilters;
 
         private int GetSourceRowIndex(int viewRowIndex)
         {
@@ -1640,6 +2332,12 @@ namespace BlazorTUI.TUI
                 throw new ArgumentOutOfRangeException(nameof(columnIndex));
         }
 
+        private void InitializeColumnOrder()
+        {
+            columnOrder.Clear();
+            columnOrder.AddRange(Enumerable.Range(0, columns.Length));
+        }
+
         private int ValidatePageSize(int value)
         {
             ArgumentOutOfRangeException.ThrowIfLessThan(value, 1);
@@ -1700,6 +2398,10 @@ namespace BlazorTUI.TUI
         private sealed record ActiveRowFilter(
             string Description,
             Func<GridRow, bool> Predicate);
+
+        private sealed record GridRenderLine(
+            int ViewRowIndex,
+            string Text);
 
         private sealed record CellEditState(
             int RowIndex,

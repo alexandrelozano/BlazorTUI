@@ -316,6 +316,91 @@ public class GridViewTests
     }
 
     [Fact]
+    public void ColumnLayoutCanHideResizeReorderAndExportVisibleRows()
+    {
+        var screen = new Screen(40, 8);
+        GridView grid = CreateOrdersGrid(pageSize: 3);
+        screen.TopContainer.AddControl(grid);
+
+        grid.HideColumn(0);
+        grid.SetColumnWidth(1, 10);
+        grid.MoveColumn(2, 0);
+        screen.Render();
+
+        Assert.Equal(new[] { 2, 1 }, grid.VisibleColumnIndexes);
+        Assert.StartsWith("Status│Pizza", Read(screen, 1, 1, 18));
+        Assert.DoesNotContain("Order", grid.ExportCsv());
+        Assert.Equal(
+            "Status,Pizza" + Environment.NewLine +
+            "Cooking,Pepperoni" + Environment.NewLine +
+            "Hold,Calzone" + Environment.NewLine +
+            "Ready,Veggie" + Environment.NewLine +
+            "Done,Margherita" + Environment.NewLine +
+            "Cooking,Hawaiian",
+            grid.ExportCsv());
+        Assert.Contains("Order", grid.ExportCsv(visibleColumnsOnly: false));
+    }
+
+    [Fact]
+    public void FilterRowEditsTextFilterFromKeyboard()
+    {
+        GridView grid = CreateOrdersGrid(pageSize: 3);
+        grid.ShowFilterRow = true;
+
+        Assert.True(grid.BeginFilterEdit(1));
+        grid.KeyDown("C", false);
+        grid.KeyDown("a", false);
+        grid.KeyDown("Enter", false);
+
+        Assert.False(grid.IsFilterEditing);
+        Assert.True(grid.IsFilterActive(1));
+        Assert.Equal("Ca", grid.GetFilter(1).Description);
+        Assert.Equal(new[] { "Calzone" }, grid.CurrentPageRows.Select(row => row.Cells[1]));
+
+        Assert.True(grid.BeginFilterEdit(1));
+        grid.KeyDown("Backspace", false);
+        grid.KeyDown("Backspace", false);
+        grid.KeyDown("Enter", false);
+
+        Assert.False(grid.HasActiveFilters);
+    }
+
+    [Fact]
+    public void GroupingAndAggregateFootersRenderComputedRows()
+    {
+        var screen = new Screen(60, 12);
+        GridView grid = CreateOrdersGrid(pageSize: 3);
+        grid.GroupByColumn(2);
+        grid.AddCountFooter("Rows", 2);
+        screen.TopContainer.AddControl(grid);
+
+        screen.Render();
+
+        Assert.Equal(2, grid.GroupColumnIndex);
+        Assert.Contains("◆", Read(screen, 1, 1, 24));
+        Assert.Contains("Status: Cooking", Read(screen, 1, 3, 30));
+        Assert.Contains("Rows", Read(screen, 1, 5, 24) + Read(screen, 1, 6, 24) + Read(screen, 1, 7, 24));
+    }
+
+    [Fact]
+    public async Task LoadRowsAsyncReplacesMaterializedRowsAndPreservesGridOperations()
+    {
+        GridView grid = CreateOrdersGrid(pageSize: 3);
+
+        await grid.LoadRowsAsync(_ => Task.FromResult<IEnumerable<GridView.GridRow>>(new[]
+        {
+            new GridView.GridRow { Cells = new[] { "10", "Funghi", "Ready" } },
+            new GridView.GridRow { Cells = new[] { "11", "Diavola", "Cooking" } }
+        }));
+
+        Assert.False(grid.IsLoading);
+        Assert.Equal(2, grid.RowCount);
+        grid.SortByColumn(1);
+
+        Assert.Equal(new[] { "Diavola", "Funghi" }, grid.CurrentPageRows.Select(row => row.Cells[1]));
+    }
+
+    [Fact]
     public void ValidatesArguments()
     {
         Assert.Throws<ArgumentException>(() =>

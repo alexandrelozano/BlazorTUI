@@ -346,6 +346,26 @@
         ordersGrid.SetRowFilter(row => row.Cells[0] != "2", "Exclude order two");
         _ = ordersGrid.RowFilter;
         ordersGrid.ClearFilters();
+        ordersGrid.ShowFilterRow = true;
+        ordersGrid.BeginFilterEdit(1);
+        ordersGrid.KeyDown("V", false);
+        _ = ordersGrid.CommitFilterEdit();
+        ordersGrid.ClearFilters();
+        ordersGrid.HideColumn(0);
+        ordersGrid.ShowColumn(0);
+        ordersGrid.MoveColumn(1, 0);
+        ordersGrid.SetColumnWidth(1, 10);
+        ordersGrid.SetColumnOrder(new[] { 0, 1 });
+        ordersGrid.GroupByColumn(1);
+        ordersGrid.ClearGrouping();
+        ordersGrid.AddCountFooter("Rows", 1);
+        _ = ordersGrid.ExportCsv();
+        _ = ordersGrid.ExportTsv();
+        ordersGrid.ClearAggregateFooters();
+        _ = ordersGrid.LoadRowsAsync(_ => Task.FromResult<IEnumerable<GridView.GridRow>>(new[]
+        {
+            new GridView.GridRow { Cells = new[] { "4", "Margherita" } }
+        }));
         terminal.TopContainer.AddControl(ordersGrid);
         var commands = new CommandPalette(
             "commands",

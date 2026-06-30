@@ -861,6 +861,34 @@ frame.AddControl(orders);
 
 Use `SortByColumn(columnIndex)` to toggle ascending/descending sorting, or `SortByColumn(columnIndex, direction)` for an explicit `GridSortDirection`. `ClearSort` restores the original row order. Use `SetTextFilter`, `SetExactFilter`, `SetColumnFilter`, `SetRowFilter`, `ClearFilter`, `ClearRowFilter`, and `ClearFilters` to control filtering. `Filters`, `RowFilter`, `HasActiveFilters`, and `FilteredRowCount` expose the current filtered state. Filtered columns show a `◊` marker in the header; sorted columns show `▲` or `▼`. `NextPage`, `PreviousPage`, `GoToPage`, `PageIndex`, `PageSize`, and `PageCount` manage pagination. `SelectedRow`, `SelectedRowIndex`, `SelectedSourceRowIndex`, `SelectedColumnIndex`, `SelectRow`, `SelectSourceRow`, and `SelectCell` manage selection. Use `BeginEdit`, `CommitEdit`, and `CancelEdit` for programmatic cell editing; users can start editing an editable cell with `Enter`, commit with `Enter`, and cancel with `Escape`. Column editors support `TextBox`, `ComboBox`, `CheckBox`, `NumericBox`, and `DateBox` modes through `GridViewCellEditorKind`, plus per-column validation rules and typed `CellEditStarted`, `CellEditCommitted`, and `CellEditCanceled` events. Clicking a column header sorts it, clicking the up/down glyphs changes pages, and `PageUp`/`PageDown` work from the keyboard.
 
+Advanced grid operations are available without changing the existing row and column model:
+
+```csharp
+orders.ShowFilterRow = true;
+orders.BeginFilterEdit(columnIndex: 1); // type and press Enter, or call SetTextFilter directly
+
+orders.HideColumn(2);
+orders.MoveColumn(3, visibleIndex: 0);
+orders.SetColumnWidth(1, 16);
+orders.ShowAllColumns();
+
+orders.GroupByColumn(3);
+orders.AddCountFooter("Rows", columnIndex: 3);
+
+string csv = orders.ExportCsv();
+
+await orders.LoadRowsAsync(async cancellationToken =>
+{
+    OrderDto[] rows = await client.GetFromJsonAsync<OrderDto[]>("/api/orders", cancellationToken) ?? [];
+    return rows.Select(order => new GridView.GridRow
+    {
+        Cells = new[] { order.Id, order.Pizza, order.Status }
+    });
+});
+```
+
+Use `ShowFilterRow`, `BeginFilterEdit`, `CommitFilterEdit`, and `CancelFilterEdit` for the built-in filter row. Use `VisibleColumnIndexes`, `VisibleColumns`, `IsColumnVisible`, `SetColumnVisible`, `ShowColumn`, `HideColumn`, `ShowAllColumns`, `MoveColumn`, `SetColumnOrder`, and `SetColumnWidth` to control column visibility, order, and width. Grouping is controlled with `GroupByColumn`, `ClearGrouping`, and `GroupColumnIndex`; grouped columns show a `◆` marker. Aggregate footers are configured with `AddAggregateFooter`, `AddCountFooter`, `AddSumFooter`, `ClearAggregateFooters`, and `AggregateFooters`. `ExportCsv`, `ExportTsv`, and `ExportDelimited` export the current filtered/sorted view, using visible columns by default. `LoadRowsAsync` replaces materialized rows from an asynchronous loader while preserving filtering, sorting, paging, selection rules, and validation of row shape.
+
 ## Large data virtualization
 
 For data-heavy screens, use virtual data providers instead of passing a fully materialized list. The control keeps the same terminal rendering model but asks the provider only for the visible rows or items it needs:
@@ -1127,7 +1155,7 @@ The repository contains focused pages that can be run directly:
 | [Additional inputs](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/AdditionalInputs.razor) | Search boxes, autocomplete suggestions, masked input, toggle switches, and multi-select combo boxes |
 | [Form validation](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/FormValidation.razor) | Required fields, custom validation rules, inline error messages, and first-invalid focus |
 | [DataForm](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/DataFormExample.razor) | Model-bound generated form fields, validation summary, submit-time updates, and editor factories |
-| [GridView](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/GridViewExample.razor) | Sorting, pagination, row selection, filters, filter indicators, editable cells, column editors, validation, and edit events |
+| [GridView](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/GridViewExample.razor) | Sorting, pagination, row selection, filter row UI, editable cells, column layout, grouping, aggregate footers, export helpers, async loading, validation, and edit events |
 | [Data visualizations](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/DataVisualizations.razor) | Sparklines, bar charts, gauges, timelines, and aligned key/value details |
 | [Dialogs and menus](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/DialogsAndMenus.razor) | Menu shortcuts, custom modal dialogs, and message boxes |
 | [Images](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/Images.razor) | Loading encoded image bytes into a `PictureBox` |
@@ -1160,6 +1188,8 @@ Run `dotnet run --project SampleApp` from the repository root and open `/` or `/
 - Added submit-time validation, first-invalid focus, validation-summary updates, model-update events, default editor generation, custom editor factories, explicit editor binding, focused executable examples, regression tests, and NuGet consumer coverage.
 - Added input controls: `SearchBox`, `AutoCompleteBox`, `MaskedTextBox`, `ToggleSwitch`, and `MultiSelectComboBox`.
 - Added typed events, validation values, popup handling, theme integration, state persistence, focused executable examples, regression tests, and NuGet consumer coverage for the additional input controls.
+- Added advanced `GridView` data operations: built-in filter row editing, column visibility, column resizing, column reordering, row grouping, aggregate footer rows, CSV/TSV/delimited export helpers, and async materialized row loading.
+- Updated the GridView example, regression tests, and NuGet consumer coverage for the expanded GridView API.
 
 ### 0.8.13 — 2026-06-29
 

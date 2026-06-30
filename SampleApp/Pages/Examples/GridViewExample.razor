@@ -7,7 +7,7 @@
 <BlazorTUI.BlazorTUI
     screen="@screen"
     AriaLabel="GridView example"
-    AriaDescription="Dedicated GridView example with sorting, pagination, row selection, filtering, and cell editing." />
+    AriaDescription="Dedicated GridView example with sorting, pagination, row selection, filtering, cell editing, grouping, aggregate footers, column layout, export helpers, and async loading." />
 
 @code {
     private Screen screen = null!;
@@ -16,10 +16,10 @@
 
     protected override void OnInitialized()
     {
-        screen = new Screen(60, 30);
+        screen = new Screen(60, 32);
 
         var frame = new Frame(
-            "gridFrame", "GRIDVIEW", 3, 3, 54, 24,
+            "gridFrame", "GRIDVIEW", 3, 3, 54, 26,
             Frame.BorderStyle.Line, Color.Yellow, Color.DarkBlue);
         screen.TopContainer.AddContainer(frame);
 
@@ -27,23 +27,28 @@
             "gridInstructions", "Sort, page, filter, select, or edit cells.",
             3, 2, 48, Color.White, Color.DarkBlue));
 
-        AddFilterButton(frame, "allOrdersButton", "All", 3, () =>
+        AddButton(frame, "allOrdersButton", "All", 3, 4, () =>
         {
             ordersGrid.ClearFilters();
             status.Value = $"All rows: {ordersGrid.FilteredRowCount}";
         });
-        AddFilterButton(frame, "cookingOrdersButton", "Cooking", 11, () =>
+        AddButton(frame, "cookingOrdersButton", "Cooking", 11, 4, () =>
             ApplySingleFilter(() => ordersGrid.SetExactFilter(3, "Cooking")));
-        AddFilterButton(frame, "readyOrdersButton", "Ready", 22, () =>
+        AddButton(frame, "readyOrdersButton", "Ready", 22, 4, () =>
             ApplySingleFilter(() => ordersGrid.SetExactFilter(3, "Ready")));
-        AddFilterButton(frame, "johnOrdersButton", "John", 31, () =>
+        AddButton(frame, "johnOrdersButton", "John", 31, 4, () =>
             ApplySingleFilter(() => ordersGrid.SetTextFilter(2, "John")));
-        AddFilterButton(frame, "specialOrdersButton", "Special", 39, () =>
+        AddButton(frame, "specialOrdersButton", "Special", 39, 4, () =>
             ApplySingleFilter(() => ordersGrid.SetColumnFilter(
                 1,
                 pizza => pizza.Contains("Gorgonzola", StringComparison.OrdinalIgnoreCase) ||
                     pizza.Contains("Veggie", StringComparison.OrdinalIgnoreCase),
                 "Special pizzas")));
+        AddButton(frame, "filterRowButton", "Filter UI", 3, 5, ToggleFilterRow);
+        AddButton(frame, "groupStatusButton", "Group", 16, 5, ToggleGrouping);
+        AddButton(frame, "layoutButton", "Layout", 25, 5, ToggleColumnLayout);
+        AddButton(frame, "footerButton", "Footer", 35, 5, ToggleFooter);
+        AddButton(frame, "loadButton", "Load", 44, 5, () => _ = LoadRowsExampleAsync());
 
         ordersGrid = new GridView(
             "ordersGrid",
@@ -75,7 +80,7 @@
             },
             CreateRows(),
             3,
-            7,
+            8,
             47,
             10,
             Color.Yellow,
@@ -108,7 +113,7 @@
         frame.AddControl(ordersGrid);
 
         status = new StatusBar(
-            "gridStatus", "Ready", 3, 19, 47, Color.Black, Color.Cyan)
+            "gridStatus", "Ready", 3, 20, 47, Color.Black, Color.Cyan)
         {
             Separator = "  "
         };
@@ -119,16 +124,16 @@
         frame.AddControl(status);
 
         frame.AddControl(new Label(
-            "gridFooter", "Editable columns: Pizza, Courier, Status.",
-            3, 21, 47, Color.White, Color.DarkBlue));
+            "gridFooter", "/ edits filter UI. Layout hides courier/moves status.",
+            3, 22, 47, Color.White, Color.DarkBlue));
 
         screen.SetFocus("ordersGrid");
     }
 
-    private void AddFilterButton(Frame frame, string name, string text, short x, Action action)
+    private void AddButton(Frame frame, string name, string text, short x, short y, Action action)
     {
         var button = new Button(
-            name, text, x, 4, (short)Math.Max(7, text.Length + 2),
+            name, text, x, y, (short)Math.Max(7, text.Length + 2),
             Color.White, Color.DarkGreen);
         button.Clicked += (_, _) => action();
         frame.AddControl(button);
@@ -138,6 +143,84 @@
     {
         ordersGrid.ClearFilters();
         applyFilter();
+    }
+
+    private void ToggleFilterRow()
+    {
+        ordersGrid.ShowFilterRow = !ordersGrid.ShowFilterRow;
+        if (ordersGrid.ShowFilterRow)
+        {
+            ordersGrid.BeginFilterEdit(1);
+            status.Value = "Type filter text and press Enter";
+        }
+        else
+        {
+            status.Value = "Filter UI hidden";
+        }
+    }
+
+    private void ToggleGrouping()
+    {
+        if (ordersGrid.GroupColumnIndex >= 0)
+        {
+            ordersGrid.ClearGrouping();
+            status.Value = "Grouping cleared";
+        }
+        else
+        {
+            ordersGrid.GroupByColumn(3);
+            status.Value = "Grouped by Status";
+        }
+    }
+
+    private void ToggleColumnLayout()
+    {
+        if (ordersGrid.IsColumnVisible(2))
+        {
+            ordersGrid.HideColumn(2);
+            ordersGrid.MoveColumn(3, 0);
+            ordersGrid.SetColumnWidth(1, 16);
+            status.Value = "Courier hidden, Status moved first";
+        }
+        else
+        {
+            ordersGrid.ShowAllColumns();
+            ordersGrid.SetColumnOrder(new[] { 0, 1, 2, 3 });
+            ordersGrid.SetColumnWidth(1, 14);
+            status.Value = "Column layout restored";
+        }
+    }
+
+    private void ToggleFooter()
+    {
+        if (ordersGrid.AggregateFooters.Count > 0)
+        {
+            ordersGrid.ClearAggregateFooters();
+            status.Value = "Footer cleared";
+        }
+        else
+        {
+            ordersGrid.AddCountFooter("Rows", 3);
+            status.Value = $"CSV export length: {ordersGrid.ExportCsv().Length}";
+        }
+    }
+
+    private async Task LoadRowsExampleAsync()
+    {
+        status.Value = "Loading rows...";
+        await ordersGrid.LoadRowsAsync(async _ =>
+        {
+            await Task.Delay(50);
+            return new[]
+            {
+                Row("21", "Diavola", "Nora Hall", "Cooking"),
+                Row("22", "Funghi", "Alex Carter", "Ready"),
+                Row("23", "Veggie", "Nora Hall", "Delivered"),
+                Row("24", "Margherita", "Alex Carter", "Ready")
+            };
+        });
+        status.Value = $"Async rows loaded: {ordersGrid.RowCount}";
+        StateHasChanged();
     }
 
     private static readonly string[] PizzaOptions =

@@ -79,7 +79,10 @@ public class SampleAppSmokeTests : IClassFixture<WebApplicationFactory<Program>>
 
         Assert.Contains($"<title>{title}</title>", html);
         Assert.Contains("class=\"gridfs\"", html);
-        Assert.Contains("--tui-columns:60; --tui-rows:30", html);
+        string expectedSize = route == "/examples/grid-view"
+            ? "--tui-columns:60; --tui-rows:32"
+            : "--tui-columns:60; --tui-rows:30";
+        Assert.Contains(expectedSize, html);
     }
 
     [Fact]
