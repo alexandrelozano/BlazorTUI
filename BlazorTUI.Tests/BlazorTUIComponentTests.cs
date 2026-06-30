@@ -167,6 +167,26 @@ public class BlazorTUIComponentTests : BunitContext
     }
 
     [Fact]
+    public void ComponentIgnoresEmptyKeyAndForwardsSpaceKey()
+    {
+        var screen = new Screen(12, 4);
+        var toggle = new ToggleSwitch("toggle", "Enabled", false, 0, 0, 10, Color.White, Color.Black);
+        screen.TopContainer.AddControl(toggle);
+        screen.SetFocus("toggle");
+
+        var component = Render<global::BlazorTUI.BlazorTUI>(parameters =>
+            parameters.Add(instance => instance.screen, screen));
+        var grid = component.Find(".gridfs");
+
+        Exception? exception = Record.Exception(() => grid.KeyDown(new KeyboardEventArgs { Key = "" }));
+        Assert.Null(exception);
+        Assert.False(toggle.Value);
+
+        grid.KeyDown(new KeyboardEventArgs { Key = " " });
+        Assert.True(toggle.Value);
+    }
+
+    [Fact]
     public void OpenDialogsAreAnnounced()
     {
         var screen = new Screen(12, 6);

@@ -15,6 +15,7 @@
     private static readonly ExampleDestination[] Destinations =
     {
         new("controlsExample", "Controls and events", "Inputs and callbacks", "/examples/controls-events"),
+        new("additionalInputsExample", "Additional inputs", "Search, masks, multi", "/examples/additional-inputs"),
         new("validationExample", "Form validation", "Required fields", "/examples/form-validation"),
         new("dataFormExample", "DataForm", "Model-bound fields", "/examples/data-form"),
         new("gridViewExample", "GridView", "Sorting, pages, filters", "/examples/grid-view"),
@@ -44,10 +45,10 @@
 
     protected override void OnInitialized()
     {
-        screen = new Screen(80, 34);
+        screen = new Screen(80, 38);
 
         var frame = new Frame(
-            "examplesFrame", "BLAZORTUI EXAMPLES", 1, 2, 78, 30,
+            "examplesFrame", "BLAZORTUI EXAMPLES", 1, 2, 78, 34,
             Frame.BorderStyle.Line, Color.Yellow, Color.DarkBlue);
         screen.TopContainer.AddContainer(frame);
 
@@ -62,8 +63,8 @@
         for (int index = 0; index < Destinations.Length; index++)
         {
             ExampleDestination destination = Destinations[index];
-            short column = (short)(3 + (index / 8) * 25);
-            short row = (short)(5 + (index % 8) * 3);
+            short column = (short)(3 + (index / 9) * 25);
+            short row = (short)(5 + (index % 9) * 3);
             var button = new Button(
                 destination.ControlName, destination.Title,
                 column, row, 21, Color.Yellow, Color.Black);
@@ -77,7 +78,7 @@
 
         frame.AddControl(new Label(
             "catalogFooter", "Root page: this catalog. Mouse clicks supported.",
-            3, 28, 72, Color.White, Color.DarkBlue));
+            3, 32, 72, Color.White, Color.DarkBlue));
 
         screen.SetFocus(Destinations[0].ControlName);
     }

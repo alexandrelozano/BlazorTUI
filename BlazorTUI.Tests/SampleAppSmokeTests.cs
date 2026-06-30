@@ -29,7 +29,7 @@ public class SampleAppSmokeTests : IClassFixture<WebApplicationFactory<Program>>
         Assert.Contains("<title>BlazorTUI examples</title>", html);
         Assert.Contains("_framework/blazor.server.js", html);
         Assert.Contains("class=\"gridfs\"", html);
-        Assert.Contains("--tui-columns:80; --tui-rows:34", html);
+        Assert.Contains("--tui-columns:80; --tui-rows:38", html);
         Assert.Contains("aria-label=\"BlazorTUI example catalog\"", html);
     }
 
@@ -42,12 +42,13 @@ public class SampleAppSmokeTests : IClassFixture<WebApplicationFactory<Program>>
 
         Assert.Contains("<title>BlazorTUI examples</title>", html);
         Assert.Contains("class=\"gridfs\"", html);
-        Assert.Contains("--tui-columns:80; --tui-rows:34", html);
+        Assert.Contains("--tui-columns:80; --tui-rows:38", html);
         Assert.Contains("aria-label=\"BlazorTUI example catalog\"", html);
     }
 
     [Theory]
     [InlineData("/examples/controls-events", "Controls and events example")]
+    [InlineData("/examples/additional-inputs", "Additional input controls example")]
     [InlineData("/examples/form-validation", "Form validation example")]
     [InlineData("/examples/data-form", "DataForm example")]
     [InlineData("/examples/grid-view", "GridView example")]

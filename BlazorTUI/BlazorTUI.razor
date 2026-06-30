@@ -401,6 +401,9 @@
 
     private void HandleKeyDown(KeyboardEventArgs e)
     {
+        if (string.IsNullOrEmpty(e.Key))
+            return;
+
         TuiKeyGesture gesture = TuiKeyGesture.FromKeyboardEvent(e.Key, e.CtrlKey, e.ShiftKey, e.AltKey, e.MetaKey);
         if (screen.Shortcuts.TryGetAction(gesture, out TuiShortcutAction action))
         {

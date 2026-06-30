@@ -1,0 +1,100 @@
+@page "/examples/additional-inputs"
+@using global::BlazorTUI.TUI
+@using Color = System.Drawing.Color
+
+<PageTitle>Additional input controls example</PageTitle>
+
+<BlazorTUI.BlazorTUI
+    screen="@screen"
+    AriaLabel="Additional input controls example"
+    AriaDescription="Shows search, autocomplete, masked, toggle, and multi-select input controls." />
+
+@code {
+    private readonly Screen screen = CreateScreen();
+
+    private static Screen CreateScreen()
+    {
+        var screen = new Screen(60, 30);
+        var frame = new Frame(
+            "additionalInputsFrame", "ADDITIONAL INPUTS", 4, 3, 52, 22,
+            Frame.BorderStyle.Line, Color.Yellow, Color.DarkBlue);
+        screen.TopContainer.AddContainer(frame);
+
+        var status = new StatusBar(
+            "additionalInputsStatus",
+            "Use Enter, F4, arrows, and Space.",
+            3, 19, 46,
+            Color.Black, Color.Cyan)
+        {
+            Separator = "  "
+        };
+        status.AddItem("hint", "Tab focus");
+        frame.AddControl(status);
+
+        frame.AddControl(new Label(
+            "searchLabel", "Search:", 3, 3, 11,
+            Color.White, Color.DarkBlue));
+        var search = new SearchBox(
+            "searchBox", "pizza", 16, 3, 22,
+            Color.Yellow, Color.Black);
+        search.SearchRequested += (_, args) => status.Value = $"Search: {args.Value}";
+        search.Cleared += (_, _) => status.Value = "Search cleared";
+        frame.AddControl(search);
+
+        frame.AddControl(new Label(
+            "autoLabel", "City:", 3, 6, 11,
+            Color.White, Color.DarkBlue));
+        var city = new AutoCompleteBox(
+            "cityAutoComplete",
+            "",
+            new[] { "Barcelona", "Berlin", "Brussels", "Madrid", "Milan", "Paris", "Valencia" },
+            16, 6, 22,
+            Color.Yellow, Color.Black,
+            maxDropDownItems: 4);
+        city.SuggestionSelected += (_, args) => status.Value = $"City: {args.Item}";
+        frame.AddControl(city);
+
+        frame.AddControl(new Label(
+            "phoneLabel", "Phone:", 3, 10, 11,
+            Color.White, Color.DarkBlue));
+        var phone = new MaskedTextBox(
+            "phoneMask", "000-000-000", "555123",
+            16, 10,
+            Color.Yellow, Color.Black)
+        {
+            IsRequired = true,
+            RequiredMessage = "Phone incomplete"
+        };
+        frame.AddControl(phone);
+
+        var enabled = new ToggleSwitch(
+            "enabledSwitch", "Enable alerts", true,
+            3, 13, 28,
+            Color.Yellow, Color.DarkBlue);
+        enabled.ValueChanged += (_, args) => status.Value = args.Value ? "Alerts on" : "Alerts off";
+        frame.AddControl(enabled);
+
+        frame.AddControl(new Label(
+            "tagsLabel", "Tags:", 3, 16, 11,
+            Color.White, Color.DarkBlue));
+        var tags = new MultiSelectComboBox(
+            "tagsMultiSelect",
+            new[] { "Online", "VIP", "Late", "Paid", "Archived" },
+            16, 16, 22,
+            Color.Yellow, Color.Black,
+            selectedItems: new[] { "Online" },
+            maxDropDownItems: 4);
+        tags.SelectionChanged += (_, args) =>
+            status.Value = $"{args.Item}: {(args.IsSelected ? "selected" : "removed")}";
+        frame.AddControl(tags);
+
+        frame.AddControl(new Label(
+            "additionalInputsHint",
+            "Masked fields validate when the mask is complete.",
+            3, 21, 46,
+            Color.Cyan, Color.DarkBlue));
+
+        screen.SetFocus("searchBox");
+        return screen;
+    }
+}

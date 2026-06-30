@@ -9,7 +9,7 @@ namespace BlazorTUI.TUI
             bool alt = false,
             bool meta = false)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(key);
+            ThrowIfInvalidKey(key);
 
             Key = NormalizeKey(key);
             Control = control;
@@ -132,7 +132,7 @@ namespace BlazorTUI.TUI
 
         internal static string NormalizeKey(string key)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(key);
+            ThrowIfInvalidKey(key);
 
             return key switch
             {
@@ -143,6 +143,14 @@ namespace BlazorTUI.TUI
                 _ when key.Length == 1 => key.ToUpperInvariant(),
                 _ => key
             };
+        }
+
+        private static void ThrowIfInvalidKey(string key)
+        {
+            ArgumentNullException.ThrowIfNull(key);
+
+            if (key.Length == 0 || (key != " " && string.IsNullOrWhiteSpace(key)))
+                throw new ArgumentException("A key gesture must contain a key.", nameof(key));
         }
 
         private static bool TryGetModifierKey(string key, out string? modifierKey)

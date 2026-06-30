@@ -466,6 +466,62 @@
         dataForm.ModelUpdated += (_, args) => _ = args.CurrentValue;
         _ = dataForm.Submit(focusFirstInvalid: false);
         terminal.TopContainer.AddContainer(dataForm);
+        var searchInput = new SearchBox(
+            "consumerSearchBox",
+            "orders",
+            0, 0, 14,
+            System.Drawing.Color.White,
+            System.Drawing.Color.Black);
+        searchInput.SearchRequested += (_, args) => _ = args.Value;
+        searchInput.Cleared += (_, _) => { };
+        searchInput.Search();
+        searchInput.Clear();
+        terminal.TopContainer.AddControl(searchInput);
+        var autoComplete = new AutoCompleteBox(
+            "consumerAutoComplete",
+            "",
+            new[] { "Barcelona", "Berlin", "Madrid" },
+            0, 0, 16,
+            System.Drawing.Color.White,
+            System.Drawing.Color.Black);
+        autoComplete.SuggestionSelected += (_, args) => _ = args.Item;
+        autoComplete.KeyDown("B", false);
+        autoComplete.KeyDown("Enter", false);
+        terminal.TopContainer.AddControl(autoComplete);
+        var masked = new MaskedTextBox(
+            "consumerMask",
+            "000-000",
+            "123",
+            0, 0,
+            System.Drawing.Color.White,
+            System.Drawing.Color.Black)
+        {
+            IsRequired = true
+        };
+        masked.KeyDown("4", false);
+        _ = masked.RawValue;
+        terminal.TopContainer.AddControl(masked);
+        var toggle = new ToggleSwitch(
+            "consumerToggle",
+            "Toggle",
+            false,
+            0, 0, 14,
+            System.Drawing.Color.White,
+            System.Drawing.Color.Black);
+        toggle.ValueChanged += (_, args) => _ = args.Value;
+        toggle.Toggle();
+        terminal.TopContainer.AddControl(toggle);
+        var multiSelect = new MultiSelectComboBox(
+            "consumerMultiSelect",
+            new[] { "Online", "VIP", "Late" },
+            0, 0, 16,
+            System.Drawing.Color.White,
+            System.Drawing.Color.Black,
+            selectedItems: new[] { "Online" });
+        multiSelect.SelectionChanged += (_, args) => _ = args.Item;
+        multiSelect.SelectItem("VIP");
+        multiSelect.DeselectItem("Online");
+        terminal.TopContainer.AddControl(multiSelect);
         terminal.SetFocus("priority");
         TuiScreenState state = terminal.ExportState();
         string serializedState = terminal.ExportStateJson();

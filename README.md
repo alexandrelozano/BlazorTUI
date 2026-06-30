@@ -183,8 +183,8 @@ Use `FirstPanel` and `SecondPanel` as normal containers for controls or nested c
 | --- | --- |
 | Layout | `Frame`, `StackPanel`, `GridPanel`, `DockPanel`, `WrapPanel`, `ScrollViewer`, `SplitPanel`, `TabControl`, `TabPage` |
 | Forms | `DataForm<TModel>`, `FormField<TModel>`, `ValidationSummary` |
-| Text and input | `Label`, `TextBox`, `PasswordBox`, `TextArea`, `NumericBox`, `DateBox`, `Calendar`, `DatePicker`, `DateRangePicker`, `MonthPicker`, `TimeBox` |
-| Selection | `CheckBox`, `RadioButton`, `RadioGroup`, `ComboBox`, `ListBox`, `TreeView`, `Slider`, `ColorPicker` |
+| Text and input | `Label`, `TextBox`, `SearchBox`, `AutoCompleteBox`, `MaskedTextBox`, `PasswordBox`, `TextArea`, `NumericBox`, `DateBox`, `Calendar`, `DatePicker`, `DateRangePicker`, `MonthPicker`, `TimeBox` |
+| Selection | `CheckBox`, `ToggleSwitch`, `RadioButton`, `RadioGroup`, `ComboBox`, `MultiSelectComboBox`, `ListBox`, `TreeView`, `Slider`, `ColorPicker` |
 | Actions and navigation | `Breadcrumb`, `BreadcrumbItem`, `Button`, `CommandPalette`, `CommandPaletteItem`, `ContextMenu`, `ContextMenuItem`, `MenuBar`, `Menu`, `MenuItem` |
 | Data and feedback | `GridView`, `Sparkline`, `BarChart`, `Gauge`, `Timeline`, `KeyValueList`, `ProgressBar`, `Spinner`, `StatusBar`, `Toast`, `PictureBox` |
 | Modal and transient UI | `Dialog`, `MessageBox`, `ModalPanel`, `Popover`, `Tooltip` |
@@ -233,7 +233,77 @@ saveButton.Clicked += (_, _) =>
 
 Validation messages are rendered inline beside the control when there is room, or below it when the right side is full. Use `ShowValidationMessage`, `ValidationMessageForeColor`, and `ValidationMessageBackgroundColor` to control that display. Use `GetInvalidControls()` when application code needs to inspect the current invalid controls after validation.
 
-`TextBox`, `PasswordBox`, `TextArea`, `DateBox`, `Calendar`, `DatePicker`, `DateRangePicker`, `MonthPicker`, `TimeBox`, `NumericBox`, `CheckBox`, `RadioButton`, `ComboBox`, `RadioGroup`, `ListBox`, `TreeView`, `Slider`, and `ColorPicker` expose their current value to validation rules. For checkboxes and radio buttons, a required field means the value must be selected.
+`TextBox`, `SearchBox`, `AutoCompleteBox`, `MaskedTextBox`, `PasswordBox`, `TextArea`, `DateBox`, `Calendar`, `DatePicker`, `DateRangePicker`, `MonthPicker`, `TimeBox`, `NumericBox`, `CheckBox`, `ToggleSwitch`, `RadioButton`, `ComboBox`, `MultiSelectComboBox`, `RadioGroup`, `ListBox`, `TreeView`, `Slider`, and `ColorPicker` expose their current value to validation rules. For checkboxes, toggle switches, and radio buttons, a required field means the value must be selected.
+
+## Additional input controls
+
+Use the specialized input controls when plain text fields need common UI behavior:
+
+```csharp
+var search = new SearchBox(
+    "orderSearch", "pizza", 3, 4, 22,
+    Color.Yellow, Color.Black);
+search.SearchRequested += (_, args) =>
+    status.Value = $"Search: {args.Value}";
+search.Cleared += (_, _) =>
+    status.Value = "Search cleared";
+frame.AddControl(search);
+
+var city = new AutoCompleteBox(
+    "cityInput",
+    "",
+    new[] { "Barcelona", "Berlin", "Brussels", "Madrid" },
+    3,
+    6,
+    22,
+    Color.Yellow,
+    Color.Black);
+city.SuggestionSelected += (_, args) =>
+    status.Value = $"City: {args.Item}";
+frame.AddControl(city);
+
+var phone = new MaskedTextBox(
+    "phoneInput",
+    "000-000-000",
+    "",
+    3,
+    8,
+    Color.Yellow,
+    Color.Black)
+{
+    IsRequired = true,
+    RequiredMessage = "Phone incomplete"
+};
+frame.AddControl(phone);
+
+var alerts = new ToggleSwitch(
+    "alertsToggle",
+    "Enable alerts",
+    true,
+    3,
+    10,
+    24,
+    Color.Yellow,
+    Color.DarkBlue);
+alerts.ValueChanged += (_, args) =>
+    status.Value = args.Value ? "Alerts on" : "Alerts off";
+frame.AddControl(alerts);
+
+var tags = new MultiSelectComboBox(
+    "tagsInput",
+    new[] { "Online", "VIP", "Late", "Paid" },
+    3,
+    12,
+    22,
+    Color.Yellow,
+    Color.Black,
+    selectedItems: new[] { "Online" });
+tags.SelectionChanged += (_, args) =>
+    status.Value = $"{args.Item}: {(args.IsSelected ? "selected" : "removed")}";
+frame.AddControl(tags);
+```
+
+`SearchBox` raises `SearchRequested` on `Enter` or the search glyph and clears with `Escape` or the clear glyph. `AutoCompleteBox` filters suggestions as users type and commits the highlighted suggestion with `Enter`. `MaskedTextBox` uses masks such as `000-000-000`; `0`/`9` accept digits, `A`/`a`/`L`/`?` accept letters, and `*` accepts letters or digits. `ToggleSwitch` is a compact boolean input. `MultiSelectComboBox` opens with `Enter`, `Space`, or `F4` and toggles highlighted items with `Space` or `Enter`.
 
 ## Data forms
 
@@ -1054,6 +1124,7 @@ The repository contains focused pages that can be run directly:
 | Example | Demonstrates |
 | --- | --- |
 | [Controls and events](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/ControlsAndEvents.razor) | Text and password input, validation, combo-box and radio-group selection, command palette actions, checkbox state, callbacks, focus order, and status messages |
+| [Additional inputs](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/AdditionalInputs.razor) | Search boxes, autocomplete suggestions, masked input, toggle switches, and multi-select combo boxes |
 | [Form validation](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/FormValidation.razor) | Required fields, custom validation rules, inline error messages, and first-invalid focus |
 | [DataForm](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/DataFormExample.razor) | Model-bound generated form fields, validation summary, submit-time updates, and editor factories |
 | [GridView](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/GridViewExample.razor) | Sorting, pagination, row selection, filters, filter indicators, editable cells, column editors, validation, and edit events |
@@ -1087,6 +1158,8 @@ Run `dotnet run --project SampleApp` from the repository root and open `/` or `/
 - Added `DataForm<TModel>` for model-bound form composition with generated field labels and editors.
 - Added `FormField<TModel>`, `FormFieldEditorKind`, `FormFieldEditorFactory<TModel>`, `FormFieldEditorContext<TModel>`, `DataFormModelUpdatedEventArgs<TModel>`, and `ValidationSummary`.
 - Added submit-time validation, first-invalid focus, validation-summary updates, model-update events, default editor generation, custom editor factories, explicit editor binding, focused executable examples, regression tests, and NuGet consumer coverage.
+- Added input controls: `SearchBox`, `AutoCompleteBox`, `MaskedTextBox`, `ToggleSwitch`, and `MultiSelectComboBox`.
+- Added typed events, validation values, popup handling, theme integration, state persistence, focused executable examples, regression tests, and NuGet consumer coverage for the additional input controls.
 
 ### 0.8.13 — 2026-06-29
 

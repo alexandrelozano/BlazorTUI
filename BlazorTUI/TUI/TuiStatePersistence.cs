@@ -99,6 +99,19 @@ namespace BlazorTUI.TUI
                     passwordBox.ExportTextInputState(passwordState);
                     passwordState.SetBoolean("IsRevealed", passwordBox.IsRevealed);
                     return passwordState;
+                case SearchBox searchBox:
+                    var searchState = new TuiElementState(nameof(SearchBox));
+                    searchBox.ExportTextInputState(searchState);
+                    return searchState;
+                case AutoCompleteBox autoCompleteBox:
+                    var autoCompleteState = new TuiElementState(nameof(AutoCompleteBox));
+                    autoCompleteBox.ExportAutoCompleteBoxState(autoCompleteState);
+                    return autoCompleteState;
+                case MaskedTextBox maskedTextBox:
+                    var maskedState = new TuiElementState(nameof(MaskedTextBox));
+                    maskedTextBox.ExportTextInputState(maskedState);
+                    maskedState.SetString("RawValue", maskedTextBox.RawValue);
+                    return maskedState;
                 case NumericBox numericBox:
                     var numericState = new TuiElementState(nameof(NumericBox));
                     numericBox.ExportTextInputState(numericState);
@@ -148,6 +161,10 @@ namespace BlazorTUI.TUI
                     var checkBoxState = new TuiElementState(nameof(CheckBox));
                     checkBoxState.SetBoolean("Value", checkBox.Value);
                     return checkBoxState;
+                case ToggleSwitch toggleSwitch:
+                    var toggleState = new TuiElementState(nameof(ToggleSwitch));
+                    toggleState.SetBoolean("Value", toggleSwitch.Value);
+                    return toggleState;
                 case RadioButton radioButton:
                     var radioButtonState = new TuiElementState(nameof(RadioButton));
                     radioButtonState.SetBoolean("Value", radioButton.Value);
@@ -156,6 +173,10 @@ namespace BlazorTUI.TUI
                     var comboState = new TuiElementState(nameof(ComboBox));
                     comboBox.ExportComboBoxState(comboState);
                     return comboState;
+                case MultiSelectComboBox multiSelectComboBox:
+                    var multiComboState = new TuiElementState(nameof(MultiSelectComboBox));
+                    multiSelectComboBox.ExportMultiSelectComboBoxState(multiComboState);
+                    return multiComboState;
                 case ListBox listBox:
                     var listState = new TuiElementState(nameof(ListBox));
                     listBox.ExportListBoxState(listState);
@@ -292,6 +313,18 @@ namespace BlazorTUI.TUI
                     if (state.TryGetBoolean("IsRevealed", out bool isRevealed))
                         passwordBox.IsRevealed = isRevealed;
                     break;
+                case SearchBox searchBox:
+                    searchBox.RestoreTextInputState(state);
+                    break;
+                case AutoCompleteBox autoCompleteBox:
+                    autoCompleteBox.RestoreAutoCompleteBoxState(state);
+                    break;
+                case MaskedTextBox maskedTextBox:
+                    if (state.TryGetString("RawValue", out string rawValue))
+                        maskedTextBox.RawValue = rawValue;
+                    else
+                        maskedTextBox.RestoreTextInputState(state);
+                    break;
                 case NumericBox numericBox:
                     numericBox.RestoreTextInputState(state);
                     if (state.TryGetBoolean("HasNumericValue", out bool hasNumericValue) && !hasNumericValue)
@@ -350,12 +383,19 @@ namespace BlazorTUI.TUI
                     if (state.TryGetBoolean("Value", out bool checkBoxValue))
                         checkBox.Value = checkBoxValue;
                     break;
+                case ToggleSwitch toggleSwitch:
+                    if (state.TryGetBoolean("Value", out bool toggleValue))
+                        toggleSwitch.Value = toggleValue;
+                    break;
                 case RadioButton radioButton:
                     if (state.TryGetBoolean("Value", out bool radioButtonValue))
                         radioButton.Value = radioButtonValue;
                     break;
                 case ComboBox comboBox:
                     comboBox.RestoreComboBoxState(state);
+                    break;
+                case MultiSelectComboBox multiSelectComboBox:
+                    multiSelectComboBox.RestoreMultiSelectComboBoxState(state);
                     break;
                 case ListBox listBox:
                     listBox.RestoreListBoxState(state);

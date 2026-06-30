@@ -59,9 +59,9 @@ namespace BlazorTUI.TUI
         private static TuiThemeRole GetDefaultRole(Control control)
             => control switch
             {
-                TextBox or PasswordBox or TextArea or NumericBox or DateBox or Calendar or DatePicker or DateRangePicker or MonthPicker or TimeBox or ComboBox or ListBox => TuiThemeRole.Input,
+                TextBox or PasswordBox or TextArea or NumericBox or DateBox or Calendar or DatePicker or DateRangePicker or MonthPicker or TimeBox or ComboBox or ListBox or SearchBox or AutoCompleteBox or MaskedTextBox or MultiSelectComboBox => TuiThemeRole.Input,
                 Button or CommandPalette or ContextMenu => TuiThemeRole.Action,
-                CheckBox or RadioButton or RadioGroup or TreeView or Slider or ColorPicker or Breadcrumb => TuiThemeRole.Selection,
+                CheckBox or ToggleSwitch or RadioButton or RadioGroup or TreeView or Slider or ColorPicker or Breadcrumb => TuiThemeRole.Selection,
                 StatusBar or Toast or ValidationSummary => TuiThemeRole.Status,
                 ProgressBar or Spinner or PictureBox or Sparkline or BarChart or Gauge => TuiThemeRole.Accent,
                 GridView or Timeline or KeyValueList or Tooltip or Popover => TuiThemeRole.Surface,
