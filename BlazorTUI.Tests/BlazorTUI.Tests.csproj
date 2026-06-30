@@ -29,4 +29,8 @@
     <ProjectReference Include="..\SampleApp\SampleApp.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="VisualSnapshots\**\*.snap" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

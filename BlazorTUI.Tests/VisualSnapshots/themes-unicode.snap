@@ -1,0 +1,35 @@
+﻿screen: 42x12
+text:
+00|                                          |
+01| ╔═══════════THEME + UNICODE══════════╗   |
+02| ║                                    ║   |
+03| ║ Café 🙂  漢 字                        ║   |
+04| ║                                    ║   |
+05| ║ é🙂 漢                               ║   |
+06| ║                                    ║   |
+07| ║ [ ON ] Unicode mode                ║   |
+08| ║ Theme: HighContrast                ║   |
+09| ╚════════════════════════════════════╝   |
+10|                                          |
+11|                                          |
+styles:
+00,00-41: fg=#FFFF00 bg=#000000 deco=None text=                                          
+01,00-41: fg=#FFFF00 bg=#000000 deco=None text= ╔═══════════THEME + UNICODE══════════╗   
+02,00-41: fg=#FFFF00 bg=#000000 deco=None text= ║                                    ║   
+03,00-02: fg=#FFFF00 bg=#000000 deco=None text= ║ 
+03,03-14: fg=#00FFFF bg=#000000 deco=None text=Café 🙂  漢 字 
+03,15-41: fg=#FFFF00 bg=#000000 deco=None text=                       ║   
+04,00-41: fg=#FFFF00 bg=#000000 deco=None text= ║                                    ║   
+05,00-02: fg=#FFFF00 bg=#000000 deco=None text= ║ 
+05,03-14: fg=#FFFFFF bg=#000000 deco=None text=é🙂 漢        
+05,15-41: fg=#FFFF00 bg=#000000 deco=None text=                       ║   
+06,00-41: fg=#FFFF00 bg=#000000 deco=None text= ║                                    ║   
+07,00-02: fg=#FFFF00 bg=#000000 deco=None text= ║ 
+07,03-22: fg=#000000 bg=#FFFF00 deco=None text=[ ON ] Unicode mode 
+07,23-41: fg=#FFFF00 bg=#000000 deco=None text=               ║   
+08,00-02: fg=#FFFF00 bg=#000000 deco=None text= ║ 
+08,03-34: fg=#000000 bg=#FFFFFF deco=None text=Theme: HighContrast             
+08,35-41: fg=#FFFF00 bg=#000000 deco=None text=   ║   
+09,00-41: fg=#FFFF00 bg=#000000 deco=None text= ╚════════════════════════════════════╝   
+10,00-41: fg=#FFFF00 bg=#000000 deco=None text=                                          
+11,00-41: fg=#FFFF00 bg=#000000 deco=None text=

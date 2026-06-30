@@ -1,0 +1,25 @@
+﻿grid:
+role=application
+aria-label=Visual regression terminal
+aria-describedby=blazortui-id-instructions blazortui-id-description blazortui-id-screen blazortui-id-controls
+style=--tui-columns:42; --tui-rows:12; --tui-width-from-height:175cqh; --tui-height-from-width:57.14285714285714cqw; --tui-font-size:8.333333333333334cqh;
+shortcuts=Tab Shift+Tab Alt F2 Control+K Meta+K Control+Tab Alt+PageDown Control+Shift+Tab Alt+PageUp Control+A Meta+A Control+C Meta+C Control+X Meta+X Control+V Meta+V Control+Z Meta+Z Control+Y Meta+Y Control+Shift+Z Shift+Meta+Z ArrowUp ArrowDown ArrowLeft ArrowRight Enter Space Escape F4 Backspace Delete Home End PageUp PageDown
+control-summaries:
+StatusBar status: Theme: HighContrast, no items. Label unicodeLabel TextBox unicodeInput. Unicode input baseline. ToggleSwitch enabled: Unicode mode, on.
+first-visible-tiles:
+╔ style=grid-column:2; grid-row:2; color:#FFFF00; background-color:#000000; white-space:pre;
+═ style=grid-column:3; grid-row:2; color:#FFFF00; background-color:#000000; white-space:pre;
+═ style=grid-column:4; grid-row:2; color:#FFFF00; background-color:#000000; white-space:pre;
+═ style=grid-column:5; grid-row:2; color:#FFFF00; background-color:#000000; white-space:pre;
+═ style=grid-column:6; grid-row:2; color:#FFFF00; background-color:#000000; white-space:pre;
+═ style=grid-column:7; grid-row:2; color:#FFFF00; background-color:#000000; white-space:pre;
+═ style=grid-column:8; grid-row:2; color:#FFFF00; background-color:#000000; white-space:pre;
+═ style=grid-column:9; grid-row:2; color:#FFFF00; background-color:#000000; white-space:pre;
+═ style=grid-column:10; grid-row:2; color:#FFFF00; background-color:#000000; white-space:pre;
+═ style=grid-column:11; grid-row:2; color:#FFFF00; background-color:#000000; white-space:pre;
+═ style=grid-column:12; grid-row:2; color:#FFFF00; background-color:#000000; white-space:pre;
+═ style=grid-column:13; grid-row:2; color:#FFFF00; background-color:#000000; white-space:pre;
+T style=grid-column:14; grid-row:2; color:#FFFF00; background-color:#000000; white-space:pre;
+H style=grid-column:15; grid-row:2; color:#FFFF00; background-color:#000000; white-space:pre;
+E style=grid-column:16; grid-row:2; color:#FFFF00; background-color:#000000; white-space:pre;
+M style=grid-column:17; grid-row:2; color:#FFFF00; background-color:#000000; white-space:pre;

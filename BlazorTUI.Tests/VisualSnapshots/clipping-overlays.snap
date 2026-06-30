@@ -1,0 +1,81 @@
+﻿screen: 44x16
+text:
+00|                                            |
+01| ┌───────────CLIP + OVERLAYS──────────┐     |
+02| │                                    │     |
+03| │                      ↑             │     |
+04| │                      │             │     |
+05| │                      │             │     |
+06| │                      │             │     |
+07| │                      ↓             │     |
+08| │ ←────────────────────→             │     |
+09| │       Refresh                      │     |
+10| │ [ActioArchive      visible         │     |
+11| │       Disabled                     │     |
+12| │                                    │     |
+13| └────────────────────────────────────┘     |
+14|                                            |
+15|                                            |
+styles:
+00,00-43: fg=#FFFF00 bg=#0000FF deco=None text=                                            
+01,00-00: fg=#FFFF00 bg=#0000FF deco=None text= 
+01,01-38: fg=#FFFF00 bg=#00008B deco=None text=┌───────────CLIP + OVERLAYS──────────┐
+01,39-43: fg=#FFFF00 bg=#0000FF deco=None text=     
+02,00-00: fg=#FFFF00 bg=#0000FF deco=None text= 
+02,01-38: fg=#FFFF00 bg=#00008B deco=None text=│                                    │
+02,39-43: fg=#FFFF00 bg=#0000FF deco=None text=     
+03,00-00: fg=#FFFF00 bg=#0000FF deco=None text= 
+03,01-02: fg=#FFFF00 bg=#00008B deco=None text=│ 
+03,03-24: fg=#00FFFF bg=#000000 deco=None text=                     ↑
+03,25-38: fg=#FFFF00 bg=#00008B deco=None text=             │
+03,39-43: fg=#FFFF00 bg=#0000FF deco=None text=     
+04,00-00: fg=#FFFF00 bg=#0000FF deco=None text= 
+04,01-02: fg=#FFFF00 bg=#00008B deco=None text=│ 
+04,03-24: fg=#00FFFF bg=#000000 deco=None text=                     │
+04,25-38: fg=#FFFF00 bg=#00008B deco=None text=             │
+04,39-43: fg=#FFFF00 bg=#0000FF deco=None text=     
+05,00-00: fg=#FFFF00 bg=#0000FF deco=None text= 
+05,01-02: fg=#FFFF00 bg=#00008B deco=None text=│ 
+05,03-24: fg=#00FFFF bg=#000000 deco=None text=                     │
+05,25-38: fg=#FFFF00 bg=#00008B deco=None text=             │
+05,39-43: fg=#FFFF00 bg=#0000FF deco=None text=     
+06,00-00: fg=#FFFF00 bg=#0000FF deco=None text= 
+06,01-02: fg=#FFFF00 bg=#00008B deco=None text=│ 
+06,03-24: fg=#00FFFF bg=#000000 deco=None text=                     │
+06,25-38: fg=#FFFF00 bg=#00008B deco=None text=             │
+06,39-43: fg=#FFFF00 bg=#0000FF deco=None text=     
+07,00-00: fg=#FFFF00 bg=#0000FF deco=None text= 
+07,01-02: fg=#FFFF00 bg=#00008B deco=None text=│ 
+07,03-24: fg=#00FFFF bg=#000000 deco=None text=                     ↓
+07,25-38: fg=#FFFF00 bg=#00008B deco=None text=             │
+07,39-43: fg=#FFFF00 bg=#0000FF deco=None text=     
+08,00-00: fg=#FFFF00 bg=#0000FF deco=None text= 
+08,01-02: fg=#FFFF00 bg=#00008B deco=None text=│ 
+08,03-24: fg=#00FFFF bg=#000000 deco=None text=←────────────────────→
+08,25-38: fg=#FFFF00 bg=#00008B deco=None text=             │
+08,39-43: fg=#FFFF00 bg=#0000FF deco=None text=     
+09,00-00: fg=#FFFF00 bg=#0000FF deco=None text= 
+09,01-08: fg=#FFFF00 bg=#00008B deco=None text=│       
+09,09-20: fg=#000000 bg=#FFFF00 deco=None text=Refresh     
+09,21-38: fg=#FFFF00 bg=#00008B deco=None text=                 │
+09,39-43: fg=#FFFF00 bg=#0000FF deco=None text=     
+10,00-00: fg=#FFFF00 bg=#0000FF deco=None text= 
+10,01-02: fg=#FFFF00 bg=#00008B deco=None text=│ 
+10,03-08: fg=#FFFFFF bg=#006400 deco=None text=[Actio
+10,09-20: fg=#FFFF00 bg=#000000 deco=None text=Archive     
+10,21-29: fg=#000000 bg=#00FFFF deco=None text= visible 
+10,30-38: fg=#FFFF00 bg=#00008B deco=None text=        │
+10,39-43: fg=#FFFF00 bg=#0000FF deco=None text=     
+11,00-00: fg=#FFFF00 bg=#0000FF deco=None text= 
+11,01-08: fg=#FFFF00 bg=#00008B deco=None text=│       
+11,09-20: fg=#808080 bg=#000000 deco=None text=Disabled    
+11,21-38: fg=#FFFF00 bg=#00008B deco=None text=                 │
+11,39-43: fg=#FFFF00 bg=#0000FF deco=None text=     
+12,00-00: fg=#FFFF00 bg=#0000FF deco=None text= 
+12,01-38: fg=#FFFF00 bg=#00008B deco=None text=│                                    │
+12,39-43: fg=#FFFF00 bg=#0000FF deco=None text=     
+13,00-00: fg=#FFFF00 bg=#0000FF deco=None text= 
+13,01-38: fg=#FFFF00 bg=#00008B deco=None text=└────────────────────────────────────┘
+13,39-43: fg=#FFFF00 bg=#0000FF deco=None text=     
+14,00-43: fg=#FFFF00 bg=#0000FF deco=None text=                                            
+15,00-43: fg=#FFFF00 bg=#0000FF deco=None text=

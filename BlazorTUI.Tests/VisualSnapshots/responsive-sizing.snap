@@ -1,0 +1,184 @@
+﻿screen: 84x46
+text:
+00|                                                                                    |
+01|                                                                                    |
+02|  ┌──────────────────────────────RESPONSIVE 84x46──────────────────────────────┐    |
+03|  │                                                                            │    |
+04|  │                                                                            │    |
+05|  │  Rows above forty use the same CSS variable grid.                          │    |
+06|  │                                                                            │    |
+07|  │                                                                            │    |
+08|  │                   67%                                                      │    |
+09|  │                                                                            │    |
+10|  │                                                                            │    |
+11|  │  ━━━━━━━━━●──────────────                                                  │    |
+12|  │                                                                            │    |
+13|  │                                                                            │    |
+14|  │                                                                            │    |
+15|  │                                                                            │    |
+16|  │                                                                            │    |
+17|  │                                                                            │    |
+18|  │                                                                            │    |
+19|  │                                                                            │    |
+20|  │                                                                            │    |
+21|  │                                                                            │    |
+22|  │                                                                            │    |
+23|  │                                                                            │    |
+24|  │                                                                            │    |
+25|  │                                                                            │    |
+26|  │                                                                            │    |
+27|  │                                                                            │    |
+28|  │                                                                            │    |
+29|  │                                                                            │    |
+30|  │                                                                            │    |
+31|  │                                                                            │    |
+32|  │                                                                            │    |
+33|  │                                                                            │    |
+34|  │                                                                            │    |
+35|  │                                                                            │    |
+36|  │                                                                            │    |
+37|  │                                                                            │    |
+38|  │                                                      bottom-right marker   │    |
+39|  │                                                                            │    |
+40|  │                                                                            │    |
+41|  └────────────────────────────────────────────────────────────────────────────┘    |
+42|                                                                                    |
+43|                                                                                    |
+44|                                                                                    |
+45|                                                                                    |
+styles:
+00,00-83: fg=#FFFF00 bg=#0000FF deco=None text=                                                                                    
+01,00-83: fg=#FFFF00 bg=#0000FF deco=None text=                                                                                    
+02,00-01: fg=#FFFF00 bg=#0000FF deco=None text=  
+02,02-79: fg=#FFFF00 bg=#00008B deco=None text=┌──────────────────────────────RESPONSIVE 84x46──────────────────────────────┐
+02,80-83: fg=#FFFF00 bg=#0000FF deco=None text=    
+03,00-01: fg=#FFFF00 bg=#0000FF deco=None text=  
+03,02-79: fg=#FFFF00 bg=#00008B deco=None text=│                                                                            │
+03,80-83: fg=#FFFF00 bg=#0000FF deco=None text=    
+04,00-01: fg=#FFFF00 bg=#0000FF deco=None text=  
+04,02-79: fg=#FFFF00 bg=#00008B deco=None text=│                                                                            │
+04,80-83: fg=#FFFF00 bg=#0000FF deco=None text=    
+05,00-01: fg=#FFFF00 bg=#0000FF deco=None text=  
+05,02-04: fg=#FFFF00 bg=#00008B deco=None text=│  
+05,05-52: fg=#FFFFFF bg=#00008B deco=None text=Rows above forty use the same CSS variable grid.
+05,53-79: fg=#FFFF00 bg=#00008B deco=None text=                          │
+05,80-83: fg=#FFFF00 bg=#0000FF deco=None text=    
+06,00-01: fg=#FFFF00 bg=#0000FF deco=None text=  
+06,02-79: fg=#FFFF00 bg=#00008B deco=None text=│                                                                            │
+06,80-83: fg=#FFFF00 bg=#0000FF deco=None text=    
+07,00-01: fg=#FFFF00 bg=#0000FF deco=None text=  
+07,02-79: fg=#FFFF00 bg=#00008B deco=None text=│                                                                            │
+07,80-83: fg=#FFFF00 bg=#0000FF deco=None text=    
+08,00-01: fg=#FFFF00 bg=#0000FF deco=None text=  
+08,02-04: fg=#FFFF00 bg=#00008B deco=None text=│  
+08,05-29: fg=#000000 bg=#FFFF00 deco=None text=                 67%     
+08,30-40: fg=#FFFF00 bg=#000000 deco=None text=           
+08,41-79: fg=#FFFF00 bg=#00008B deco=None text=                                      │
+08,80-83: fg=#FFFF00 bg=#0000FF deco=None text=    
+09,00-01: fg=#FFFF00 bg=#0000FF deco=None text=  
+09,02-79: fg=#FFFF00 bg=#00008B deco=None text=│                                                                            │
+09,80-83: fg=#FFFF00 bg=#0000FF deco=None text=    
+10,00-01: fg=#FFFF00 bg=#0000FF deco=None text=  
+10,02-79: fg=#FFFF00 bg=#00008B deco=None text=│                                                                            │
+10,80-83: fg=#FFFF00 bg=#0000FF deco=None text=    
+11,00-01: fg=#FFFF00 bg=#0000FF deco=None text=  
+11,02-04: fg=#FFFF00 bg=#00008B deco=None text=│  
+11,05-28: fg=#FFFFFF bg=#000000 deco=None text=━━━━━━━━━●──────────────
+11,29-79: fg=#FFFF00 bg=#00008B deco=None text=                                                  │
+11,80-83: fg=#FFFF00 bg=#0000FF deco=None text=    
+12,00-01: fg=#FFFF00 bg=#0000FF deco=None text=  
+12,02-79: fg=#FFFF00 bg=#00008B deco=None text=│                                                                            │
+12,80-83: fg=#FFFF00 bg=#0000FF deco=None text=    
+13,00-01: fg=#FFFF00 bg=#0000FF deco=None text=  
+13,02-79: fg=#FFFF00 bg=#00008B deco=None text=│                                                                            │
+13,80-83: fg=#FFFF00 bg=#0000FF deco=None text=    
+14,00-01: fg=#FFFF00 bg=#0000FF deco=None text=  
+14,02-79: fg=#FFFF00 bg=#00008B deco=None text=│                                                                            │
+14,80-83: fg=#FFFF00 bg=#0000FF deco=None text=    
+15,00-01: fg=#FFFF00 bg=#0000FF deco=None text=  
+15,02-79: fg=#FFFF00 bg=#00008B deco=None text=│                                                                            │
+15,80-83: fg=#FFFF00 bg=#0000FF deco=None text=    
+16,00-01: fg=#FFFF00 bg=#0000FF deco=None text=  
+16,02-79: fg=#FFFF00 bg=#00008B deco=None text=│                                                                            │
+16,80-83: fg=#FFFF00 bg=#0000FF deco=None text=    
+17,00-01: fg=#FFFF00 bg=#0000FF deco=None text=  
+17,02-79: fg=#FFFF00 bg=#00008B deco=None text=│                                                                            │
+17,80-83: fg=#FFFF00 bg=#0000FF deco=None text=    
+18,00-01: fg=#FFFF00 bg=#0000FF deco=None text=  
+18,02-79: fg=#FFFF00 bg=#00008B deco=None text=│                                                                            │
+18,80-83: fg=#FFFF00 bg=#0000FF deco=None text=    
+19,00-01: fg=#FFFF00 bg=#0000FF deco=None text=  
+19,02-79: fg=#FFFF00 bg=#00008B deco=None text=│                                                                            │
+19,80-83: fg=#FFFF00 bg=#0000FF deco=None text=    
+20,00-01: fg=#FFFF00 bg=#0000FF deco=None text=  
+20,02-79: fg=#FFFF00 bg=#00008B deco=None text=│                                                                            │
+20,80-83: fg=#FFFF00 bg=#0000FF deco=None text=    
+21,00-01: fg=#FFFF00 bg=#0000FF deco=None text=  
+21,02-79: fg=#FFFF00 bg=#00008B deco=None text=│                                                                            │
+21,80-83: fg=#FFFF00 bg=#0000FF deco=None text=    
+22,00-01: fg=#FFFF00 bg=#0000FF deco=None text=  
+22,02-79: fg=#FFFF00 bg=#00008B deco=None text=│                                                                            │
+22,80-83: fg=#FFFF00 bg=#0000FF deco=None text=    
+23,00-01: fg=#FFFF00 bg=#0000FF deco=None text=  
+23,02-79: fg=#FFFF00 bg=#00008B deco=None text=│                                                                            │
+23,80-83: fg=#FFFF00 bg=#0000FF deco=None text=    
+24,00-01: fg=#FFFF00 bg=#0000FF deco=None text=  
+24,02-79: fg=#FFFF00 bg=#00008B deco=None text=│                                                                            │
+24,80-83: fg=#FFFF00 bg=#0000FF deco=None text=    
+25,00-01: fg=#FFFF00 bg=#0000FF deco=None text=  
+25,02-79: fg=#FFFF00 bg=#00008B deco=None text=│                                                                            │
+25,80-83: fg=#FFFF00 bg=#0000FF deco=None text=    
+26,00-01: fg=#FFFF00 bg=#0000FF deco=None text=  
+26,02-79: fg=#FFFF00 bg=#00008B deco=None text=│                                                                            │
+26,80-83: fg=#FFFF00 bg=#0000FF deco=None text=    
+27,00-01: fg=#FFFF00 bg=#0000FF deco=None text=  
+27,02-79: fg=#FFFF00 bg=#00008B deco=None text=│                                                                            │
+27,80-83: fg=#FFFF00 bg=#0000FF deco=None text=    
+28,00-01: fg=#FFFF00 bg=#0000FF deco=None text=  
+28,02-79: fg=#FFFF00 bg=#00008B deco=None text=│                                                                            │
+28,80-83: fg=#FFFF00 bg=#0000FF deco=None text=    
+29,00-01: fg=#FFFF00 bg=#0000FF deco=None text=  
+29,02-79: fg=#FFFF00 bg=#00008B deco=None text=│                                                                            │
+29,80-83: fg=#FFFF00 bg=#0000FF deco=None text=    
+30,00-01: fg=#FFFF00 bg=#0000FF deco=None text=  
+30,02-79: fg=#FFFF00 bg=#00008B deco=None text=│                                                                            │
+30,80-83: fg=#FFFF00 bg=#0000FF deco=None text=    
+31,00-01: fg=#FFFF00 bg=#0000FF deco=None text=  
+31,02-79: fg=#FFFF00 bg=#00008B deco=None text=│                                                                            │
+31,80-83: fg=#FFFF00 bg=#0000FF deco=None text=    
+32,00-01: fg=#FFFF00 bg=#0000FF deco=None text=  
+32,02-79: fg=#FFFF00 bg=#00008B deco=None text=│                                                                            │
+32,80-83: fg=#FFFF00 bg=#0000FF deco=None text=    
+33,00-01: fg=#FFFF00 bg=#0000FF deco=None text=  
+33,02-79: fg=#FFFF00 bg=#00008B deco=None text=│                                                                            │
+33,80-83: fg=#FFFF00 bg=#0000FF deco=None text=    
+34,00-01: fg=#FFFF00 bg=#0000FF deco=None text=  
+34,02-79: fg=#FFFF00 bg=#00008B deco=None text=│                                                                            │
+34,80-83: fg=#FFFF00 bg=#0000FF deco=None text=    
+35,00-01: fg=#FFFF00 bg=#0000FF deco=None text=  
+35,02-79: fg=#FFFF00 bg=#00008B deco=None text=│                                                                            │
+35,80-83: fg=#FFFF00 bg=#0000FF deco=None text=    
+36,00-01: fg=#FFFF00 bg=#0000FF deco=None text=  
+36,02-79: fg=#FFFF00 bg=#00008B deco=None text=│                                                                            │
+36,80-83: fg=#FFFF00 bg=#0000FF deco=None text=    
+37,00-01: fg=#FFFF00 bg=#0000FF deco=None text=  
+37,02-79: fg=#FFFF00 bg=#00008B deco=None text=│                                                                            │
+37,80-83: fg=#FFFF00 bg=#0000FF deco=None text=    
+38,00-01: fg=#FFFF00 bg=#0000FF deco=None text=  
+38,02-56: fg=#FFFF00 bg=#00008B deco=None text=│                                                      
+38,57-75: fg=#00FFFF bg=#00008B deco=None text=bottom-right marker
+38,76-79: fg=#FFFF00 bg=#00008B deco=None text=   │
+38,80-83: fg=#FFFF00 bg=#0000FF deco=None text=    
+39,00-01: fg=#FFFF00 bg=#0000FF deco=None text=  
+39,02-79: fg=#FFFF00 bg=#00008B deco=None text=│                                                                            │
+39,80-83: fg=#FFFF00 bg=#0000FF deco=None text=    
+40,00-01: fg=#FFFF00 bg=#0000FF deco=None text=  
+40,02-79: fg=#FFFF00 bg=#00008B deco=None text=│                                                                            │
+40,80-83: fg=#FFFF00 bg=#0000FF deco=None text=    
+41,00-01: fg=#FFFF00 bg=#0000FF deco=None text=  
+41,02-79: fg=#FFFF00 bg=#00008B deco=None text=└────────────────────────────────────────────────────────────────────────────┘
+41,80-83: fg=#FFFF00 bg=#0000FF deco=None text=    
+42,00-83: fg=#FFFF00 bg=#0000FF deco=None text=                                                                                    
+43,00-83: fg=#FFFF00 bg=#0000FF deco=None text=                                                                                    
+44,00-83: fg=#FFFF00 bg=#0000FF deco=None text=                                                                                    
+45,00-83: fg=#FFFF00 bg=#0000FF deco=None text=
