@@ -246,7 +246,8 @@ namespace BlazorTUI.TUI
 
             int previousValue = value;
             value = newValue;
-            ValueChanged?.Invoke(this, new SliderValueChangedEventArgs(previousValue, newValue));
+            if (!TuiEventScope.EventsSuppressed)
+                ValueChanged?.Invoke(this, new SliderValueChangedEventArgs(previousValue, newValue));
             return true;
         }
 

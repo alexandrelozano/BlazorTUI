@@ -314,6 +314,9 @@ namespace BlazorTUI.TUI
 
         private void RaiseSelectionChanged(int previousSelectedIndex, BreadcrumbItem? previousSelectedItem)
         {
+            if (TuiEventScope.EventsSuppressed)
+                return;
+
             SelectedIndexChanged?.Invoke(this, EventArgs.Empty);
             SelectionChanged?.Invoke(
                 this,

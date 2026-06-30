@@ -297,6 +297,9 @@ namespace BlazorTUI.TUI
 
         private void RaiseSelectionChanged(int previousSelectedIndex, RadioGroupOption? previousSelectedOption)
         {
+            if (TuiEventScope.EventsSuppressed)
+                return;
+
             SelectedIndexChanged?.Invoke(this, EventArgs.Empty);
             SelectionChanged?.Invoke(
                 this,

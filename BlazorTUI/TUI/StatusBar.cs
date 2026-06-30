@@ -67,7 +67,8 @@ namespace BlazorTUI.TUI
 
             string previousMessage = message;
             message = newMessage;
-            MessageChanged?.Invoke(this, new StatusBarMessageChangedEventArgs(previousMessage, message));
+            if (!TuiEventScope.EventsSuppressed)
+                MessageChanged?.Invoke(this, new StatusBarMessageChangedEventArgs(previousMessage, message));
         }
 
         public StatusBarItem AddItem(

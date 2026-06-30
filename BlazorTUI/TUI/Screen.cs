@@ -123,8 +123,22 @@ namespace BlazorTUI.TUI
             TuiStatePersistence.Restore(this, state);
         }
 
+        public void RestoreState(TuiScreenState state, TuiStateRestoreOptions options)
+        {
+            ArgumentNullException.ThrowIfNull(state);
+            ArgumentNullException.ThrowIfNull(options);
+            TuiStatePersistence.Restore(this, state, options);
+        }
+
         public void RestoreStateJson(string json)
             => RestoreState(TuiScreenState.FromJson(json));
+
+        public void RestoreStateJson(string json, TuiStateRestoreOptions options)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(json);
+            ArgumentNullException.ThrowIfNull(options);
+            RestoreState(TuiScreenState.FromJson(json), options);
+        }
 
         public void KeyDown(string key, bool shiftKey)
         {

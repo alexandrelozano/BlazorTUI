@@ -116,6 +116,142 @@ public class StatePersistenceTests
         Assert.False(fixture.Grid.HasActiveFilters);
     }
 
+    [Fact]
+    public void ScreenStateIncludesSchemaVersionAndCustomPayloadSlots()
+    {
+        TestScreenFixture fixture = CreateFixture();
+        TuiScreenState state = fixture.Screen.ExportState();
+
+        state.SetPayload("route", "/orders/42");
+        state.SetProtectedPayload("token", "secret-token", Protect);
+
+        string json = state.ToJson(indented: true);
+        TuiScreenState restored = TuiScreenState.FromJson(json);
+
+        Assert.Equal(TuiScreenState.CurrentSchemaVersion, state.SchemaVersion);
+        Assert.Contains("\"SchemaVersion\"", json, StringComparison.Ordinal);
+        Assert.True(restored.TryGetPayload("route", out string route));
+        Assert.Equal("/orders/42", route);
+        Assert.True(restored.TryGetProtectedPayload("token", Unprotect, out string token));
+        Assert.Equal("secret-token", token);
+    }
+
+    [Fact]
+    public void RestoreStateCanRestoreOnlySelectedControlsWithoutRestoringFocus()
+    {
+        TestScreenFixture fixture = CreateFixture();
+        fixture.Name.Value = "Saved";
+        fixture.Priority.SelectItem("High");
+        fixture.Screen.SetFocus("priority");
+        TuiScreenState state = fixture.Screen.ExportState();
+
+        fixture.Name.Value = "Dirty";
+        fixture.Priority.SelectItem("Low");
+        fixture.Screen.SetFocus("name");
+
+        fixture.Screen.RestoreState(
+            state,
+            new TuiStateRestoreOptions
+            {
+                RestoreFocus = false,
+                ControlNames = new[] { "name" }
+            });
+
+        Assert.Equal("Saved", fixture.Name.Value);
+        Assert.Equal("Low", fixture.Priority.SelectedItem);
+        Assert.Equal("name", fixture.Screen.TopContainer.GetCurrentFocusControl()?.Name);
+    }
+
+    [Fact]
+    public void RestoreStateAppliesVersionedMigrationHooksBeforeRestoring()
+    {
+        TestScreenFixture fixture = CreateFixture();
+        fixture.Name.Value = "Migrated";
+        TuiScreenState state = fixture.Screen.ExportState();
+        state.SchemaVersion = 0;
+        state.Controls["legacyName"] = state.Controls["name"];
+        state.Controls.Remove("name");
+
+        fixture.Name.Value = "Dirty";
+
+        fixture.Screen.RestoreState(
+            state,
+            new TuiStateRestoreOptions
+            {
+                Migrations = new[]
+                {
+                    new TuiStateMigration(
+                        fromVersion: 0,
+                        toVersion: TuiScreenState.CurrentSchemaVersion,
+                        migrate: migratedState =>
+                        {
+                            migratedState.Controls["name"] = migratedState.Controls["legacyName"];
+                            migratedState.Controls.Remove("legacyName");
+                            return migratedState;
+                        })
+                }
+            });
+
+        Assert.Equal("Migrated", fixture.Name.Value);
+        Assert.Equal(TuiScreenState.CurrentSchemaVersion, state.SchemaVersion);
+    }
+
+    [Fact]
+    public void RestoreStateCanSuppressControlEvents()
+    {
+        TestScreenFixture fixture = CreateFixture();
+        fixture.Volume.Value = 70;
+        fixture.Contact.SelectValue("phone");
+        fixture.Path.SelectValue("/docs/api");
+        fixture.Status.Message = "Saved";
+        fixture.Screen.SetFocus("priority");
+        TuiScreenState state = fixture.Screen.ExportState();
+
+        int sliderEvents = 0;
+        int radioEvents = 0;
+        int breadcrumbEvents = 0;
+        int statusEvents = 0;
+        int focusEvents = 0;
+        fixture.Volume.ValueChanged += (_, _) => sliderEvents++;
+        fixture.Contact.SelectionChanged += (_, _) => radioEvents++;
+        fixture.Path.SelectionChanged += (_, _) => breadcrumbEvents++;
+        fixture.Status.MessageChanged += (_, _) => statusEvents++;
+        fixture.Priority.GotFocus += (_, _) => focusEvents++;
+
+        fixture.Volume.Value = 10;
+        fixture.Contact.SelectValue("email");
+        fixture.Path.SelectValue("/");
+        fixture.Status.Message = "Dirty";
+        fixture.Screen.SetFocus("name");
+
+        sliderEvents = 0;
+        radioEvents = 0;
+        breadcrumbEvents = 0;
+        statusEvents = 0;
+        focusEvents = 0;
+
+        fixture.Screen.RestoreState(
+            state,
+            new TuiStateRestoreOptions { SuppressEvents = true });
+
+        Assert.Equal(70, fixture.Volume.Value);
+        Assert.Equal("phone", fixture.Contact.SelectedValue);
+        Assert.Equal("/docs/api", fixture.Path.SelectedValue);
+        Assert.Equal("Saved", fixture.Status.Message);
+        Assert.Equal("priority", fixture.Screen.TopContainer.GetCurrentFocusControl()?.Name);
+        Assert.Equal(0, sliderEvents);
+        Assert.Equal(0, radioEvents);
+        Assert.Equal(0, breadcrumbEvents);
+        Assert.Equal(0, statusEvents);
+        Assert.Equal(0, focusEvents);
+    }
+
+    private static string Protect(string value)
+        => Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(value));
+
+    private static string Unprotect(string value)
+        => System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(value));
+
     private static TestScreenFixture CreateFixture()
     {
         var screen = new Screen(80, 30);

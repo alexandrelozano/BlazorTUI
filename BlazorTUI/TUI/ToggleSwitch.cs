@@ -42,7 +42,8 @@ namespace BlazorTUI.TUI
                     return;
 
                 this.value = value;
-                ValueChanged?.Invoke(this, new ToggleSwitchValueChangedEventArgs(this.value));
+                if (!TuiEventScope.EventsSuppressed)
+                    ValueChanged?.Invoke(this, new ToggleSwitchValueChangedEventArgs(this.value));
             }
         }
 

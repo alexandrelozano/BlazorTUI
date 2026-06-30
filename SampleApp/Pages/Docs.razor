@@ -226,10 +226,21 @@
         """;
 
     private static readonly string StateSnippet = """
-        string json = screen.ExportStateJson();
+        TuiScreenState state = screen.ExportState();
+        state.SetPayload("route", "/orders/42");
+        state.SetProtectedPayload("token", token, ProtectForStorage);
+
+        string json = state.ToJson(indented: true);
 
         // Later, after controls have been recreated with the same names:
-        screen.RestoreStateJson(json);
+        screen.RestoreStateJson(
+            json,
+            new TuiStateRestoreOptions
+            {
+                SuppressEvents = true,
+                RestoreFocus = false,
+                ControlNames = new[] { "name", "priority" }
+            });
         screen.Render();
         """;
 

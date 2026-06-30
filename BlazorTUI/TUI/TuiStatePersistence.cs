@@ -22,18 +22,27 @@ namespace BlazorTUI.TUI
         }
 
         public static void Restore(Screen screen, TuiScreenState state)
+            => Restore(screen, state, TuiStateRestoreOptions.Default);
+
+        public static void Restore(Screen screen, TuiScreenState state, TuiStateRestoreOptions options)
         {
             ArgumentNullException.ThrowIfNull(screen);
             ArgumentNullException.ThrowIfNull(state);
+            ArgumentNullException.ThrowIfNull(options);
 
-            RestoreContainer(screen.TopContainer, state);
+            TuiScreenState restoreState = options.ApplyMigrations(state);
+            using TuiEventScope _ = TuiEventScope.Suppress(options.SuppressEvents);
+
+            RestoreContainer(screen.TopContainer, restoreState, options);
             foreach (Dialog dialog in screen.Dialogs)
-                RestoreContainer(dialog, state);
+                RestoreContainer(dialog, restoreState, options);
 
-            if (!string.IsNullOrWhiteSpace(state.FocusedControlName) &&
-                TryFindControl(screen, state.FocusedControlName) is { TabStop: true })
+            if (options.RestoreFocus &&
+                !string.IsNullOrWhiteSpace(restoreState.FocusedControlName) &&
+                options.ShouldRestoreControl(restoreState.FocusedControlName) &&
+                TryFindControl(screen, restoreState.FocusedControlName) is { TabStop: true })
             {
-                screen.SetFocus(state.FocusedControlName);
+                screen.SetFocus(restoreState.FocusedControlName);
             }
         }
 
@@ -52,10 +61,14 @@ namespace BlazorTUI.TUI
                 ExportContainer(child, screenState);
         }
 
-        private static void RestoreContainer(Container container, TuiScreenState screenState)
+        private static void RestoreContainer(
+            Container container,
+            TuiScreenState screenState,
+            TuiStateRestoreOptions options)
         {
             if (screenState.Containers is not null &&
-                screenState.Containers.TryGetValue(container.Name, out TuiElementState? containerState))
+                screenState.Containers.TryGetValue(container.Name, out TuiElementState? containerState) &&
+                options.ShouldRestoreContainer(container.Name))
             {
                 RestoreContainerState(container, containerState);
             }
@@ -63,14 +76,15 @@ namespace BlazorTUI.TUI
             foreach (Control control in container.Controls)
             {
                 if (screenState.Controls is not null &&
-                    screenState.Controls.TryGetValue(control.Name, out TuiElementState? controlState))
+                    screenState.Controls.TryGetValue(control.Name, out TuiElementState? controlState) &&
+                    options.ShouldRestoreControl(control.Name))
                 {
                     RestoreControlState(control, controlState);
                 }
             }
 
             foreach (Container child in container.Containers)
-                RestoreContainer(child, screenState);
+                RestoreContainer(child, screenState, options);
         }
 
         private static TuiElementState? TryExportContainerState(Container container)

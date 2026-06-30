@@ -544,9 +544,30 @@
         terminal.TopContainer.AddControl(multiSelect);
         terminal.SetFocus("priority");
         TuiScreenState state = terminal.ExportState();
+        _ = state.SchemaVersion;
+        state.SetPayload("route", "/consumer");
+        _ = state.TryGetPayload("route", out string _);
+        state.SetProtectedPayload("secret", "payload", value => Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(value)));
+        _ = state.TryGetProtectedPayload(
+            "secret",
+            value => System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(value)),
+            out string _);
         string serializedState = terminal.ExportStateJson();
         terminal.RestoreState(state);
+        terminal.RestoreState(
+            state,
+            new TuiStateRestoreOptions
+            {
+                SuppressEvents = true,
+                RestoreFocus = false,
+                ControlNames = new[] { "priority" },
+                Migrations = new[]
+                {
+                    new TuiStateMigration(0, TuiScreenState.CurrentSchemaVersion, migratedState => migratedState)
+                }
+            });
         terminal.RestoreStateJson(serializedState);
+        terminal.RestoreStateJson(serializedState, new TuiStateRestoreOptions { RestoreContainers = false });
         return terminal;
     }
 

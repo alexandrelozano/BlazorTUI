@@ -597,7 +597,43 @@ string json = screen.ExportStateJson(indented: true);
 screen.RestoreStateJson(json);
 ```
 
-The snapshot restores current control values, focus, text selections, selected items, active tabs, split-panel position, calendar state, date-picker, date-range-picker, and month-picker popup state, data-visualization values/items, tree expansion and selection, grid row values, grid sorting, text/exact grid filters, grid pagination, and command-palette search state. Predicate-based grid filters and row filters keep their exported description metadata, but their delegate functions are not restored because arbitrary delegates are not serializable. Virtual providers remain application-owned; state persistence restores keys, focus, paging, and search where applicable, not the provider's backing data.
+Snapshots include a schema version and support custom payload slots:
+
+```csharp
+TuiScreenState state = screen.ExportState();
+state.SetPayload("route", "/orders/42");
+state.SetProtectedPayload("token", token, ProtectForStorage);
+
+if (state.TryGetPayload("route", out string route))
+    Navigation.NavigateTo(route);
+
+if (state.TryGetProtectedPayload("token", UnprotectFromStorage, out string restoredToken))
+    UseToken(restoredToken);
+```
+
+Use restore options when you need partial restore, migration hooks, or event suppression:
+
+```csharp
+screen.RestoreState(
+    state,
+    new TuiStateRestoreOptions
+    {
+        RestoreFocus = false,
+        SuppressEvents = true,
+        ControlNames = new[] { "name", "priority" },
+        Migrations = new[]
+        {
+            new TuiStateMigration(0, TuiScreenState.CurrentSchemaVersion, oldState =>
+            {
+                oldState.Controls["priority"] = oldState.Controls["legacyPriority"];
+                oldState.Controls.Remove("legacyPriority");
+                return oldState;
+            })
+        }
+    });
+```
+
+The snapshot restores current control values, focus, text selections, selected items, active tabs, split-panel position, calendar state, date-picker, date-range-picker, and month-picker popup state, data-visualization values/items, tree expansion and selection, grid row values, grid sorting, text/exact grid filters, grid pagination, column layout, grid grouping, filter-row UI state, and command-palette search state. Predicate-based grid filters, row filters, footer callbacks, and custom delegates keep their exported description metadata when available, but delegate functions are not restored because arbitrary delegates are not serializable. Virtual providers remain application-owned; state persistence restores keys, focus, paging, and search where applicable, not the provider's backing data.
 
 ## Keyboard and mouse interaction
 
@@ -1193,6 +1229,7 @@ Run `dotnet run --project SampleApp` from the repository root and open `/`, `/ex
 - Added advanced `GridView` data operations: built-in filter row editing, column visibility, column resizing, column reordering, row grouping, aggregate footer rows, CSV/TSV/delimited export helpers, and async materialized row loading.
 - Updated the GridView example, regression tests, and NuGet consumer coverage for the expanded GridView API.
 - Added a `/docs` documentation site in the sample app with README-derived guidance, runnable example links, terminal previews, API notes, common snippets, migration guidance, styling, and smoke-test coverage.
+- Added state-persistence extensions: `SchemaVersion`, `CurrentSchemaVersion`, opaque payload slots, protected payload slots, versioned migration hooks, partial restore options, focus restore control, and optional event suppression during restore.
 
 ### 0.8.13 — 2026-06-29
 

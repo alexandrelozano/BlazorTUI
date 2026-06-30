@@ -53,6 +53,9 @@ namespace BlazorTUI.TUI
                     return;
 
                 focus = value;
+                if (TuiEventScope.EventsSuppressed)
+                    return;
+
                 if (value)
                 {
                     OnFocus?.Invoke();
@@ -155,6 +158,9 @@ namespace BlazorTUI.TUI
 
         internal void NotifyClicked()
         {
+            if (TuiEventScope.EventsSuppressed)
+                return;
+
             OnClick?.Invoke(this);
             Clicked?.Invoke(this, EventArgs.Empty);
         }
@@ -191,7 +197,7 @@ namespace BlazorTUI.TUI
             else
                 ApplyValidationColors();
 
-            if (changed)
+            if (changed && !TuiEventScope.EventsSuppressed)
                 ValidationChanged?.Invoke(this, new TuiValidationChangedEventArgs(isValid, validationMessage));
         }
 
