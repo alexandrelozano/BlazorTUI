@@ -1,0 +1,170 @@
+.docs-page {
+    background: #07111f;
+    color: #e8eefc;
+    font-family: "Segoe UI", system-ui, sans-serif;
+    line-height: 1.55;
+    margin: 0;
+    min-height: 100vh;
+    padding: 2rem;
+    text-align: left;
+}
+
+.hero,
+.docs-section {
+    background: #0e1a2f;
+    border: 1px solid #2a3d63;
+    border-radius: 1rem;
+    box-shadow: 0 1rem 2.5rem rgb(0 0 0 / 30%);
+    margin: 0 auto 1.5rem;
+    max-width: 1180px;
+    padding: 1.5rem;
+}
+
+.hero {
+    background:
+        radial-gradient(circle at top left, rgb(0 255 255 / 18%), transparent 22rem),
+        linear-gradient(135deg, #102243, #070b14);
+}
+
+.eyebrow {
+    color: #00ffff;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    margin: 0 0 0.5rem;
+    text-transform: uppercase;
+}
+
+h1,
+h2,
+h3 {
+    color: #ffff00;
+    line-height: 1.2;
+    margin-top: 0;
+}
+
+h1 {
+    font-size: clamp(2rem, 6vw, 4.2rem);
+    max-width: 900px;
+}
+
+h2 {
+    font-size: 1.7rem;
+}
+
+h3 {
+    font-size: 1.1rem;
+}
+
+p {
+    color: #cfe4ff;
+}
+
+a {
+    color: #00ffff;
+}
+
+.hero-actions,
+.card-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.hero-actions a,
+.card-actions a {
+    background: #102b4e;
+    border: 1px solid #00ffff;
+    border-radius: 999px;
+    color: #00ffff;
+    display: inline-block;
+    padding: 0.55rem 0.9rem;
+    text-decoration: none;
+}
+
+.hero-actions a:hover,
+.card-actions a:hover {
+    background: #00ffff;
+    color: #07111f;
+}
+
+.example-grid,
+.notes-grid,
+.preview-grid,
+.snippet-grid {
+    display: grid;
+    gap: 1rem;
+}
+
+.example-grid {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.notes-grid,
+.snippet-grid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.preview-grid {
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+
+.example-card,
+.notes-grid article,
+.snippet-grid article,
+figure {
+    background: #07111f;
+    border: 1px solid #243a5e;
+    border-radius: 0.8rem;
+    margin: 0;
+    padding: 1rem;
+}
+
+.example-card p {
+    min-height: 4.5rem;
+}
+
+pre {
+    background: #02060d;
+    border: 1px solid #2b466f;
+    border-radius: 0.75rem;
+    color: #f7f7c5;
+    overflow-x: auto;
+    padding: 1rem;
+    text-align: left;
+    white-space: pre;
+}
+
+code,
+.terminal-preview {
+    font-family: "Cascadia Mono", Consolas, monospace;
+}
+
+.terminal-preview {
+    background: #00008b;
+    border-color: #ffff00;
+    color: #ffff00;
+    min-height: 9rem;
+}
+
+figcaption {
+    color: #00ffff;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+li {
+    color: #d8e8ff;
+    margin-bottom: 0.45rem;
+}
+
+@media (max-width: 720px) {
+    .docs-page {
+        padding: 1rem;
+    }
+
+    .hero,
+    .docs-section {
+        padding: 1rem;
+    }
+}

@@ -1149,6 +1149,8 @@ BlazorTUI displays the encoded image without resizing or converting the source d
 
 The repository contains focused pages that can be run directly:
 
+The sample app also includes a documentation site at `/docs`. It summarizes the README, links to runnable examples, includes screenshot-ready terminal previews, API notes, common snippets, and migration guidance.
+
 | Example | Demonstrates |
 | --- | --- |
 | [Controls and events](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/ControlsAndEvents.razor) | Text and password input, validation, combo-box and radio-group selection, command palette actions, checkbox state, callbacks, focus order, and status messages |
@@ -1177,7 +1179,7 @@ The repository contains focused pages that can be run directly:
 | [Transient UI](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/TransientUi.razor) | Context menus, tooltips, toast notifications, popovers, and reusable modal panels |
 | [Complete showcase](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Index.razor) | All controls, nested frames, z-order, callbacks, and animation |
 
-Run `dotnet run --project SampleApp` from the repository root and open `/` or `/examples` to browse them. The example routes are exercised by the automated test suite so API changes cannot silently leave the documentation out of date.
+Run `dotnet run --project SampleApp` from the repository root and open `/`, `/examples`, or `/docs` to browse them. The example and documentation routes are exercised by the automated test suite so API changes cannot silently leave the documentation out of date.
 
 ## Changelog
 
@@ -1190,6 +1192,7 @@ Run `dotnet run --project SampleApp` from the repository root and open `/` or `/
 - Added typed events, validation values, popup handling, theme integration, state persistence, focused executable examples, regression tests, and NuGet consumer coverage for the additional input controls.
 - Added advanced `GridView` data operations: built-in filter row editing, column visibility, column resizing, column reordering, row grouping, aggregate footer rows, CSV/TSV/delimited export helpers, and async materialized row loading.
 - Updated the GridView example, regression tests, and NuGet consumer coverage for the expanded GridView API.
+- Added a `/docs` documentation site in the sample app with README-derived guidance, runnable example links, terminal previews, API notes, common snippets, migration guidance, styling, and smoke-test coverage.
 
 ### 0.8.13 — 2026-06-29
 

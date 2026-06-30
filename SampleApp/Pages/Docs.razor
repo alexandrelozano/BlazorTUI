@@ -1,0 +1,273 @@
+@page "/docs"
+
+<PageTitle>BlazorTUI documentation</PageTitle>
+
+<main class="docs-page">
+    <section class="hero">
+        <p class="eyebrow">BlazorTUI documentation site</p>
+        <h1>Build text user interfaces in Blazor Server</h1>
+        <p>
+            This documentation page condenses the README and the focused executable examples into
+            one browsable guide. Use it while the sample app is running to jump directly into runnable
+            examples and compare the API notes with working source files.
+        </p>
+        <div class="hero-actions">
+            <a href="/examples">Browse examples</a>
+            <a href="https://github.com/alexandrelozano/BlazorTUI/blob/master/README.md">Read README</a>
+            <a href="#migration">Migration notes</a>
+        </div>
+    </section>
+
+    <section class="docs-section" id="quick-start">
+        <h2>Quick start</h2>
+        <p>
+            Install the package, create a `Screen`, add containers and controls, and render it with the
+            `BlazorTUI` component. Coordinates are zero-based and child coordinates are relative to their parent.
+        </p>
+        <pre><code>@QuickStartSnippet</code></pre>
+    </section>
+
+    <section class="docs-section" id="examples">
+        <h2>Runnable examples</h2>
+        <p>
+            Each example is an executable consumer page in `SampleApp/Pages/Examples`. The run links below
+            open the live page in this sample app; source links point to the implementation.
+        </p>
+        <div class="example-grid">
+            @foreach (DocumentationExample example in Examples)
+            {
+                <article class="example-card">
+                    <h3>@example.Title</h3>
+                    <p>@example.Description</p>
+                    <div class="card-actions">
+                        <a href="@example.Route">Run</a>
+                        <a href="@example.SourceUrl">Source</a>
+                    </div>
+                </article>
+            }
+        </div>
+    </section>
+
+    <section class="docs-section" id="previews">
+        <h2>Screenshot-ready previews</h2>
+        <p>
+            These terminal-style previews mirror the focused examples and are useful in release notes,
+            docs screenshots, or visual regression planning.
+        </p>
+        <div class="preview-grid">
+            <figure>
+                <figcaption>Example catalog</figcaption>
+                <pre class="terminal-preview">@CatalogPreview</pre>
+            </figure>
+            <figure>
+                <figcaption>Advanced GridView</figcaption>
+                <pre class="terminal-preview">@GridViewPreview</pre>
+            </figure>
+            <figure>
+                <figcaption>DataForm</figcaption>
+                <pre class="terminal-preview">@DataFormPreview</pre>
+            </figure>
+        </div>
+    </section>
+
+    <section class="docs-section" id="api-notes">
+        <h2>API notes</h2>
+        <div class="notes-grid">
+            <article>
+                <h3>Screen and rendering</h3>
+                <ul>
+                    <li>`Screen` owns rows, the root container, the optional menu bar, dialogs, shortcuts, theme, and state export.</li>
+                    <li>Controls render by mutating `Cell` instances; final cell states drive revision changes.</li>
+                    <li>`TuiRow` skips unchanged rows and cell CSS is cached by visual setters.</li>
+                </ul>
+            </article>
+            <article>
+                <h3>Controls and input</h3>
+                <ul>
+                    <li>Interactive controls opt into focus with `TabStop` and support keyboard/mouse conventions.</li>
+                    <li>Browser shortcuts are selectively intercepted; modified shortcuts stay with the browser unless BlazorTUI owns them.</li>
+                    <li>Text controls support selection, clipboard, Unicode-aware editing, and bounded undo/redo.</li>
+                </ul>
+            </article>
+            <article>
+                <h3>Forms and data</h3>
+                <ul>
+                    <li>Validation supports required fields, custom rules, inline messages, and first-invalid focus.</li>
+                    <li>`DataForm&lt;TModel&gt;` composes generated or explicit editors while keeping normal controls.</li>
+                    <li>`GridView` supports sorting, filters, filter-row UI, selection, pagination, editing, grouping, export, and async loading.</li>
+                </ul>
+            </article>
+            <article>
+                <h3>Release quality</h3>
+                <ul>
+                    <li>The package targets `net10.0` and builds with deterministic settings, Source Link, symbols, and package validation.</li>
+                    <li>The CI matrix validates Windows and Linux, test coverage, the package artifact, and an isolated NuGet consumer.</li>
+                    <li>Image decoding stays outside the library; `PictureBox` receives encoded bytes and stores data URIs in cells.</li>
+                </ul>
+            </article>
+        </div>
+    </section>
+
+    <section class="docs-section" id="snippets">
+        <h2>Common snippets</h2>
+        <div class="snippet-grid">
+            <article>
+                <h3>Validation</h3>
+                <pre><code>@ValidationSnippet</code></pre>
+            </article>
+            <article>
+                <h3>Advanced GridView</h3>
+                <pre><code>@GridViewSnippet</code></pre>
+            </article>
+            <article>
+                <h3>State persistence</h3>
+                <pre><code>@StateSnippet</code></pre>
+            </article>
+        </div>
+    </section>
+
+    <section class="docs-section" id="migration">
+        <h2>Migration guidance</h2>
+        <ol>
+            <li>Prefer PascalCase APIs such as `TopContainer`, `Rows`, `Cells`, `ForeColor`, `Clicked`, `GotFocus`, and `LostFocus`.</li>
+            <li>Keep legacy lowercase members only for existing `0.8.x` compatibility; new code should avoid them.</li>
+            <li>Use `AddMenu` and `AddItem` for menus instead of mutating internal lists directly.</li>
+            <li>Use `System.Drawing.Color` from `System.Drawing.Primitives`; do not add `System.Drawing.Common`.</li>
+            <li>When upgrading examples, preserve unique non-empty control names and positive dimensions.</li>
+            <li>Run the package smoke test after changing public API, README snippets, or NuGet metadata.</li>
+        </ol>
+    </section>
+</main>
+
+@code {
+    private const string RepositoryRoot = "https://github.com/alexandrelozano/BlazorTUI/blob/master";
+
+    private static readonly DocumentationExample[] Examples =
+    [
+        new("Controls and events", "Inputs, callbacks, focus order, and status messages.", "/examples/controls-events", "SampleApp/Pages/Examples/ControlsAndEvents.razor"),
+        new("Additional inputs", "SearchBox, AutoCompleteBox, MaskedTextBox, ToggleSwitch, and MultiSelectComboBox.", "/examples/additional-inputs", "SampleApp/Pages/Examples/AdditionalInputs.razor"),
+        new("Form validation", "Required fields, custom rules, inline errors, and first-invalid focus.", "/examples/form-validation", "SampleApp/Pages/Examples/FormValidation.razor"),
+        new("DataForm", "Model-bound fields, generated editors, validation summary, and submit updates.", "/examples/data-form", "SampleApp/Pages/Examples/DataFormExample.razor"),
+        new("GridView", "Sorting, filters, filter row UI, editing, grouping, export, and async loading.", "/examples/grid-view", "SampleApp/Pages/Examples/GridViewExample.razor"),
+        new("Data visualizations", "Sparkline, BarChart, Gauge, Timeline, and KeyValueList.", "/examples/data-visualizations", "SampleApp/Pages/Examples/DataVisualizations.razor"),
+        new("Dialogs and menus", "Menu shortcuts, modal dialogs, and message boxes.", "/examples/dialogs-menus", "SampleApp/Pages/Examples/DialogsAndMenus.razor"),
+        new("Images", "Encoded image bytes rendered through PictureBox cells.", "/examples/images", "SampleApp/Pages/Examples/Images.razor"),
+        new("TabControl", "Tabbed layouts, nested controls, and keyboard navigation.", "/examples/tabs", "SampleApp/Pages/Examples/Tabs.razor"),
+        new("TreeView", "Hierarchical nodes, expansion, selection events, and navigation.", "/examples/tree-view", "SampleApp/Pages/Examples/TreeViewExample.razor"),
+        new("Slider", "Horizontal and vertical ranges with mouse and keyboard changes.", "/examples/sliders", "SampleApp/Pages/Examples/Sliders.razor"),
+        new("SplitPanel", "Resizable vertical and horizontal panes with nested layouts.", "/examples/split-panels", "SampleApp/Pages/Examples/SplitPanels.razor"),
+        new("Layout panels", "StackPanel, GridPanel, DockPanel, WrapPanel, and ScrollViewer.", "/examples/stack-panel", "SampleApp/Pages/Examples/StackPanelExample.razor"),
+        new("Calendar and dates", "Calendar, DatePicker, DateRangePicker, and MonthPicker.", "/examples/calendar", "SampleApp/Pages/Examples/CalendarExample.razor"),
+        new("Breadcrumb", "Hierarchical path navigation with selection and activation events.", "/examples/breadcrumbs", "SampleApp/Pages/Examples/Breadcrumbs.razor"),
+        new("Themes", "Runtime theme switching and predefined palettes.", "/examples/themes", "SampleApp/Pages/Examples/Themes.razor"),
+        new("Transient UI", "Context menus, tooltips, toasts, popovers, and modal panels.", "/examples/transient-ui", "SampleApp/Pages/Examples/TransientUi.razor"),
+        new("Complete showcase", "All controls, nested frames, callbacks, z-order, and animation.", "/examples/showcase", "SampleApp/Pages/Index.razor")
+    ];
+
+    private static readonly string QuickStartSnippet = """
+        @using BlazorTUI.TUI
+        @using Color = System.Drawing.Color
+
+        <BlazorTUI.BlazorTUI screen="@screen" />
+
+        @code {
+            private readonly Screen screen = new(80, 40);
+
+            protected override void OnInitialized()
+            {
+                var frame = new Frame("mainFrame", "ORDERS", 2, 2, 50, 12,
+                    Frame.BorderStyle.Line, Color.Yellow, Color.DarkBlue);
+
+                screen.TopContainer.AddContainer(frame);
+                frame.AddControl(new TextBox("customerName", "", 2, 2, 24,
+                    Color.Yellow, Color.Black));
+                frame.AddControl(new Button("saveButton", "Save", 2, 4, 10,
+                    Color.White, Color.DarkGreen));
+                screen.SetFocus("customerName");
+            }
+        }
+        """;
+
+    private static readonly string ValidationSnippet = """
+        var name = new TextBox("name", "", 12, 2, 24, Color.Yellow, Color.Black)
+        {
+            IsRequired = true,
+            RequiredMessage = "Name required"
+        };
+
+        name.ValidationRules.Add(
+            value => value is string text && text.Length >= 3,
+            "Use at least 3 characters.");
+
+        bool valid = screen.Validate(focusFirstInvalid: true);
+        IReadOnlyList<Control> invalidControls = screen.GetInvalidControls();
+        """;
+
+    private static readonly string GridViewSnippet = """
+        orders.ShowFilterRow = true;
+        orders.BeginFilterEdit(columnIndex: 1);
+        orders.GroupByColumn(3);
+        orders.AddCountFooter("Rows", columnIndex: 3);
+        orders.HideColumn(2);
+        orders.MoveColumn(3, visibleIndex: 0);
+
+        string csv = orders.ExportCsv();
+
+        await orders.LoadRowsAsync(async cancellationToken =>
+        {
+            OrderDto[] rows = await client.GetFromJsonAsync<OrderDto[]>(
+                "/api/orders", cancellationToken) ?? [];
+
+            return rows.Select(order => new GridView.GridRow
+            {
+                Cells = new[] { order.Id, order.Pizza, order.Status }
+            });
+        });
+        """;
+
+    private static readonly string StateSnippet = """
+        string json = screen.ExportStateJson();
+
+        // Later, after controls have been recreated with the same names:
+        screen.RestoreStateJson(json);
+        screen.Render();
+        """;
+
+    private static readonly string CatalogPreview = """
+        ┌───────────────BLAZORTUI EXAMPLES───────────────┐
+        │ [ Controls and events ]   [ GridView       ]   │
+        │   Inputs and callbacks      Advanced data grid  │
+        │ [ DataForm            ]   [ Themes         ]   │
+        │   Model-bound forms        Runtime palettes    │
+        │ [ Complete showcase   ]                         │
+        └─────────────────────────────────────────────────┘
+        """;
+
+    private static readonly string GridViewPreview = """
+        Order │Pizza          │Courier     │Status ◆▼│
+        Ready │               │            │         │
+        ──────────────────────────────────────────────
+        ▸ Status: Cooking
+        1     │Pepperoni      │John River  │Cooking  │
+        4     │Calzone        │Maria Lee   │Cooking  │
+        Rows  │               │            │10       │
+        """;
+
+    private static readonly string DataFormPreview = """
+        Name:      [Alex                 ]
+        Password:  •••••••
+        Priority:  [Normal          ▼]
+        Contact:   (●) Email ( ) Phone
+
+        [ Submit ]
+        """;
+
+    private sealed record DocumentationExample(
+        string Title,
+        string Description,
+        string Route,
+        string SourcePath)
+    {
+        public string SourceUrl => $"{RepositoryRoot}/{SourcePath}";
+    }
+}

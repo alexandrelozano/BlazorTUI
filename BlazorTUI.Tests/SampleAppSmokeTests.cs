@@ -46,6 +46,25 @@ public class SampleAppSmokeTests : IClassFixture<WebApplicationFactory<Program>>
         Assert.Contains("aria-label=\"BlazorTUI example catalog\"", html);
     }
 
+    [Fact]
+    public async Task DocumentationSiteStartsAndLinksToRunnableExamples()
+    {
+        using HttpClient client = factory.CreateClient();
+
+        string html = await client.GetStringAsync("/docs");
+
+        Assert.Contains("<title>BlazorTUI documentation</title>", html);
+        Assert.Contains("BlazorTUI documentation site", html);
+        Assert.Contains("Quick start", html);
+        Assert.Contains("Runnable examples", html);
+        Assert.Contains("Screenshot-ready previews", html);
+        Assert.Contains("API notes", html);
+        Assert.Contains("Migration guidance", html);
+        Assert.Contains("href=\"/examples/grid-view\"", html);
+        Assert.Contains("GridView", html);
+        Assert.Contains("ExportCsv", html);
+    }
+
     [Theory]
     [InlineData("/examples/controls-events", "Controls and events example")]
     [InlineData("/examples/additional-inputs", "Additional input controls example")]
