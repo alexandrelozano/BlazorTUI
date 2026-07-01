@@ -70,6 +70,7 @@ namespace BlazorTUI.TUI
             else if (mnuOpen.menuItems != null)
             {
                 showShortCutkeys = true;
+                IReadOnlyList<MenuItem> visibleItems = mnuOpen.VisibleItems();
 
                 switch (key)
                 {
@@ -102,7 +103,7 @@ namespace BlazorTUI.TUI
                         }
                         break;
                     case "ArrowDown":
-                        if (mnuOpen.selectedItem < mnuOpen.menuItems.Count)
+                        if (mnuOpen.selectedItem < visibleItems.Count)
                             mnuOpen.selectedItem++;
                         break;
                     case "ArrowUp":
@@ -112,7 +113,7 @@ namespace BlazorTUI.TUI
                     case "Enter":
                         if (mnuOpen.selectedItem > 0)
                         {
-                            mnuOpen.menuItems[mnuOpen.selectedItem - 1].Invoke();
+                            visibleItems[mnuOpen.selectedItem - 1].Invoke();
 
                             mnuOpen.selectedItem = 0;
                             mnuOpen.opended = false;
@@ -120,9 +121,11 @@ namespace BlazorTUI.TUI
                         }
                         break;
                     default:
-                        foreach (MenuItem menuItem in mnuOpen.menuItems)
+                        foreach (MenuItem menuItem in visibleItems)
                         {
-                            if (menuItem.shortCutKey != null && char.ToUpperInvariant(key[0]) == char.ToUpperInvariant(menuItem.shortCutKey.Value))
+                            if (menuItem.Enabled &&
+                                menuItem.shortCutKey != null &&
+                                char.ToUpperInvariant(key[0]) == char.ToUpperInvariant(menuItem.shortCutKey.Value))
                             {
                                 menuItem.Invoke();
 
@@ -176,18 +179,19 @@ namespace BlazorTUI.TUI
             }
 
             int itemIndex = Y - 1;
-            int dropDownWidth = openMenu.menuItems.Count == 0
+            IReadOnlyList<MenuItem> visibleItems = openMenu.VisibleItems();
+            int dropDownWidth = visibleItems.Count == 0
                 ? 0
-                : openMenu.menuItems.Max(item => TuiText.VisualWidth(item.text));
-            bool itemClicked = itemIndex >= 0 && itemIndex < openMenu.menuItems.Count &&
+                : visibleItems.Max(item => TuiText.VisualWidth(item.Text));
+            bool itemClicked = itemIndex >= 0 && itemIndex < visibleItems.Count &&
                 X >= openMenuStartX && X < openMenuStartX + dropDownWidth;
 
             CloseMenus();
             if (!itemClicked)
                 return false;
 
-            MenuItem item = openMenu.menuItems[itemIndex];
-            if (item.menuItemType != MenuItem.MenuItemType.Separator)
+            MenuItem item = visibleItems[itemIndex];
+            if (item.Type != MenuItem.MenuItemType.Separator && item.Enabled)
                 item.Invoke();
 
             return true;
@@ -264,11 +268,12 @@ namespace BlazorTUI.TUI
 
         private void RenderOpenMenu(IList<Row> rows, Menu menu, int startX, Color fore, Color background)
         {
-            if (menu.menuItems.Count == 0)
+            IReadOnlyList<MenuItem> visibleItems = menu.VisibleItems();
+            if (visibleItems.Count == 0)
                 return;
 
-            int maxLength = menu.menuItems.Max(item => TuiText.VisualWidth(item.text));
-            for (int y = 1; y <= menu.menuItems.Count && y < rows.Count; y++)
+            int maxLength = visibleItems.Max(item => TuiText.VisualWidth(item.Text));
+            for (int y = 1; y <= visibleItems.Count && y < rows.Count; y++)
             {
                 bool shortCutKeyShowed = false;
                 for (int x2 = 0; x2 < maxLength && x2 + startX < rows[y].Cells.Count; x2++)
@@ -286,12 +291,14 @@ namespace BlazorTUI.TUI
                     }
 
                     cell.textDecoration = Cell.TextDecoration.None;
-                    MenuItem menuItem = menu.menuItems[y - 1];
+                    MenuItem menuItem = visibleItems[y - 1];
+                    if (!menuItem.Enabled && menuItem.Type != MenuItem.MenuItemType.Separator)
+                        cell.foreColor = Color.Gray;
 
-                    if (menuItem.menuItemType == MenuItem.MenuItemType.Separator)
+                    if (menuItem.Type == MenuItem.MenuItemType.Separator)
                         cell.character = "─";
                     else
-                        cell.character = TuiText.CellAt(menuItem.text, x2);
+                        cell.character = TuiText.CellAt(menuItem.Text, x2);
 
                     if (!shortCutKeyShowed &&
                         showShortCutkeys &&

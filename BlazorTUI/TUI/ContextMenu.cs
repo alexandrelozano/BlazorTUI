@@ -20,13 +20,14 @@ namespace BlazorTUI.TUI
             get => selectedIndex;
             set
             {
-                if (items.Count == 0)
+                IReadOnlyList<ContextMenuItem> visibleItems = GetVisibleItems();
+                if (visibleItems.Count == 0)
                 {
                     selectedIndex = -1;
                     return;
                 }
 
-                selectedIndex = Math.Clamp(value, 0, items.Count - 1);
+                selectedIndex = Math.Clamp(value, 0, visibleItems.Count - 1);
                 if (!IsSelectable(selectedIndex))
                     selectedIndex = FindNextSelectable(selectedIndex, 1);
             }
@@ -66,6 +67,28 @@ namespace BlazorTUI.TUI
             }
         }
 
+        public ContextMenu(
+            string name,
+            IEnumerable<TuiCommand> commands,
+            short X,
+            short Y,
+            short width,
+            Color foreColor,
+            Color backgroundColor,
+            IEnumerable<string>? targetControlNames = null)
+            : this(
+                name,
+                commands?.Select(command => new ContextMenuItem(command)) ??
+                    throw new ArgumentNullException(nameof(commands)),
+                X,
+                Y,
+                width,
+                foreColor,
+                backgroundColor,
+                targetControlNames)
+        {
+        }
+
         public void SetItems(IEnumerable<ContextMenuItem> nextItems)
         {
             ArgumentNullException.ThrowIfNull(nextItems);
@@ -84,6 +107,14 @@ namespace BlazorTUI.TUI
 
             items.Add(item);
             selectedIndex = FindNextSelectable(Math.Max(0, selectedIndex), 1);
+        }
+
+        public ContextMenuItem AddCommand(TuiCommand command)
+        {
+            ArgumentNullException.ThrowIfNull(command);
+            var item = new ContextMenuItem(command);
+            AddItem(item);
+            return item;
         }
 
         public ContextMenuItem? GetItem(string name)
@@ -132,12 +163,13 @@ namespace BlazorTUI.TUI
 
         public void OpenAt(short x, short y)
         {
-            if (!Visible || items.Count == 0)
+            IReadOnlyList<ContextMenuItem> visibleItems = GetVisibleItems();
+            if (!Visible || visibleItems.Count == 0)
                 return;
 
             X = x;
             Y = y;
-            Height = (short)Math.Max(1, items.Count);
+            Height = (short)Math.Max(1, visibleItems.Count);
             selectedIndex = FindNextSelectable(selectedIndex < 0 ? 0 : selectedIndex, 1);
             IsOpen = true;
             container?.BringToFront(this);
@@ -168,6 +200,8 @@ namespace BlazorTUI.TUI
             if (!IsOpen)
                 return false;
 
+            IReadOnlyList<ContextMenuItem> visibleItems = GetVisibleItems();
+
             switch (key)
             {
                 case "Escape":
@@ -183,7 +217,7 @@ namespace BlazorTUI.TUI
                     selectedIndex = FindNextSelectable(0, 1);
                     return true;
                 case "End":
-                    selectedIndex = FindNextSelectable(items.Count - 1, -1);
+                    selectedIndex = FindNextSelectable(visibleItems.Count - 1, -1);
                     return true;
                 case "Enter":
                 case "Space":
@@ -197,7 +231,8 @@ namespace BlazorTUI.TUI
 
         public override bool Click(short X, short Y)
         {
-            if (!Visible || !IsOpen || X < 0 || X >= Width || Y < 0 || Y >= items.Count)
+            IReadOnlyList<ContextMenuItem> visibleItems = GetVisibleItems();
+            if (!Visible || !IsOpen || X < 0 || X >= Width || Y < 0 || Y >= visibleItems.Count)
                 return false;
 
             selectedIndex = Y;
@@ -211,8 +246,9 @@ namespace BlazorTUI.TUI
             if (!Visible || !IsOpen || container is null)
                 return;
 
-            for (int row = 0; row < items.Count; row++)
-                RenderItem(rows, row, items[row], row == selectedIndex);
+            IReadOnlyList<ContextMenuItem> visibleItems = GetVisibleItems();
+            for (int row = 0; row < visibleItems.Count; row++)
+                RenderItem(rows, row, visibleItems[row], row == selectedIndex);
         }
 
         internal void ExportContextMenuState(TuiElementState state)
@@ -244,13 +280,14 @@ namespace BlazorTUI.TUI
                 Y = (short)restoredY;
             }
 
-            IsOpen = state.TryGetBoolean("IsOpen", out bool isOpen) && isOpen && items.Count > 0;
-            Height = (short)(IsOpen ? Math.Max(1, items.Count) : 1);
+            IReadOnlyList<ContextMenuItem> visibleItems = GetVisibleItems();
+            IsOpen = state.TryGetBoolean("IsOpen", out bool isOpen) && isOpen && visibleItems.Count > 0;
+            Height = (short)(IsOpen ? Math.Max(1, visibleItems.Count) : 1);
         }
 
         bool IPopupControl.ContainsPopupPoint(short X, short Y)
             => Visible && IsOpen && X >= this.X && X < this.X + Width &&
-                Y >= this.Y && Y < this.Y + items.Count;
+                Y >= this.Y && Y < this.Y + GetVisibleItems().Count;
 
         void IPopupControl.ClosePopup()
             => Close();
@@ -276,7 +313,7 @@ namespace BlazorTUI.TUI
 
         private void MoveSelection(int delta)
         {
-            if (items.Count == 0)
+            if (GetVisibleItems().Count == 0)
                 return;
 
             selectedIndex = FindNextSelectable(selectedIndex + delta, delta);
@@ -284,39 +321,47 @@ namespace BlazorTUI.TUI
 
         private int FindNextSelectable(int start, int delta)
         {
-            if (items.Count == 0)
+            IReadOnlyList<ContextMenuItem> visibleItems = GetVisibleItems();
+            if (visibleItems.Count == 0)
                 return -1;
 
             int direction = delta < 0 ? -1 : 1;
-            int index = ((start % items.Count) + items.Count) % items.Count;
-            for (int attempts = 0; attempts < items.Count; attempts++)
+            int index = ((start % visibleItems.Count) + visibleItems.Count) % visibleItems.Count;
+            for (int attempts = 0; attempts < visibleItems.Count; attempts++)
             {
                 if (IsSelectable(index))
                     return index;
 
-                index = (index + direction + items.Count) % items.Count;
+                index = (index + direction + visibleItems.Count) % visibleItems.Count;
             }
 
             return 0;
         }
 
         private bool IsSelectable(int index)
-            => index >= 0 &&
-                index < items.Count &&
-                items[index].Enabled &&
-                items[index].Type != ContextMenuItemType.Separator;
+        {
+            IReadOnlyList<ContextMenuItem> visibleItems = GetVisibleItems();
+            return index >= 0 &&
+                index < visibleItems.Count &&
+                visibleItems[index].Enabled &&
+                visibleItems[index].Type != ContextMenuItemType.Separator;
+        }
 
         private void InvokeSelectedItem()
         {
             if (!IsSelectable(selectedIndex))
                 return;
 
-            ContextMenuItem item = items[selectedIndex];
-            item.Invoke();
-            ItemClicked?.Invoke(this, new ContextMenuItemClickedEventArgs(item));
+            ContextMenuItem item = GetVisibleItems()[selectedIndex];
+            bool invoked = item.Invoke();
+            if (invoked)
+                ItemClicked?.Invoke(this, new ContextMenuItemClickedEventArgs(item));
             Close();
             NotifyClicked();
         }
+
+        private IReadOnlyList<ContextMenuItem> GetVisibleItems()
+            => items.Where(item => item.Visible).ToList();
 
         private void WriteCell(IList<Row> rows, int localX, int localY, string character, Color foreColor, Color backgroundColor)
         {

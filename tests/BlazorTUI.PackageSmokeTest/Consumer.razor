@@ -13,9 +13,17 @@
         terminal.Shortcuts.SetBindings(TuiShortcutAction.SelectNextTab, "Alt+N");
         terminal.Shortcuts.SetBindings(TuiShortcutAction.SelectPreviousTab, "Alt+P");
         terminal.Shortcuts.AddBinding(TuiShortcutAction.ControlOpen, "Control+O");
+        var commandRegistry = new TuiCommandRegistry();
+        var saveCommand = commandRegistry.AddCommand("saveCommand", "Save", "Save changes", _ => { });
+        saveCommand.SetShortcuts("Control+S");
         var button = new Button(
-            "save", "Save", 2, 2, 8,
+            "save", saveCommand, 2, 2, 8,
             System.Drawing.Color.White, System.Drawing.Color.DarkGreen);
+        var commandMenuBar = new MenuBar(System.Drawing.Color.White, System.Drawing.Color.DarkBlue, terminal);
+        var commandMenu = new Menu("Commands", 'C');
+        commandMenu.AddCommand(saveCommand, 'S');
+        commandMenuBar.AddMenu(commandMenu);
+        terminal.MenuBar = commandMenuBar;
         button.ScreenReaderSummary = "Save button";
         var input = new TextBox(
             "name", "Alex", 2, 1, 10,
@@ -129,6 +137,7 @@
             new[]
             {
                 new ContextMenuItem("refresh", "Refresh", ContextMenuItemType.Item),
+                new ContextMenuItem(saveCommand),
                 new ContextMenuItem("separator", "", ContextMenuItemType.Separator),
                 new ContextMenuItem("disabled", "Disabled") { Enabled = false }
             },
@@ -141,7 +150,7 @@
         _ = terminal.TopContainer.ContextClick(2, 2);
         _ = contextMenu.KeyDown("Escape", false);
         var tooltip = new Tooltip(
-            "consumerTooltip", "Save changes", "save", 0, 0, 14,
+            "consumerTooltip", saveCommand, "save", 0, 0, 14,
             System.Drawing.Color.Black,
             System.Drawing.Color.Cyan)
         {
@@ -211,6 +220,7 @@
             "status", "Ready", 0, 5, 20,
             System.Drawing.Color.Black, System.Drawing.Color.Gray);
         status.AddItem("help", "F1 Help");
+        status.AddCommand(saveCommand);
         status.Value = "Saved";
         terminal.TopContainer.AddControl(status);
         var split = new SplitPanel(
@@ -372,15 +382,20 @@
             new GridView.GridRow { Cells = new[] { "4", "Margherita" } }
         }));
         terminal.TopContainer.AddControl(ordersGrid);
+        var buildCommand = commandRegistry.AddCommand("build", "Build", "Run build", command => _ = command.Id);
         var commands = new CommandPalette(
             "commands",
-            new[] { new CommandPaletteItem("build", "Build", action: command => _ = command.Name) },
+            commandRegistry,
             0, 19, 20,
             System.Drawing.Color.White, System.Drawing.Color.Black);
         commands.CommandExecuted += (_, args) => _ = args.CommandName;
         commands.Open();
         commands.SearchText = "build";
         commands.ExecuteCommand("build");
+        _ = buildCommand.Execute();
+        _ = commandRegistry.Execute("saveCommand");
+        saveCommand.Enabled = true;
+        saveCommand.Visible = true;
         terminal.TopContainer.AddControl(commands);
         terminal.TopContainer.AddControl(new Label(
             "unicodeLabel", "Café 🙂 漢", 0, 21, 12,

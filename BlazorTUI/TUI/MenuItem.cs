@@ -8,8 +8,49 @@ namespace BlazorTUI.TUI
 {
     public class MenuItem
     {
+        private TuiCommand? command;
+        private bool enabled = true;
+        private bool visible = true;
+
         public string text;
-        public string Text { get => text; set => text = value ?? ""; }
+        public string Text
+        {
+            get => command?.Label ?? text;
+            set
+            {
+                if (command is not null)
+                    command.Label = value;
+                else
+                    text = value ?? "";
+            }
+        }
+
+        public TuiCommand? Command => command;
+
+        public bool Enabled
+        {
+            get => command?.Enabled ?? enabled;
+            set
+            {
+                if (command is not null)
+                    command.Enabled = value;
+                else
+                    enabled = value;
+            }
+        }
+
+        public bool Visible
+        {
+            get => command?.Visible ?? visible;
+            set
+            {
+                if (command is not null)
+                    command.Visible = value;
+                else
+                    visible = value;
+            }
+        }
+
         public char? shortCutKey = null;
         public char? ShortcutKey { get => shortCutKey; set => shortCutKey = value; }
 
@@ -34,10 +75,36 @@ namespace BlazorTUI.TUI
             this.shortCutKey = shortCutKey;
         }
 
-        internal void Invoke()
+        public MenuItem(TuiCommand command, MenuItemType menuItemType = MenuItemType.Item, char? shortCutKey = null)
         {
-            OnClick?.Invoke();
+            ArgumentNullException.ThrowIfNull(command);
+
+            this.command = command;
+            text = command.Label;
+            this.menuItemType = menuItemType;
+            this.shortCutKey = shortCutKey;
+        }
+
+        public void BindCommand(TuiCommand command)
+        {
+            ArgumentNullException.ThrowIfNull(command);
+            this.command = command;
+            text = command.Label;
+        }
+
+        internal bool Invoke()
+        {
+            if (!Enabled || !Visible || Type == MenuItemType.Separator)
+                return false;
+
+            if (command is not null && !command.Execute())
+                return false;
+
+            if (command is null)
+                OnClick?.Invoke();
+
             Clicked?.Invoke(this, EventArgs.Empty);
+            return true;
         }
     }
 }

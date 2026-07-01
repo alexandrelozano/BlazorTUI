@@ -7,11 +7,20 @@ namespace BlazorTUI.TUI
     {
         private string text;
         private string targetControlName;
+        private TuiCommand? command;
 
         public string Text
         {
-            get => text;
-            set => text = value ?? "";
+            get => command is null
+                ? text
+                : string.IsNullOrWhiteSpace(command.Description) ? command.Label : command.Description;
+            set
+            {
+                if (command is not null)
+                    command.Description = value;
+                else
+                    text = value ?? "";
+            }
         }
 
         public string TargetControlName
@@ -27,6 +36,8 @@ namespace BlazorTUI.TUI
         public bool IsOpen { get; private set; }
 
         public bool AutoShowOnFocus { get; set; } = true;
+
+        public TuiCommand? Command => command;
 
         public Tooltip(
             string name,
@@ -51,6 +62,36 @@ namespace BlazorTUI.TUI
             ForeColor = foreColor;
             BackgroundColor = backgroundColor;
             TabStop = false;
+        }
+
+        public Tooltip(
+            string name,
+            TuiCommand command,
+            string targetControlName,
+            short X,
+            short Y,
+            short width,
+            Color foreColor,
+            Color backgroundColor)
+            : this(
+                name,
+                command is null ? "" : string.IsNullOrWhiteSpace(command.Description) ? command.Label : command.Description,
+                targetControlName,
+                X,
+                Y,
+                width,
+                foreColor,
+                backgroundColor)
+        {
+            ArgumentNullException.ThrowIfNull(command);
+            BindCommand(command);
+        }
+
+        public void BindCommand(TuiCommand command)
+        {
+            ArgumentNullException.ThrowIfNull(command);
+            this.command = command;
+            text = string.IsNullOrWhiteSpace(command.Description) ? command.Label : command.Description;
         }
 
         public void Show() => IsOpen = true;
@@ -90,13 +131,16 @@ namespace BlazorTUI.TUI
             if (!Visible || container is null || !ShouldRenderTooltip())
                 return;
 
-            string value = TuiText.PadRightToVisualWidth(text, Width);
+            string value = TuiText.PadRightToVisualWidth(Text, Width);
             for (int x = 0; x < Width; x++)
                 WriteCell(rows, x, TuiText.CellAt(value, x));
         }
 
         private bool ShouldRenderTooltip()
         {
+            if (command is not null && !command.Visible)
+                return false;
+
             if (IsOpen)
                 return true;
 

@@ -4,6 +4,8 @@ namespace BlazorTUI.TUI
     {
         private string name;
         private string text;
+        private bool enabled = true;
+        private bool visible = true;
 
         public string Name
         {
@@ -11,15 +13,45 @@ namespace BlazorTUI.TUI
             set => name = ValidateName(value);
         }
 
+        public TuiCommand? Command { get; }
+
         public string Text
         {
-            get => text;
-            set => text = value ?? "";
+            get => Command?.Label ?? text;
+            set
+            {
+                if (Command is not null)
+                    Command.Label = value;
+                else
+                    text = value ?? "";
+            }
         }
 
         public ContextMenuItemType Type { get; set; }
 
-        public bool Enabled { get; set; } = true;
+        public bool Enabled
+        {
+            get => Command?.Enabled ?? enabled;
+            set
+            {
+                if (Command is not null)
+                    Command.Enabled = value;
+                else
+                    enabled = value;
+            }
+        }
+
+        public bool Visible
+        {
+            get => Command?.Visible ?? visible;
+            set
+            {
+                if (Command is not null)
+                    Command.Visible = value;
+                else
+                    visible = value;
+            }
+        }
 
         public Action? OnClick { get; set; }
 
@@ -35,13 +67,31 @@ namespace BlazorTUI.TUI
             Type = type;
         }
 
-        internal void Invoke()
+        public ContextMenuItem(
+            TuiCommand command,
+            ContextMenuItemType type = ContextMenuItemType.Item)
         {
-            if (!Enabled || Type == ContextMenuItemType.Separator)
-                return;
+            ArgumentNullException.ThrowIfNull(command);
 
-            OnClick?.Invoke();
+            this.name = command.Id;
+            Command = command;
+            this.text = command.Label;
+            Type = type;
+        }
+
+        internal bool Invoke()
+        {
+            if (!Enabled || !Visible || Type == ContextMenuItemType.Separator)
+                return false;
+
+            if (Command is not null && !Command.Execute())
+                return false;
+
+            if (Command is null)
+                OnClick?.Invoke();
+
             Clicked?.Invoke(this, EventArgs.Empty);
+            return true;
         }
 
         private static string ValidateName(string value)

@@ -90,6 +90,20 @@ namespace BlazorTUI.TUI
             return item;
         }
 
+        public StatusBarItem AddCommand(
+            TuiCommand command,
+            short width = 0,
+            StatusBarItemAlignment alignment = StatusBarItemAlignment.Right,
+            Color? foreColor = null,
+            Color? backgroundColor = null,
+            bool includeShortcut = true)
+        {
+            ArgumentNullException.ThrowIfNull(command);
+            var item = new StatusBarItem(command, width, alignment, foreColor, backgroundColor, includeShortcut);
+            AddItem(item);
+            return item;
+        }
+
         public void AddItem(StatusBarItem item)
         {
             ArgumentNullException.ThrowIfNull(item);
@@ -150,7 +164,7 @@ namespace BlazorTUI.TUI
         {
             int cursor = width;
             List<StatusBarItem> rightItems = items
-                .Where(item => item.Alignment == StatusBarItemAlignment.Right)
+                .Where(item => item.Visible && item.Alignment == StatusBarItemAlignment.Right)
                 .ToList();
 
             for (int index = rightItems.Count - 1; index >= 0 && cursor > 0; index--)
@@ -176,7 +190,7 @@ namespace BlazorTUI.TUI
         {
             int cursor = RenderText(rows, absoluteY, 0, rightLimit, message, foreColor, backgroundColor);
 
-            foreach (StatusBarItem item in items.Where(item => item.Alignment == StatusBarItemAlignment.Left))
+            foreach (StatusBarItem item in items.Where(item => item.Visible && item.Alignment == StatusBarItemAlignment.Left))
             {
                 if (cursor > 0 && TuiText.VisualWidth(separator) > 0)
                     cursor = RenderText(rows, absoluteY, cursor, rightLimit, separator, foreColor, backgroundColor);
@@ -252,7 +266,7 @@ namespace BlazorTUI.TUI
             return TuiText.PadRightToVisualWidth(item.Text, item.Width);
         }
 
-        private Color ItemForeColor(StatusBarItem item) => item.ForeColor ?? foreColor;
+        private Color ItemForeColor(StatusBarItem item) => item.Enabled ? item.ForeColor ?? foreColor : Color.Gray;
 
         private Color ItemBackgroundColor(StatusBarItem item) => item.BackgroundColor ?? backgroundColor;
     }

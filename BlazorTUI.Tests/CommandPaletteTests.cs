@@ -146,7 +146,7 @@ public class CommandPaletteTests
             Color.White, Color.Black);
 
         Assert.Throws<InvalidOperationException>(() => palette.AddCommand("build", "Build again"));
-        Assert.Throws<ArgumentNullException>(() => palette.AddCommand(null!));
+        Assert.Throws<ArgumentNullException>(() => palette.AddCommand((CommandPaletteItem)null!));
         Assert.Throws<ArgumentNullException>(() => palette.RemoveCommand((CommandPaletteItem)null!));
         Assert.Throws<ArgumentException>(() => palette.GetCommand(" "));
     }

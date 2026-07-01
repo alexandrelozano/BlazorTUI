@@ -204,7 +204,7 @@ Use `FirstPanel` and `SecondPanel` as normal containers for controls or nested c
 | Forms | `DataForm<TModel>`, `FormField<TModel>`, `ValidationSummary` |
 | Text and input | `Label`, `TextBox`, `SearchBox`, `AutoCompleteBox`, `MaskedTextBox`, `PasswordBox`, `TextArea`, `NumericBox`, `DateBox`, `Calendar`, `DatePicker`, `DateRangePicker`, `MonthPicker`, `TimeBox` |
 | Selection | `CheckBox`, `ToggleSwitch`, `RadioButton`, `RadioGroup`, `ComboBox`, `MultiSelectComboBox`, `ListBox`, `TreeView`, `Slider`, `ColorPicker` |
-| Actions and navigation | `Breadcrumb`, `BreadcrumbItem`, `Button`, `CommandPalette`, `CommandPaletteItem`, `ContextMenu`, `ContextMenuItem`, `MenuBar`, `Menu`, `MenuItem` |
+| Actions and navigation | `Breadcrumb`, `BreadcrumbItem`, `Button`, `CommandPalette`, `CommandPaletteItem`, `ContextMenu`, `ContextMenuItem`, `MenuBar`, `Menu`, `MenuItem`, `TuiCommand`, `TuiCommandRegistry` |
 | Data and feedback | `GridView`, `Sparkline`, `BarChart`, `Gauge`, `Timeline`, `KeyValueList`, `ProgressBar`, `Spinner`, `StatusBar`, `Toast`, `PictureBox` |
 | Modal and transient UI | `Dialog`, `MessageBox`, `ModalPanel`, `Popover`, `Tooltip` |
 
@@ -781,6 +781,48 @@ bool confirmed = await screen.DialogService.ConfirmAsync(
 ```
 
 `ShowMessageAsync` returns the selected `MessageBox.Result`. `ConfirmAsync` returns `true` for confirmation and `false` for rejection. The dialog is still modal: while it is open, keyboard and mouse input are routed to the top dialog until it closes. Both APIs accept an optional `CancellationToken`; cancellation closes the dialog and cancels the returned task.
+
+## Unified command model
+
+Use `TuiCommand` and `TuiCommandRegistry` when the same application action should appear in several controls. A command owns its ID, label, description, enabled/visible state, shortcuts, handler, and `Executed` event. Buttons, menus, command palettes, context menus, status bars, and tooltips can all bind to the same command object:
+
+```csharp
+var commands = new TuiCommandRegistry();
+TuiCommand save = commands.AddCommand(
+    "saveOrder",
+    "Save",
+    "Save the current order",
+    _ => status.Value = "Saved");
+save.SetShortcuts("Control+S");
+
+frame.AddControl(new Button(
+    "saveButton", save, 3, 4, 10,
+    Color.White, Color.DarkGreen));
+
+var menu = new Menu("File", 'F');
+menu.AddCommand(save, 'S');
+screen.MenuBar = new MenuBar(Color.White, Color.DarkBlue, screen);
+screen.MenuBar.AddMenu(menu);
+
+frame.AddControl(new CommandPalette(
+    "commands", commands, 30, 4, 28,
+    Color.Yellow, Color.Black));
+
+frame.AddControl(new ContextMenu(
+    "actionsMenu",
+    new[] { save },
+    3, 5, 16,
+    Color.Yellow, Color.Black,
+    new[] { "saveButton" }));
+
+frame.AddControl(new Tooltip(
+    "saveTip", save, "saveButton", 14, 4, 26,
+    Color.Black, Color.Cyan));
+
+status.AddCommand(save);
+```
+
+Changing `save.Label`, `save.Description`, `save.Enabled`, or `save.Visible` updates bound controls the next time they render or execute. `Enabled = false` prevents execution; `Visible = false` hides command-backed entries from palettes, context menus, status bars, tooltips, and buttons. Existing direct callback APIs such as `Button.Clicked`, `MenuItem.OnClick`, `ContextMenuItem.OnClick`, and `CommandPaletteItem.Action` remain available for simple one-off actions.
 
 ## Transient and contextual UI
 
@@ -1386,6 +1428,7 @@ Run `dotnet run --project SampleApp` from the repository root and open `/`, `/ex
 - Added provider-driven virtual data operations for large `GridView`, `ListBox`, `TreeView`, and `CommandPalette` data sources.
 - Added query objects and operations-provider interfaces so consumers can push filtering, sorting, grouping, searching, paging, and visible-window prefetching into their own data layer.
 - Added async/cancellable `RefreshVirtualQueryAsync` hooks for virtual controls using operations providers.
+- Added a unified command model with `TuiCommand` and `TuiCommandRegistry`, plus command binding for buttons, menus, command palettes, context menus, status bars, and tooltips.
 - Updated NuGet consumer coverage and virtualization regression tests for the new provider-driven API.
 
 ### 0.8.15 — 2026-06-30

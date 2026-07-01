@@ -5,12 +5,34 @@ namespace BlazorTUI.TUI
 {
     public class Button : Control
     {
-        string text;
+        private string text;
+        private TuiCommand? command;
+        private bool enabled = true;
 
         public string Text
         {
-            get => text.Trim();
-            set => text = (value ?? "").CenterString(width);
+            get => command?.Label ?? text.Trim();
+            set
+            {
+                if (command is not null)
+                    command.Label = value;
+
+                text = (value ?? "").CenterString(width);
+            }
+        }
+
+        public TuiCommand? Command => command;
+
+        public bool Enabled
+        {
+            get => command?.Enabled ?? enabled;
+            set
+            {
+                if (command is not null)
+                    command.Enabled = value;
+                else
+                    enabled = value;
+            }
         }
 
         public Button(string name, string text, short X, short Y, short width, Color forecolor, Color backgroundcolor)
@@ -28,14 +50,33 @@ namespace BlazorTUI.TUI
             this.TabStop = true;
         }
 
+        public Button(string name, TuiCommand command, short X, short Y, short width, Color forecolor, Color backgroundcolor)
+            : this(name, command?.Label ?? "", X, Y, width, forecolor, backgroundcolor)
+        {
+            ArgumentNullException.ThrowIfNull(command);
+            BindCommand(command);
+        }
+
+        public void BindCommand(TuiCommand command)
+        {
+            ArgumentNullException.ThrowIfNull(command);
+            this.command = command;
+            text = command.Label.CenterString(width);
+            if (string.IsNullOrWhiteSpace(ScreenReaderDescription) &&
+                !string.IsNullOrWhiteSpace(command.Description))
+            {
+                ScreenReaderDescription = command.Description;
+            }
+        }
+
         public override bool Click(short X, short Y)
         {
             bool handled = false;
 
-            if (Visible)
+            if (IsVisibleByCommand && Enabled)
             {
                 container.TopContainer().SetFocus(name);
-
+                command?.Execute();
                 handled = true;
             }
 
@@ -49,7 +90,7 @@ namespace BlazorTUI.TUI
         {
             bool handled = false;
 
-            if (Visible)
+            if (IsVisibleByCommand && Enabled)
             {
                 switch (key)
                 {
@@ -57,10 +98,12 @@ namespace BlazorTUI.TUI
                         break;
                     case "Space":
                     case " ":
+                        command?.Execute();
                         NotifyClicked();
                         handled = true;
                         break;
                     case "Enter":
+                        command?.Execute();
                         NotifyClicked();
                         handled = true; 
                         break;
@@ -80,24 +123,26 @@ namespace BlazorTUI.TUI
 
         public override void Render(IList<Row> rows)
         {
-            if (Visible)
+            if (IsVisibleByCommand)
             {
+                string renderedText = Text.CenterString(width);
                 for (short n = 0; n < width; n++)
                 {
                     if (container.YOffset() + Y < container.YOffset() + container.height && container.YOffset() + Y < rows.Count)
                     {
                         if (container.XOffset() + X + n < container.XOffset() + container.width && container.XOffset() + X + n < rows[Y].Cells.Count)
                         {
-                            string ch = TuiText.CellAt(text, n);
+                            string ch = TuiText.CellAt(renderedText, n);
+                            Color foreground = Enabled ? foreColor : Color.Gray;
 
                             if (Focus)
                             {
                                 rows[container.YOffset() + Y].Cells[container.XOffset() + X + n].foreColor = backgroundColor;
-                                rows[container.YOffset() + Y].Cells[container.XOffset() + X + n].backgroundColor = foreColor;
+                                rows[container.YOffset() + Y].Cells[container.XOffset() + X + n].backgroundColor = foreground;
                             }
                             else
                             {
-                                rows[container.YOffset() + Y].Cells[container.XOffset() + X + n].foreColor = foreColor;
+                                rows[container.YOffset() + Y].Cells[container.XOffset() + X + n].foreColor = foreground;
                                 rows[container.YOffset() + Y].Cells[container.XOffset() + X + n].backgroundColor = backgroundColor;
                             }
 
@@ -116,5 +161,7 @@ namespace BlazorTUI.TUI
                 }
             }
         }
+
+        private bool IsVisibleByCommand => Visible && (command?.Visible ?? true);
     }
 }

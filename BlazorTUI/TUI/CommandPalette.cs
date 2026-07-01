@@ -142,6 +142,28 @@ namespace BlazorTUI.TUI
             LostFocus += (_, _) => Close();
         }
 
+        public CommandPalette(
+            string name,
+            TuiCommandRegistry registry,
+            short X,
+            short Y,
+            short width,
+            Color foreColor,
+            Color backgroundColor,
+            short maxVisibleCommands = 5)
+            : this(
+                name,
+                registry?.Commands.Select(command => new CommandPaletteItem(command)) ??
+                    throw new ArgumentNullException(nameof(registry)),
+                X,
+                Y,
+                width,
+                foreColor,
+                backgroundColor,
+                maxVisibleCommands)
+        {
+        }
+
         public CommandPaletteItem AddCommand(
             string name,
             string title,
@@ -151,6 +173,14 @@ namespace BlazorTUI.TUI
             var command = new CommandPaletteItem(name, title, description, action);
             AddCommand(command);
             return command;
+        }
+
+        public CommandPaletteItem AddCommand(TuiCommand command)
+        {
+            ArgumentNullException.ThrowIfNull(command);
+            var item = new CommandPaletteItem(command);
+            AddCommand(item);
+            return item;
         }
 
         public void AddCommand(CommandPaletteItem command)
@@ -256,7 +286,7 @@ namespace BlazorTUI.TUI
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(name);
             CommandPaletteItem? command = GetCommand(name);
-            if (command is null)
+            if (command is null || !command.Visible || !command.Enabled)
                 return false;
 
             ExecuteCommand(command);
@@ -482,7 +512,7 @@ namespace BlazorTUI.TUI
 
         private void ExecuteHighlightedCommand()
         {
-            if (HighlightedCommand is null)
+            if (HighlightedCommand is null || !HighlightedCommand.Enabled)
                 return;
 
             ExecuteCommand(HighlightedCommand);
@@ -534,7 +564,7 @@ namespace BlazorTUI.TUI
             filteredCommands.Clear();
             if (virtualCommands is null)
             {
-                foreach (CommandPaletteItem command in commands.Where(CommandMatchesSearch))
+                foreach (CommandPaletteItem command in commands.Where(command => command.Visible).Where(CommandMatchesSearch))
                     filteredCommands.Add(command);
                 filteredCommandCount = filteredCommands.Count;
             }

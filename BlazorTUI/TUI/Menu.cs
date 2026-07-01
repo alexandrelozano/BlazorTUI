@@ -40,5 +40,16 @@ namespace BlazorTUI.TUI
             ArgumentNullException.ThrowIfNull(item);
             menuItems.Add(item);
         }
+
+        public MenuItem AddCommand(TuiCommand command, char? shortcutKey = null)
+        {
+            ArgumentNullException.ThrowIfNull(command);
+            var item = new MenuItem(command, MenuItem.MenuItemType.Item, shortcutKey);
+            AddItem(item);
+            return item;
+        }
+
+        internal IReadOnlyList<MenuItem> VisibleItems()
+            => menuItems.Where(item => item.Visible).ToList();
     }
 }
