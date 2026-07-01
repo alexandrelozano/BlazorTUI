@@ -8,6 +8,7 @@ namespace BlazorTUI.TUI
         private readonly List<TreeNode> nodes = new();
         private readonly Dictionary<string, TreeNode> nodesByName = new(StringComparer.Ordinal);
         private readonly IVirtualTreeViewDataProvider? virtualNodes;
+        private readonly IVirtualTreeViewDataOperationsProvider? virtualNodeOperations;
         private TreeNode? selectedNode;
         private string? selectedVirtualNodeKey;
         private int scrollIndex;
@@ -86,6 +87,7 @@ namespace BlazorTUI.TUI
         {
             ArgumentNullException.ThrowIfNull(nodes);
             virtualNodes = nodes;
+            virtualNodeOperations = nodes as IVirtualTreeViewDataOperationsProvider;
             EnsureVirtualSelection();
         }
 
@@ -207,11 +209,23 @@ namespace BlazorTUI.TUI
                 return;
             }
 
+            ApplyVirtualNodeQuery();
             int index = virtualNodes.FindVisibleIndexByKey(key);
             if (index < 0)
                 throw new ArgumentException("The key is not visible in this TreeView.", nameof(key));
 
             SetSelectedVirtualNodeKey(key);
+        }
+
+        public async Task RefreshVirtualQueryAsync(CancellationToken cancellationToken = default)
+        {
+            if (virtualNodeOperations is null)
+                return;
+
+            await virtualNodeOperations
+                .ApplyQueryAsync(CreateVirtualTreeViewQuery(), cancellationToken)
+                .ConfigureAwait(false);
+            EnsureVirtualSelection(applyQuery: false);
         }
 
         internal void ExportTreeViewState(TuiElementState state)
@@ -242,6 +256,7 @@ namespace BlazorTUI.TUI
 
             if (virtualNodes is not null)
             {
+                ApplyVirtualNodeQuery();
                 if (state.TryGetString("SelectedNodeKey", out string restoredSelectedKey))
                 {
                     int index = virtualNodes.FindVisibleIndexByKey(restoredSelectedKey);
@@ -467,6 +482,7 @@ namespace BlazorTUI.TUI
             if (!Visible || virtualNodes is null)
                 return false;
 
+            ApplyVirtualNodeQuery();
             EnsureVirtualSelection();
             if (selectedVirtualNodeKey is null)
                 return false;
@@ -519,6 +535,7 @@ namespace BlazorTUI.TUI
                 return false;
 
             container.TopContainer().SetFocus(Name);
+            ApplyVirtualNodeQuery();
             int visibleNodeCount = virtualNodes.VisibleCount;
             if (X == Width - 1 && visibleNodeCount > Height)
             {
@@ -527,6 +544,7 @@ namespace BlazorTUI.TUI
                 else if (Y == Height - 1)
                     scrollIndex = Math.Min(visibleNodeCount - Height, scrollIndex + 1);
 
+                ApplyVirtualNodeQuery();
                 NotifyClicked();
                 return true;
             }
@@ -549,9 +567,11 @@ namespace BlazorTUI.TUI
             if (virtualNodes is null)
                 return;
 
+            ApplyVirtualNodeQuery();
             EnsureVirtualSelection();
             int visibleNodeCount = virtualNodes.VisibleCount;
             scrollIndex = Math.Clamp(scrollIndex, 0, Math.Max(0, visibleNodeCount - Height));
+            ApplyVirtualNodeQuery();
             for (int row = 0; row < Height; row++)
             {
                 int visibleIndex = scrollIndex + row;
@@ -579,8 +599,10 @@ namespace BlazorTUI.TUI
             }
         }
 
-        private void EnsureVirtualSelection()
+        private void EnsureVirtualSelection(bool applyQuery = true)
         {
+            if (applyQuery)
+                ApplyVirtualNodeQuery();
             if (virtualNodes is null || virtualNodes.VisibleCount == 0)
             {
                 selectedVirtualNodeKey = null;
@@ -591,12 +613,12 @@ namespace BlazorTUI.TUI
             if (selectedVirtualNodeKey is not null &&
                 virtualNodes.FindVisibleIndexByKey(selectedVirtualNodeKey) >= 0)
             {
-                EnsureVirtualSelectionVisible();
+                EnsureVirtualSelectionVisible(applyQuery);
                 return;
             }
 
             selectedVirtualNodeKey = virtualNodes.GetVisibleNode(0).Key;
-            EnsureVirtualSelectionVisible();
+            EnsureVirtualSelectionVisible(applyQuery);
         }
 
         private void MoveVirtualSelection(int index)
@@ -620,11 +642,13 @@ namespace BlazorTUI.TUI
             EnsureVirtualSelectionVisible();
         }
 
-        private void EnsureVirtualSelectionVisible()
+        private void EnsureVirtualSelectionVisible(bool applyQuery = true)
         {
             if (virtualNodes is null)
                 return;
 
+            if (applyQuery)
+                ApplyVirtualNodeQuery();
             int maximumScroll = Math.Max(0, virtualNodes.VisibleCount - Height);
             if (selectedVirtualNodeKey is not null)
             {
@@ -639,7 +663,15 @@ namespace BlazorTUI.TUI
             }
 
             scrollIndex = Math.Clamp(scrollIndex, 0, maximumScroll);
+            if (applyQuery)
+                ApplyVirtualNodeQuery();
         }
+
+        private void ApplyVirtualNodeQuery()
+            => virtualNodeOperations?.ApplyQuery(CreateVirtualTreeViewQuery());
+
+        private VirtualTreeViewQuery CreateVirtualTreeViewQuery()
+            => new(Math.Max(0, scrollIndex), Math.Max(1, (int)Height));
 
         private void ExpandOrMoveIntoVirtualNode(int selectedIndex)
         {

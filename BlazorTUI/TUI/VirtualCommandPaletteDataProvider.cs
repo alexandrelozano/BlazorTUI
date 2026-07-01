@@ -1,6 +1,6 @@
 namespace BlazorTUI.TUI
 {
-    public sealed class VirtualCommandPaletteDataProvider : IVirtualCommandPaletteDataProvider
+    public sealed class VirtualCommandPaletteDataProvider : IVirtualCommandPaletteDataOperationsProvider
     {
         private readonly Func<int> getCount;
         private readonly Func<string, int> getFilteredCount;
@@ -24,6 +24,22 @@ namespace BlazorTUI.TUI
         }
 
         public int Count => Math.Max(0, getCount());
+
+        public VirtualCommandPaletteQuery CurrentQuery { get; private set; } = VirtualCommandPaletteQuery.Empty;
+
+        public void ApplyQuery(VirtualCommandPaletteQuery query)
+        {
+            ArgumentNullException.ThrowIfNull(query);
+            CurrentQuery = query;
+        }
+
+        public Task ApplyQueryAsync(VirtualCommandPaletteQuery query, CancellationToken cancellationToken = default)
+        {
+            ArgumentNullException.ThrowIfNull(query);
+            cancellationToken.ThrowIfCancellationRequested();
+            CurrentQuery = query;
+            return Task.CompletedTask;
+        }
 
         public int GetFilteredCount(string searchText)
             => Math.Max(0, getFilteredCount(searchText ?? ""));

@@ -74,6 +74,7 @@ namespace BlazorTUI.TUI
         private readonly GridColumn[] columns;
         private GridRow[] gridrows;
         private readonly IVirtualGridViewDataProvider? virtualRows;
+        private readonly IVirtualGridViewDataOperationsProvider? virtualRowOperations;
         private readonly ActiveColumnFilter?[] columnFilters;
         private readonly List<int> columnOrder = new();
         private readonly List<GridAggregateFooter> footerRows = new();
@@ -158,7 +159,7 @@ namespace BlazorTUI.TUI
 
         public IReadOnlyList<GridRow> CurrentPageRows
             => GetCurrentPageViewIndexes()
-                .Select(viewIndex => GetSourceRow(GetSourceRowIndex(viewIndex)))
+                .Select(GetViewRow)
                 .ToList();
 
         public int PageIndex
@@ -200,10 +201,14 @@ namespace BlazorTUI.TUI
                 : -1;
 
         public GridRow? SelectedRow
-            => SelectedSourceRowIndex >= 0 ? GetSourceRow(SelectedSourceRowIndex) : null;
+            => selectedViewRowIndex >= 0 && selectedViewRowIndex < ViewRowCount
+                ? GetViewRow(selectedViewRowIndex)
+                : null;
 
         public string? SelectedRowKey
-            => SelectedSourceRowIndex >= 0 ? GetSourceRowKey(SelectedSourceRowIndex) : null;
+            => selectedViewRowIndex >= 0 && selectedViewRowIndex < ViewRowCount
+                ? GetViewRowKey(selectedViewRowIndex)
+                : null;
 
         public bool IsReadOnly
         {
@@ -334,6 +339,7 @@ namespace BlazorTUI.TUI
             this.columns = columns;
             gridrows = Array.Empty<GridRow>();
             virtualRows = rows;
+            virtualRowOperations = rows as IVirtualGridViewDataOperationsProvider;
             columnFilters = new ActiveColumnFilter?[columns.Length];
             InitializeColumnOrder();
             TabStop = true;
@@ -596,6 +602,27 @@ namespace BlazorTUI.TUI
             }
 
             return builder.ToString();
+        }
+
+        public async Task RefreshVirtualQueryAsync(CancellationToken cancellationToken = default)
+        {
+            if (virtualRowOperations is null)
+                return;
+
+            isLoading = true;
+            try
+            {
+                int previousSourceRowIndex = SelectedSourceRowIndex;
+                await virtualRowOperations
+                    .ApplyQueryAsync(CreateVirtualGridViewQuery(), cancellationToken)
+                    .ConfigureAwait(false);
+                RestoreSelection(previousSourceRowIndex);
+                ClampPageIndexAfterDataChange();
+            }
+            finally
+            {
+                isLoading = false;
+            }
         }
 
         public async Task LoadRowsAsync(
@@ -883,6 +910,16 @@ namespace BlazorTUI.TUI
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(key);
 
+            if (virtualRowOperations is not null)
+            {
+                int rowIndex = virtualRowOperations.FindViewIndexByKey(key);
+                if (rowIndex < 0)
+                    throw new ArgumentException("The row key is not visible in this GridView.", nameof(key));
+
+                SetSelectedRowIndex(rowIndex, adjustPage: true);
+                return;
+            }
+
             for (int sourceRowIndex = 0; sourceRowIndex < SourceRowCount; sourceRowIndex++)
             {
                 if (!string.Equals(GetSourceRowKey(sourceRowIndex), key, StringComparison.Ordinal))
@@ -922,7 +959,7 @@ namespace BlazorTUI.TUI
             CancelEdit(raiseEvent: false);
 
             int sourceRowIndex = GetSourceRowIndex(rowIndex);
-            GridRow row = GetSourceRow(sourceRowIndex);
+            GridRow row = GetViewRow(rowIndex);
             string value = GetCellValue(row, columnIndex);
             editState = new CellEditState(
                 rowIndex,
@@ -1367,6 +1404,7 @@ namespace BlazorTUI.TUI
 
             CancelEdit(raiseEvent: false);
             pageSize = newPageSize;
+            ApplyVirtualOperationsQuery();
             ClampPageIndexAfterDataChange(forcePageChanged: true);
         }
 
@@ -1383,6 +1421,7 @@ namespace BlazorTUI.TUI
         {
             int previousPageIndex = pageIndex;
             pageIndex = index;
+            ApplyVirtualOperationsQuery();
             EnsureSelectionIsOnCurrentPage();
             PageChanged?.Invoke(
                 this,
@@ -1395,6 +1434,7 @@ namespace BlazorTUI.TUI
             pageIndex = Math.Clamp(pageIndex, 0, PageCount - 1);
             if (selectedViewRowIndex >= 0)
                 pageIndex = Math.Clamp(selectedViewRowIndex / PageSize, 0, PageCount - 1);
+            ApplyVirtualOperationsQuery();
 
             if (forcePageChanged || previousPageIndex != pageIndex)
             {
@@ -1481,6 +1521,13 @@ namespace BlazorTUI.TUI
 
         private void RebuildViewRowIndexes()
         {
+            if (virtualRowOperations is not null)
+            {
+                viewRowIndexes.Clear();
+                ApplyVirtualOperationsQuery();
+                return;
+            }
+
             if (UsesSequentialVirtualView)
             {
                 viewRowIndexes.Clear();
@@ -1524,6 +1571,32 @@ namespace BlazorTUI.TUI
             viewRowIndexes.Clear();
             viewRowIndexes.AddRange(rowIndexes);
         }
+
+        private void ApplyVirtualOperationsQuery()
+            => virtualRowOperations?.ApplyQuery(CreateVirtualGridViewQuery());
+
+        private VirtualGridViewQuery CreateVirtualGridViewQuery()
+            => new(
+                columnFilters
+                    .Select((filter, index) => filter is null
+                        ? null
+                        : new VirtualGridViewColumnFilter(
+                            index,
+                            filter.Kind,
+                            filter.Description,
+                            filter.Values,
+                            filter.Comparison,
+                            filter.Predicate))
+                    .Where(filter => filter is not null)
+                    .Cast<VirtualGridViewColumnFilter>()
+                    .ToArray(),
+                rowFilter?.Description,
+                rowFilter?.Predicate,
+                sortColumnIndex,
+                sortDirection,
+                groupColumnIndex,
+                pageIndex,
+                pageSize);
 
         private void SetColumnFilterCore(
             int columnIndex,
@@ -2115,7 +2188,7 @@ namespace BlazorTUI.TUI
                     break;
 
                 int sourceRowIndex = GetSourceRowIndex(rowIndex);
-                GridRow row = GetSourceRow(sourceRowIndex);
+                GridRow row = GetViewRow(rowIndex);
                 if (groupColumnIndex >= 0)
                 {
                     string groupValue = GetCellValue(row, groupColumnIndex);
@@ -2281,10 +2354,14 @@ namespace BlazorTUI.TUI
 
         private int SourceRowCount => virtualRows?.Count ?? gridrows.Length;
 
-        private int ViewRowCount => UsesSequentialVirtualView ? SourceRowCount : viewRowIndexes.Count;
+        private int ViewRowCount
+            => virtualRowOperations is not null
+                ? virtualRowOperations.ViewCount
+                : UsesSequentialVirtualView ? SourceRowCount : viewRowIndexes.Count;
 
         private bool UsesSequentialVirtualView
             => virtualRows is not null &&
+                virtualRowOperations is null &&
                 sortDirection == GridSortDirection.None &&
                 groupColumnIndex < 0 &&
                 !HasActiveFilters;
@@ -2294,6 +2371,9 @@ namespace BlazorTUI.TUI
             if (viewRowIndex < 0 || viewRowIndex >= ViewRowCount)
                 throw new ArgumentOutOfRangeException(nameof(viewRowIndex));
 
+            if (virtualRowOperations is not null)
+                return virtualRowOperations.GetSourceIndex(viewRowIndex);
+
             return UsesSequentialVirtualView ? viewRowIndex : viewRowIndexes[viewRowIndex];
         }
 
@@ -2302,7 +2382,30 @@ namespace BlazorTUI.TUI
             if (sourceRowIndex < 0 || sourceRowIndex >= SourceRowCount)
                 return -1;
 
+            if (virtualRowOperations is not null)
+                return virtualRowOperations.FindViewIndexBySourceIndex(sourceRowIndex);
+
             return UsesSequentialVirtualView ? sourceRowIndex : viewRowIndexes.IndexOf(sourceRowIndex);
+        }
+
+        private GridRow GetViewRow(int viewRowIndex)
+        {
+            if (viewRowIndex < 0 || viewRowIndex >= ViewRowCount)
+                throw new ArgumentOutOfRangeException(nameof(viewRowIndex));
+
+            return virtualRowOperations is not null
+                ? virtualRowOperations.GetViewRow(viewRowIndex)
+                : GetSourceRow(GetSourceRowIndex(viewRowIndex));
+        }
+
+        private string GetViewRowKey(int viewRowIndex)
+        {
+            if (viewRowIndex < 0 || viewRowIndex >= ViewRowCount)
+                throw new ArgumentOutOfRangeException(nameof(viewRowIndex));
+
+            return virtualRowOperations is not null
+                ? virtualRowOperations.GetViewRowKey(viewRowIndex)
+                : GetSourceRowKey(GetSourceRowIndex(viewRowIndex));
         }
 
         private GridRow GetSourceRow(int sourceRowIndex)

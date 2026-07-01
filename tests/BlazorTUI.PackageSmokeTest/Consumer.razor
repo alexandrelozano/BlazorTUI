@@ -389,14 +389,50 @@
         _ = terminal.GetInvalidControls();
         terminal.ApplyTheme(TuiTheme.Dark);
         _ = terminal.Theme.Resolve(TuiThemeRole.Input, TuiThemeState.Error);
+        var virtualListProvider = new VirtualListBoxDataOperationsProvider(
+            1000,
+            index => $"Item {index}",
+            query => query.HasSearch ? 100 : 1000,
+            (query, index) => $"Item {(query.HasSearch ? index * 10 : index)}",
+            getKey: index => $"item-{index}",
+            getViewKey: (query, index) => $"item-{(query.HasSearch ? index * 10 : index)}",
+            findViewIndexByKey: (query, key) =>
+                key.StartsWith("item-") && int.TryParse(key["item-".Length..], out int index)
+                    ? query.HasSearch ? index % 10 == 0 ? index / 10 : -1 : index
+                    : -1);
         var virtualList = new ListBox(
             "virtualList",
-            new VirtualListBoxDataProvider(1000, index => $"Item {index}", index => $"item-{index}"),
+            virtualListProvider,
             multipleSelection: false,
             0, 0, 12, 3,
             System.Drawing.Color.White,
             System.Drawing.Color.Black);
+        virtualList.SearchText = "Item";
+        _ = virtualList.RefreshVirtualQueryAsync();
         virtualList.SelectKey("item-10");
+        _ = virtualListProvider.CurrentQuery;
+        var virtualGridProvider = new VirtualGridViewDataOperationsProvider(
+            1000,
+            index => new GridView.GridRow { Cells = new[] { index.ToString(), $"Row {index}" } },
+            _ => 1000,
+            (query, index) =>
+            {
+                int sourceIndex = query.SortDirection == GridSortDirection.Descending ? 999 - index : index;
+                return new GridView.GridRow { Cells = new[] { sourceIndex.ToString(), $"Row {sourceIndex}" } };
+            },
+            getRowKey: index => $"row-{index}",
+            getViewRowKey: (query, index) =>
+            {
+                int sourceIndex = query.SortDirection == GridSortDirection.Descending ? 999 - index : index;
+                return $"row-{sourceIndex}";
+            },
+            getSourceIndex: (query, index) => query.SortDirection == GridSortDirection.Descending ? 999 - index : index,
+            findViewIndexBySourceIndex: (query, sourceIndex) =>
+                query.SortDirection == GridSortDirection.Descending ? 999 - sourceIndex : sourceIndex,
+            findViewIndexByKey: (query, key) =>
+                key.StartsWith("row-") && int.TryParse(key["row-".Length..], out int sourceIndex)
+                    ? query.SortDirection == GridSortDirection.Descending ? 999 - sourceIndex : sourceIndex
+                    : -1);
         var virtualGrid = new GridView(
             "virtualGrid",
             new[]
@@ -404,34 +440,41 @@
                 new GridView.GridColumn { Title = "Id", Width = 6 },
                 new GridView.GridColumn { Title = "Name", Width = 10 }
             },
-            new VirtualGridViewDataProvider(
-                1000,
-                index => new GridView.GridRow { Cells = new[] { index.ToString(), $"Row {index}" } },
-                index => $"row-{index}"),
+            virtualGridProvider,
             0, 0, 20, 4,
             System.Drawing.Color.White,
             System.Drawing.Color.Black);
-        virtualGrid.SelectRowKey("row-10");
+        virtualGrid.SortByColumn(0, GridSortDirection.Descending);
+        _ = virtualGrid.RefreshVirtualQueryAsync();
+        virtualGrid.SelectRowKey("row-990");
+        _ = virtualGridProvider.CurrentQuery;
+        var virtualCommandProvider = new VirtualCommandPaletteDataProvider(
+            () => 1000,
+            _ => 1000,
+            (_, index) => new CommandPaletteItem($"command-{index}", $"Command {index}"));
         var virtualCommands = new CommandPalette(
             "virtualCommands",
-            new VirtualCommandPaletteDataProvider(
-                () => 1000,
-                _ => 1000,
-                (_, index) => new CommandPaletteItem($"command-{index}", $"Command {index}")),
+            virtualCommandProvider,
             0, 0, 20,
             System.Drawing.Color.White,
             System.Drawing.Color.Black);
         virtualCommands.Open();
+        virtualCommands.SearchText = "command";
+        _ = virtualCommands.RefreshVirtualQueryAsync();
+        _ = virtualCommandProvider.CurrentQuery;
+        var virtualTreeProvider = new VirtualTreeViewDataProvider(
+            () => 1000,
+            index => new VirtualTreeViewNode($"node-{index}", $"Node {index}", 0),
+            key => key.StartsWith("node-") && int.TryParse(key["node-".Length..], out int index) ? index : -1);
         var virtualTree = new TreeView(
             "virtualTree",
-            new VirtualTreeViewDataProvider(
-                () => 1000,
-                index => new VirtualTreeViewNode($"node-{index}", $"Node {index}", 0),
-                key => key.StartsWith("node-") && int.TryParse(key["node-".Length..], out int index) ? index : -1),
+            virtualTreeProvider,
             0, 0, 20, 4,
             System.Drawing.Color.White,
             System.Drawing.Color.Black);
+        _ = virtualTree.RefreshVirtualQueryAsync();
         virtualTree.SelectNodeKey("node-10");
+        _ = virtualTreeProvider.CurrentQuery;
         _ = virtualList.SelectedKey;
         _ = virtualGrid.SelectedRowKey;
         _ = virtualCommands.HighlightedCommand;

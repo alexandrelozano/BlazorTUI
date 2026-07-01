@@ -10,7 +10,10 @@ namespace BlazorTUI.TUI
         public List<string> itemsSelected = new List<string>();
         public IReadOnlyList<string> SelectedItems => itemsSelected;
         private readonly IVirtualListBoxDataProvider? virtualItems;
+        private readonly IVirtualListBoxDataOperationsProvider? virtualItemOperations;
+        private readonly List<int> viewItemIndexes = new();
         private readonly List<string> selectedKeys = new();
+        private string searchText = "";
 
         private bool multipleSelection;
 
@@ -18,7 +21,18 @@ namespace BlazorTUI.TUI
 
         public bool IsVirtualized => virtualItems is not null;
 
-        public int ItemCount => virtualItems?.Count ?? items.Count;
+        public int ItemCount
+            => virtualItemOperations is not null
+                ? virtualItemOperations.ViewCount
+                : UsesSequentialVirtualItems ? SourceItemCount : viewItemIndexes.Count;
+
+        public int SourceItemCount => virtualItems?.Count ?? items.Count;
+
+        public string SearchText
+        {
+            get => searchText;
+            set => SetSearchText(value);
+        }
 
         public IReadOnlyList<string> SelectedKeys => selectedKeys;
 
@@ -61,6 +75,7 @@ namespace BlazorTUI.TUI
 
             this.Focus = false;
             this.TabStop = true;
+            RefreshViewItems();
         }
 
         public ListBox(string name, IVirtualListBoxDataProvider items, bool multipleSelection, short X, short Y, short width, short height, Color forecolor, Color backgroundcolor)
@@ -73,6 +88,7 @@ namespace BlazorTUI.TUI
             this.width = width;
             this.height = height;
             virtualItems = items;
+            virtualItemOperations = items as IVirtualListBoxDataOperationsProvider;
             this.multipleSelection = multipleSelection;
             this.foreColor = forecolor;
             this.backgroundColor = backgroundcolor;
@@ -82,6 +98,18 @@ namespace BlazorTUI.TUI
 
             Focus = false;
             TabStop = true;
+            RefreshViewItems();
+        }
+
+        public async Task RefreshVirtualQueryAsync(CancellationToken cancellationToken = default)
+        {
+            if (virtualItemOperations is null)
+                return;
+
+            await virtualItemOperations
+                .ApplyQueryAsync(CreateVirtualListBoxQuery(), cancellationToken)
+                .ConfigureAwait(false);
+            ClampViewState();
         }
 
         internal void ExportListBoxState(TuiElementState state)
@@ -186,6 +214,18 @@ namespace BlazorTUI.TUI
         public void SelectKey(string key)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(key);
+            if (virtualItemOperations is not null)
+            {
+                int viewIndex = virtualItemOperations.FindViewIndexByKey(key);
+                if (viewIndex < 0)
+                    throw new ArgumentException("The key does not belong to this ListBox view.", nameof(key));
+
+                cursorY = viewIndex;
+                SelectItem(viewIndex);
+                EnsureCursorVisible();
+                return;
+            }
+
             for (int index = 0; index < ItemCount; index++)
             {
                 if (GetItemKey(index) == key)
@@ -258,6 +298,7 @@ namespace BlazorTUI.TUI
                     SelectItem(itemIndex);
                 }       
                 
+                virtualItemOperations?.ApplyQuery(CreateVirtualListBoxQuery());
                 container.TopContainer().SetFocus(name);
                 handled = true;
             }
@@ -272,6 +313,7 @@ namespace BlazorTUI.TUI
         {
             if (Visible)
             {
+                virtualItemOperations?.ApplyQuery(CreateVirtualListBoxQuery());
                 for (short Yn = 0; Yn < height; Yn++)
                 {
                     int itemIndex = Yn + scrollY;
@@ -334,15 +376,94 @@ namespace BlazorTUI.TUI
         protected override object? GetValidationValue() => SelectedItems;
 
         private string GetItem(int index)
-            => virtualItems is null ? items[index] : virtualItems.GetItem(index);
+            => virtualItemOperations is not null
+                ? virtualItemOperations.GetViewItem(index)
+                : GetSourceItem(GetSourceItemIndex(index));
 
         private string GetItemKey(int index)
-            => virtualItems is null ? GetItem(index) : virtualItems.GetKey(index);
+            => virtualItemOperations is not null
+                ? virtualItemOperations.GetViewKey(index)
+                : GetSourceItemKey(GetSourceItemIndex(index));
 
         private bool IsItemSelected(int index, string item)
             => virtualItems is null
                 ? itemsSelected.Contains(item)
                 : selectedKeys.Contains(GetItemKey(index));
+
+        private int SourceItemIndexCount => SourceItemCount;
+
+        private bool UsesSequentialVirtualItems
+            => virtualItems is not null &&
+                virtualItemOperations is null &&
+                searchText.Length == 0;
+
+        private int GetSourceItemIndex(int viewIndex)
+        {
+            if (viewIndex < 0 || viewIndex >= ItemCount)
+                throw new ArgumentOutOfRangeException(nameof(viewIndex));
+
+            return UsesSequentialVirtualItems ? viewIndex : viewItemIndexes[viewIndex];
+        }
+
+        private string GetSourceItem(int sourceIndex)
+            => virtualItems is null ? items[sourceIndex] : virtualItems.GetItem(sourceIndex);
+
+        private string GetSourceItemKey(int sourceIndex)
+            => virtualItems is null ? GetSourceItem(sourceIndex) : virtualItems.GetKey(sourceIndex);
+
+        private void SetSearchText(string? value)
+        {
+            string nextSearchText = value ?? "";
+            if (nextSearchText.Contains('\r') || nextSearchText.Contains('\n'))
+                throw new ArgumentException("ListBox search text cannot contain line breaks.", nameof(value));
+
+            if (searchText == nextSearchText)
+                return;
+
+            searchText = nextSearchText;
+            RefreshViewItems();
+        }
+
+        private void RefreshViewItems()
+        {
+            if (virtualItemOperations is not null)
+            {
+                viewItemIndexes.Clear();
+                virtualItemOperations.ApplyQuery(CreateVirtualListBoxQuery());
+                ClampViewState();
+                return;
+            }
+
+            if (UsesSequentialVirtualItems)
+            {
+                viewItemIndexes.Clear();
+                ClampViewState();
+                return;
+            }
+
+            viewItemIndexes.Clear();
+            for (int sourceIndex = 0; sourceIndex < SourceItemIndexCount; sourceIndex++)
+            {
+                if (ItemMatchesSearch(sourceIndex))
+                    viewItemIndexes.Add(sourceIndex);
+            }
+
+            ClampViewState();
+        }
+
+        private VirtualListBoxQuery CreateVirtualListBoxQuery()
+            => new(searchText, height <= 0 ? 0 : scrollY / Math.Max(1, (int)height), Math.Max(1, (int)height));
+
+        private bool ItemMatchesSearch(int sourceIndex)
+            => searchText.Length == 0 ||
+                GetSourceItem(sourceIndex).Contains(searchText, StringComparison.OrdinalIgnoreCase);
+
+        private void ClampViewState()
+        {
+            int maximumIndex = Math.Max(0, ItemCount - 1);
+            cursorY = Math.Clamp(cursorY, 0, maximumIndex);
+            scrollY = Math.Clamp(scrollY, 0, Math.Max(0, ItemCount - height));
+        }
 
         private void EnsureCursorVisible()
         {
@@ -352,6 +473,7 @@ namespace BlazorTUI.TUI
                 scrollY = cursorY - height + 1;
 
             scrollY = Math.Clamp(scrollY, 0, Math.Max(0, ItemCount - height));
+            virtualItemOperations?.ApplyQuery(CreateVirtualListBoxQuery());
         }
     }
 }

@@ -13,7 +13,7 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
     <PackageId>BlazorTUI.Analyzers</PackageId>
-    <Version>0.8.15</Version>
+    <Version>1.0.0</Version>
     <Authors>Alexandre Lozano Vilanova</Authors>
     <Description>Optional Roslyn analyzers for BlazorTUI consumer code.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>

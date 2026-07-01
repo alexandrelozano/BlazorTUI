@@ -8,6 +8,7 @@ namespace BlazorTUI.TUI
         private readonly List<CommandPaletteItem> commands;
         private readonly List<CommandPaletteItem> filteredCommands = new();
         private readonly IVirtualCommandPaletteDataProvider? virtualCommands;
+        private readonly IVirtualCommandPaletteDataOperationsProvider? virtualCommandOperations;
         private string searchText = "";
         private string title = "Command";
         private string placeholder = "Type a command";
@@ -126,6 +127,7 @@ namespace BlazorTUI.TUI
 
             this.commands = new List<CommandPaletteItem>();
             virtualCommands = commands;
+            virtualCommandOperations = commands as IVirtualCommandPaletteDataOperationsProvider;
             Name = name;
             this.X = X;
             this.Y = Y;
@@ -179,6 +181,20 @@ namespace BlazorTUI.TUI
         {
             ArgumentNullException.ThrowIfNull(command);
             return RemoveCommand(command.Name);
+        }
+
+        public async Task RefreshVirtualQueryAsync(CancellationToken cancellationToken = default)
+        {
+            if (virtualCommandOperations is null)
+                return;
+
+            await virtualCommandOperations
+                .ApplyQueryAsync(CreateVirtualCommandPaletteQuery(), cancellationToken)
+                .ConfigureAwait(false);
+
+            filteredCommandCount = virtualCommands?.GetFilteredCount(searchText) ?? filteredCommands.Count;
+            highlightedIndex = filteredCommandCount == 0 ? -1 : Math.Clamp(highlightedIndex, 0, filteredCommandCount - 1);
+            EnsureHighlightedCommandVisible(applyQuery: false);
         }
 
         public void ClearCommands()
@@ -524,6 +540,7 @@ namespace BlazorTUI.TUI
             }
             else
             {
+                ApplyVirtualOperationsQuery();
                 filteredCommandCount = virtualCommands.GetFilteredCount(searchText);
             }
 
@@ -541,12 +558,14 @@ namespace BlazorTUI.TUI
                 command.Description.Contains(searchText, StringComparison.OrdinalIgnoreCase);
         }
 
-        private void EnsureHighlightedCommandVisible()
+        private void EnsureHighlightedCommandVisible(bool applyQuery = true)
         {
             int visibleCount = VisibleCommandCount;
             if (highlightedIndex < 0 || visibleCount == 0)
             {
                 scrollIndex = 0;
+                if (applyQuery)
+                    ApplyVirtualOperationsQuery();
                 return;
             }
 
@@ -556,7 +575,20 @@ namespace BlazorTUI.TUI
                 scrollIndex = highlightedIndex - visibleCount + 1;
 
             scrollIndex = Math.Clamp(scrollIndex, 0, Math.Max(0, filteredCommandCount - visibleCount));
+            if (applyQuery)
+                ApplyVirtualOperationsQuery();
         }
+
+        private void ApplyVirtualOperationsQuery()
+            => virtualCommandOperations?.ApplyQuery(CreateVirtualCommandPaletteQuery());
+
+        private VirtualCommandPaletteQuery CreateVirtualCommandPaletteQuery()
+            => new(
+                searchText,
+                scrollIndex,
+                Math.Max(1, Math.Min(
+                    (int)maxVisibleCommands,
+                    container is null ? maxVisibleCommands : Math.Max(1, (int)container.Height - Y - 1))));
 
         private int VisibleCommandCount
         {

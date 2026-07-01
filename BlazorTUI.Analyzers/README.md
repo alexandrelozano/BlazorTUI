@@ -5,7 +5,7 @@ Optional Roslyn analyzers for projects that consume BlazorTUI.
 Install it as a private development dependency:
 
 ```xml
-<PackageReference Include="BlazorTUI.Analyzers" Version="0.8.15" PrivateAssets="all" />
+<PackageReference Include="BlazorTUI.Analyzers" Version="1.0.0" PrivateAssets="all" />
 ```
 
 Diagnostics:

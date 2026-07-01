@@ -41,7 +41,7 @@ dotnet add package BlazorTUI.Analyzers
 For project files, keep it private so it does not flow transitively to consumers:
 
 ```xml
-<PackageReference Include="BlazorTUI.Analyzers" Version="0.8.15" PrivateAssets="all" />
+<PackageReference Include="BlazorTUI.Analyzers" Version="1.0.0" PrivateAssets="all" />
 ```
 
 The analyzer package currently reports:
@@ -1043,7 +1043,89 @@ The virtual provider types are:
 
 Virtual controls expose stable key-based helpers such as `SelectedRowKey`, `SelectRowKey`, `SelectedKey`, `SelectKey`, `SelectedNodeKey`, and `SelectNodeKey`. Existing non-virtual constructors continue to work unchanged.
 
-`GridView` can still sort and filter virtual rows, but those operations must enumerate source row indexes to build the sorted or filtered view. For very large remote datasets, prefer applying server-side query logic in your provider and keep the grid's built-in sorting/filtering for local or moderate data.
+When the provider should own filtering, sorting, searching, grouping, or paging, use the operations-provider variants. The control sends the current query to the provider and then asks for rows or items from the provider's view instead of building a materialized index list inside the control:
+
+```csharp
+GridView.GridRow CreateOrderRow(int index) => new()
+{
+    Cells = new[] { index.ToString("D5"), index % 2 == 0 ? "Open" : "Closed" }
+};
+
+int MapOrderIndex(VirtualGridViewQuery query, int viewIndex) =>
+    IsOpenOnly(query)
+        ? NormalizeViewIndex(query, viewIndex) * 2
+        : NormalizeViewIndex(query, viewIndex);
+
+bool IsOpenOnly(VirtualGridViewQuery query) =>
+    query.ColumnFilters.Any(filter =>
+        filter.ColumnIndex == 1 &&
+        filter.Values.Contains("Open", StringComparer.OrdinalIgnoreCase));
+
+int CountOrders(VirtualGridViewQuery query) =>
+    IsOpenOnly(query) ? 25_000 : 50_000;
+
+int NormalizeViewIndex(VirtualGridViewQuery query, int viewIndex)
+{
+    int count = CountOrders(query);
+    return query.SortColumnIndex == 0 && query.SortDirection == GridSortDirection.Descending
+        ? count - 1 - viewIndex
+        : viewIndex;
+}
+
+var columns = new[]
+{
+    new GridView.GridColumn { Title = "Order", Width = 8 },
+    new GridView.GridColumn { Title = "Status", Width = 10 }
+};
+
+var provider = new VirtualGridViewDataOperationsProvider(
+    count: 50_000,
+    getRow: CreateOrderRow,
+    getViewCount: CountOrders,
+    getViewRow: (query, viewIndex) => CreateOrderRow(MapOrderIndex(query, viewIndex)),
+    getRowKey: index => $"order-{index}",
+    getViewRowKey: (query, viewIndex) => $"order-{MapOrderIndex(query, viewIndex)}",
+    getSourceIndex: MapOrderIndex,
+    findViewIndexByKey: (query, key) =>
+        key.StartsWith("order-") && int.TryParse(key["order-".Length..], out int sourceIndex)
+            ? FindOrderViewIndex(query, sourceIndex)
+            : -1);
+
+int FindOrderViewIndex(VirtualGridViewQuery query, int sourceIndex)
+{
+    if (IsOpenOnly(query) && sourceIndex % 2 != 0)
+        return -1;
+
+    int normalizedIndex = IsOpenOnly(query) ? sourceIndex / 2 : sourceIndex;
+    return query.SortColumnIndex == 0 && query.SortDirection == GridSortDirection.Descending
+        ? CountOrders(query) - 1 - normalizedIndex
+        : normalizedIndex;
+}
+
+var orders = new GridView(
+    "ordersGrid",
+    columns,
+    provider,
+    2,
+    17,
+    32,
+    8,
+    Color.Yellow,
+    Color.Black);
+
+orders.SetExactFilter(columnIndex: 1, "Open");
+orders.SortByColumn(columnIndex: 0, GridSortDirection.Descending);
+await orders.RefreshVirtualQueryAsync();
+```
+
+Operations providers are available for the virtual data controls:
+
+- `VirtualGridViewDataOperationsProvider` / `IVirtualGridViewDataOperationsProvider`
+- `VirtualListBoxDataOperationsProvider` / `IVirtualListBoxDataOperationsProvider`
+- `VirtualTreeViewDataProvider` / `IVirtualTreeViewDataOperationsProvider`
+- `VirtualCommandPaletteDataProvider` / `IVirtualCommandPaletteDataOperationsProvider`
+
+`VirtualGridViewQuery` carries active column filters, row-filter metadata, sort state, grouping, page index, and page size. `VirtualListBoxQuery` carries search text and the visible page. `VirtualTreeViewQuery` carries the current visible window. `VirtualCommandPaletteQuery` carries search text and the visible command window. Use `RefreshVirtualQueryAsync` when your provider prepares remote data asynchronously or needs cancellation support.
 
 ## Radio groups
 
@@ -1298,6 +1380,13 @@ The sample app also includes a documentation site at `/docs`. It summarizes the 
 Run `dotnet run --project SampleApp` from the repository root and open `/`, `/examples`, or `/docs` to browse them. The example and documentation routes are exercised by the automated test suite so API changes cannot silently leave the documentation out of date.
 
 ## Changelog
+
+### 1.0.0 — 2026-07-01
+
+- Added provider-driven virtual data operations for large `GridView`, `ListBox`, `TreeView`, and `CommandPalette` data sources.
+- Added query objects and operations-provider interfaces so consumers can push filtering, sorting, grouping, searching, paging, and visible-window prefetching into their own data layer.
+- Added async/cancellable `RefreshVirtualQueryAsync` hooks for virtual controls using operations providers.
+- Updated NuGet consumer coverage and virtualization regression tests for the new provider-driven API.
 
 ### 0.8.15 — 2026-06-30
 
