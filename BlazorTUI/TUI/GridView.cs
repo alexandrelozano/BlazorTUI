@@ -512,9 +512,9 @@ namespace BlazorTUI.TUI
                 {
                     double sum = rows
                         .Select(row => GetCellValue(row, columnIndex))
-                        .Where(value => double.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out _))
-                        .Sum(value => double.Parse(value, NumberStyles.Any, CultureInfo.InvariantCulture));
-                    return sum.ToString(format, formatProvider ?? CultureInfo.InvariantCulture);
+                        .Where(value => double.TryParse(value, NumberStyles.Any, CultureOptions.ResolvedCulture, out _))
+                        .Sum(value => double.Parse(value, NumberStyles.Any, CultureOptions.ResolvedCulture));
+                    return sum.ToString(format, formatProvider ?? CultureOptions.ResolvedCulture);
                 });
         }
 
@@ -1941,7 +1941,7 @@ namespace BlazorTUI.TUI
                 ? (column.editorOptions[0], column.editorOptions[1])
                 : ("False", "True");
 
-        private static bool TryValidateEditValue(GridColumn column, string value, out string message)
+        private bool TryValidateEditValue(GridColumn column, string value, out string message)
         {
             message = "";
             switch (column.EditorKind)
@@ -1950,21 +1950,21 @@ namespace BlazorTUI.TUI
                     if (column.editorOptions.Length > 0 &&
                         !column.editorOptions.Contains(value, StringComparer.OrdinalIgnoreCase))
                     {
-                        message = "Value must be one of the configured options.";
+                        message = CultureOptions.InvalidOptionMessage;
                         return false;
                     }
                     break;
                 case GridViewCellEditorKind.NumericBox:
-                    if (!double.TryParse(value, out _))
+                    if (!double.TryParse(value, NumberStyles.Any, CultureOptions.ResolvedCulture, out _))
                     {
-                        message = "Value must be numeric.";
+                        message = CultureOptions.InvalidNumberMessage;
                         return false;
                     }
                     break;
                 case GridViewCellEditorKind.DateBox:
-                    if (!DateOnly.TryParse(value, out _))
+                    if (!DateOnly.TryParse(value, CultureOptions.ResolvedCulture, DateTimeStyles.None, out _))
                     {
-                        message = "Value must be a valid date.";
+                        message = CultureOptions.InvalidDateMessage;
                         return false;
                     }
                     break;
@@ -1974,7 +1974,7 @@ namespace BlazorTUI.TUI
             {
                 if (!rule.IsValid(value))
                 {
-                    message = rule.Message;
+                    message = rule.GetMessage(value, CultureOptions);
                     return false;
                 }
             }

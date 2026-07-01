@@ -82,7 +82,7 @@ namespace BlazorTUI.TUI
         {
             string range = values.Count == 0
                 ? "no values"
-                : $"minimum {(minimum ?? values.Min()).ToString("R", CultureInfo.InvariantCulture)}, maximum {(maximum ?? values.Max()).ToString("R", CultureInfo.InvariantCulture)}";
+                : $"minimum {CultureOptions.FormatNumber(minimum ?? values.Min(), "G")}, maximum {CultureOptions.FormatNumber(maximum ?? values.Max(), "G")}";
             return FormatAccessibilitySummary($"Sparkline {Name}: {values.Count} values, {range}.");
         }
 

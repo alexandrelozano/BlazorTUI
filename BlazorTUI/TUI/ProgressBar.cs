@@ -28,8 +28,8 @@ namespace BlazorTUI.TUI
         {
             string percentage = MaxValue == 0
                 ? "percentage unavailable"
-                : $"{Math.Clamp(value / MaxValue, 0, 1) * 100:0}%";
-            return FormatAccessibilitySummary($"ProgressBar {Name}: value {Value}, maximum {Maximum}, {percentage}.");
+                : $"{CultureOptions.FormatNumber(Math.Clamp(value / MaxValue, 0, 1) * 100, "0")}%";
+            return FormatAccessibilitySummary($"ProgressBar {Name}: value {CultureOptions.FormatNumber(Value, "G")}, maximum {CultureOptions.FormatNumber(Maximum, "G")}, {percentage}.");
         }
 
         public ProgressBar(string name, ProgressBarType progessBarType, short X, short Y, short width, Double value, Double maxValue, bool showPercent, Color forecolor, Color backgroundcolor)
@@ -82,7 +82,7 @@ namespace BlazorTUI.TUI
 
                             if (showPercent)
                             {
-                                string percent = $"{((value / MaxValue) * 100.0).ToString("000")}%";
+                                string percent = $"{CultureOptions.FormatNumber((value / MaxValue) * 100.0, "000")}%";
                                 if (n == (width / 2) - 2)
                                 {
                                     if (value == MaxValue)

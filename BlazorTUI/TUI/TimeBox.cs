@@ -16,12 +16,22 @@ namespace BlazorTUI.TUI
 
         public new TimeOnly? Value { get => value; set => this.value = value; }
 
-        public TimeBox(string name, TimeOnly? value, short X, short Y, Color forecolor, Color backgroundcolor) : base(name, "", X, Y, 6, forecolor, backgroundcolor)
+        public TimeBox(
+            string name,
+            TimeOnly? value,
+            short X,
+            short Y,
+            Color forecolor,
+            Color backgroundcolor,
+            TuiCultureOptions? cultureOptions = null)
+            : base(name, "", X, Y, 6, forecolor, backgroundcolor)
         {
             this.value = value;
+            if (cultureOptions is not null)
+                CultureOptions = cultureOptions;
 
             if (this.value != null)
-                text = this.value.Value.ToString("HH:mm");
+                text = CultureOptions.FormatTime(this.value.Value);
         }
 
         public override bool KeyDown(string key, bool shiftKey)
@@ -104,7 +114,7 @@ namespace BlazorTUI.TUI
 
                 if (text.Length == 2)
                 {
-                    text += ":";
+                    text += GetTimeSeparator();
                     cursor++;
                 }
 
@@ -115,7 +125,8 @@ namespace BlazorTUI.TUI
 
                 if (text.Length == 5)
                 {
-                    this.value = TimeOnly.ParseExact(text, "HH:mm", CultureInfo.InvariantCulture);
+                    if (CultureOptions.TryParseTime(text, out TimeOnly parsedTime))
+                        this.value = parsedTime;
                 }
             }
 
@@ -139,7 +150,7 @@ namespace BlazorTUI.TUI
                             string ch = (n < text.Length) ? text.Substring(n, 1) : " ";
 
                             if (n == 2)
-                                ch = ":";
+                                ch = GetTimeSeparator().ToString();
 
                             if (Focus)
                             {
@@ -160,5 +171,11 @@ namespace BlazorTUI.TUI
         }
 
         protected override object? GetValidationValue() => value;
+
+        private char GetTimeSeparator()
+        {
+            string separator = CultureOptions.ResolvedCulture.DateTimeFormat.TimeSeparator;
+            return string.IsNullOrEmpty(separator) ? ':' : separator[0];
+        }
     }
 }

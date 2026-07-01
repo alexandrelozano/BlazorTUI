@@ -91,6 +91,7 @@ public class SampleAppSmokeTests : IClassFixture<WebApplicationFactory<Program>>
     [InlineData("/examples/date-range-picker", "DateRangePicker example")]
     [InlineData("/examples/month-picker", "MonthPicker example")]
     [InlineData("/examples/breadcrumbs", "Breadcrumb example")]
+    [InlineData("/examples/localization", "Localization example")]
     [InlineData("/examples/themes", "Themes example")]
     [InlineData("/examples/transient-ui", "Transient UI example")]
     [InlineData("/examples/state-persistence", "State persistence example")]

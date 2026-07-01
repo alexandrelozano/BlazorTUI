@@ -43,6 +43,7 @@ public class ExampleCatalogTests : BunitContext
         Assert.Contains("DateRangePicker", accessibleText);
         Assert.Contains("MonthPicker", accessibleText);
         Assert.Contains("Breadcrumb", accessibleText);
+        Assert.Contains("Localization", accessibleText);
         Assert.Contains("Themes", accessibleText);
         Assert.Contains("Transient UI", accessibleText);
         Assert.Contains("State persistence", accessibleText);
@@ -72,6 +73,7 @@ public class ExampleCatalogTests : BunitContext
     [InlineData("dateRangePickerExample", "/examples/date-range-picker")]
     [InlineData("monthPickerExample", "/examples/month-picker")]
     [InlineData("breadcrumbExample", "/examples/breadcrumbs")]
+    [InlineData("localizationExample", "/examples/localization")]
     [InlineData("themesExample", "/examples/themes")]
     [InlineData("transientUiExample", "/examples/transient-ui")]
     [InlineData("statePersistenceExample", "/examples/state-persistence")]

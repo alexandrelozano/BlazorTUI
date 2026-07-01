@@ -89,7 +89,7 @@ namespace BlazorTUI.TUI
         public override string GetAccessibilitySummary()
         {
             string maximumSummary = Maximum.HasValue
-                ? $", maximum {Maximum.Value.ToString("R", CultureInfo.InvariantCulture)}"
+                ? $", maximum {CultureOptions.FormatNumber(Maximum.Value, "G")}"
                 : "";
             return FormatAccessibilitySummary($"BarChart {Name}: {items.Count} items, {Orientation} orientation{maximumSummary}.");
         }

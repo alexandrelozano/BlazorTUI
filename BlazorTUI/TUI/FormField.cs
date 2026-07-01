@@ -1,4 +1,5 @@
 using System.Drawing;
+using System.Globalization;
 
 namespace BlazorTUI.TUI
 {
@@ -10,6 +11,9 @@ namespace BlazorTUI.TUI
         private string name;
         private string label;
         private IReadOnlyList<string> options = Array.Empty<string>();
+        private TuiCultureOptions cultureOptions = TuiCultureOptions.Current;
+        private string? requiredMessage;
+        private bool cultureOptionsExplicitlySet;
 
         public FormField(
             string name,
@@ -46,7 +50,32 @@ namespace BlazorTUI.TUI
 
         public bool IsRequired { get; set; }
 
-        public string RequiredMessage { get; set; } = "This field is required.";
+        public string RequiredMessage
+        {
+            get => requiredMessage ?? CultureOptions.RequiredMessage;
+            set
+            {
+                ArgumentException.ThrowIfNullOrWhiteSpace(value);
+                requiredMessage = value;
+            }
+        }
+
+        public TuiCultureOptions CultureOptions
+        {
+            get => cultureOptions;
+            set
+            {
+                ArgumentNullException.ThrowIfNull(value);
+                cultureOptions = value;
+                cultureOptionsExplicitlySet = true;
+            }
+        }
+
+        public CultureInfo? Culture
+        {
+            get => CultureOptions.Culture;
+            set => CultureOptions.Culture = value;
+        }
 
         public TuiValidationRuleCollection ValidationRules { get; } = new();
 
@@ -66,6 +95,8 @@ namespace BlazorTUI.TUI
 
         public char NumericSeparator { get; set; } = '.';
 
+        public bool UseCultureNumericSeparator { get; set; }
+
         public DateBox.DateFormat DateFormat { get; set; } = DateBox.DateFormat.YYYYMMDD;
 
         public FormFieldEditorFactory<TModel>? EditorFactory { get; set; }
@@ -75,6 +106,8 @@ namespace BlazorTUI.TUI
         public Control? Control { get; internal set; }
 
         public Label? LabelControl { get; internal set; }
+
+        internal bool HasExplicitCultureOptions => cultureOptionsExplicitlySet;
 
         public object? GetModelValue(TModel model)
         {
@@ -100,6 +133,7 @@ namespace BlazorTUI.TUI
 
         internal void ApplyValidationTo(Control control)
         {
+            control.CultureOptions = CultureOptions;
             control.IsRequired = IsRequired;
             control.RequiredMessage = RequiredMessage;
             foreach (TuiValidationRule rule in ValidationRules)

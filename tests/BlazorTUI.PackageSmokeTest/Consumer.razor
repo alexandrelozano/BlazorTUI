@@ -13,6 +13,14 @@
         terminal.Shortcuts.SetBindings(TuiShortcutAction.SelectNextTab, "Alt+N");
         terminal.Shortcuts.SetBindings(TuiShortcutAction.SelectPreviousTab, "Alt+P");
         terminal.Shortcuts.AddBinding(TuiShortcutAction.ControlOpen, "Control+O");
+        var culture = new TuiCultureOptions("ca-ES")
+        {
+            RequiredMessage = "Camp obligatori.",
+            InvalidNumberMessage = "El valor ha de ser numèric."
+        };
+        _ = culture.FormatDate(new DateOnly(2026, 6, 29), DateBox.DateFormat.CultureShortDate);
+        _ = culture.FormatMonth(new DateOnly(2026, 6, 1), MonthPicker.MonthFormat.CultureMonthYear);
+        _ = culture.FormatCurrency(1234.56m);
         var commandRegistry = new TuiCommandRegistry();
         var saveCommand = commandRegistry.AddCommand("saveCommand", "Save", "Save changes", _ => { });
         saveCommand.SetShortcuts("Control+S");
@@ -30,14 +38,14 @@
             System.Drawing.Color.White, System.Drawing.Color.Black)
         {
             ThemeState = TuiThemeState.Error,
+            CultureOptions = culture,
             IsRequired = true,
-            RequiredMessage = "Name required",
             ScreenReaderDescription = "Customer name used on the order."
         };
         _ = input.GetAccessibilitySummary();
         input.ValidationRules.Add(
             value => value is string text && text.Length >= 2,
-            "Name must contain at least two characters");
+            (_, options) => options.FormatValidationMessage("Use at least {0} characters", options.FormatNumber(2, "0")));
         input.ValidationChanged += (_, args) => _ = args.Message;
         var password = new PasswordBox(
             "password", "secret", 2, 3, 10,
@@ -46,19 +54,21 @@
         var datePicker = new DatePicker(
             "datePicker",
             new DateOnly(2026, 6, 29),
-            DateBox.DateFormat.YYYYMMDD,
+            DateBox.DateFormat.CultureShortDate,
             0, 0,
             System.Drawing.Color.White,
-            System.Drawing.Color.Black);
+            System.Drawing.Color.Black,
+            cultureOptions: culture);
         datePicker.ValueChanged += (_, args) => _ = args.Value;
         datePicker.Value = new DateOnly(2026, 6, 30);
         var monthPicker = new MonthPicker(
             "monthPicker",
             new DateOnly(2026, 6, 15),
-            MonthPicker.MonthFormat.YYYYMM,
+            MonthPicker.MonthFormat.CultureMonthYear,
             0, 0,
             System.Drawing.Color.White,
-            System.Drawing.Color.Black);
+            System.Drawing.Color.Black,
+            cultureOptions: culture);
         monthPicker.ValueChanged += (_, args) => _ = args.Value;
         monthPicker.Value = new DateOnly(2026, 7, 15);
         var dateRangePicker = new DateRangePicker(
@@ -68,11 +78,40 @@
             DateBox.DateFormat.YYYYMMDD,
             0, 0,
             System.Drawing.Color.White,
-            System.Drawing.Color.Black);
+            System.Drawing.Color.Black,
+            cultureOptions: culture);
         dateRangePicker.ValueChanged += (_, args) => _ = (args.StartValue, args.EndValue);
         dateRangePicker.SetRange(new DateOnly(2026, 6, 11), new DateOnly(2026, 6, 15));
         DateRangePickerValue dateRange = new(dateRangePicker.StartValue!.Value, dateRangePicker.EndValue!.Value);
         _ = dateRange;
+        var dateBox = new DateBox(
+            "cultureDateBox",
+            new DateOnly(2026, 6, 29),
+            DateBox.DateFormat.CultureShortDate,
+            0,
+            0,
+            System.Drawing.Color.White,
+            System.Drawing.Color.Black,
+            culture);
+        var timeBox = new TimeBox(
+            "cultureTimeBox",
+            new TimeOnly(14, 30),
+            0,
+            0,
+            System.Drawing.Color.White,
+            System.Drawing.Color.Black,
+            culture);
+        var numericBox = new NumericBox(
+            "cultureNumericBox",
+            1234.56,
+            5,
+            2,
+            0,
+            0,
+            System.Drawing.Color.White,
+            System.Drawing.Color.Black,
+            culture);
+        _ = (dateBox.Value, timeBox.Value, numericBox.Value);
         var calendar = new Calendar(
             "calendar",
             new DateOnly(2026, 6, 15),
@@ -80,7 +119,8 @@
             System.Drawing.Color.White,
             System.Drawing.Color.Black,
             minDate: new DateOnly(2026, 6, 1),
-            maxDate: new DateOnly(2026, 6, 30));
+            maxDate: new DateOnly(2026, 6, 30),
+            cultureOptions: culture);
         calendar.DateSelected += (_, args) => _ = args.Value;
         calendar.AddDisabledDate(new DateOnly(2026, 6, 18));
         calendar.Value = new DateOnly(2026, 6, 16);

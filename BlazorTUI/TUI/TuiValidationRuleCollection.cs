@@ -18,6 +18,13 @@ namespace BlazorTUI.TUI
             return rule;
         }
 
+        public TuiValidationRule Add(Func<object?, bool> validate, Func<object?, TuiCultureOptions, string> messageProvider)
+        {
+            var rule = new TuiValidationRule(validate, messageProvider);
+            Add(rule);
+            return rule;
+        }
+
         protected override void InsertItem(int index, TuiValidationRule item)
         {
             ArgumentNullException.ThrowIfNull(item);

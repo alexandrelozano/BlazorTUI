@@ -1,4 +1,5 @@
 using System.Drawing;
+using System.Globalization;
 
 namespace BlazorTUI.TUI
 {
@@ -11,6 +12,8 @@ namespace BlazorTUI.TUI
         private Color validationPreviousForeColor;
         private Color validationPreviousBackgroundColor;
         private TuiThemeState validationPreviousThemeState;
+        private TuiCultureOptions cultureOptions = TuiCultureOptions.Current;
+        private string? requiredMessage;
 
         public string name { get; set; } = "";
 
@@ -85,7 +88,31 @@ namespace BlazorTUI.TUI
 
         public bool IsRequired { get; set; }
 
-        public string RequiredMessage { get; set; } = "This field is required.";
+        public string RequiredMessage
+        {
+            get => requiredMessage ?? CultureOptions.RequiredMessage;
+            set
+            {
+                ArgumentException.ThrowIfNullOrWhiteSpace(value);
+                requiredMessage = value;
+            }
+        }
+
+        public TuiCultureOptions CultureOptions
+        {
+            get => cultureOptions;
+            set
+            {
+                ArgumentNullException.ThrowIfNull(value);
+                cultureOptions = value;
+            }
+        }
+
+        public CultureInfo? Culture
+        {
+            get => CultureOptions.Culture;
+            set => CultureOptions.Culture = value;
+        }
 
         public bool IsValid => isValid;
 
@@ -151,7 +178,7 @@ namespace BlazorTUI.TUI
             {
                 if (!rule.IsValid(value))
                 {
-                    SetValidationResult(false, rule.Message);
+                    SetValidationResult(false, rule.GetMessage(value, CultureOptions));
                     return false;
                 }
             }

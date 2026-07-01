@@ -204,9 +204,10 @@ Use `FirstPanel` and `SecondPanel` as normal containers for controls or nested c
 | Forms | `DataForm<TModel>`, `FormField<TModel>`, `ValidationSummary` |
 | Text and input | `Label`, `TextBox`, `SearchBox`, `AutoCompleteBox`, `MaskedTextBox`, `PasswordBox`, `TextArea`, `NumericBox`, `DateBox`, `Calendar`, `DatePicker`, `DateRangePicker`, `MonthPicker`, `TimeBox` |
 | Selection | `CheckBox`, `ToggleSwitch`, `RadioButton`, `RadioGroup`, `ComboBox`, `MultiSelectComboBox`, `ListBox`, `TreeView`, `Slider`, `ColorPicker` |
-| Actions and navigation | `Breadcrumb`, `BreadcrumbItem`, `Button`, `CommandPalette`, `CommandPaletteItem`, `ContextMenu`, `ContextMenuItem`, `MenuBar`, `Menu`, `MenuItem`, `TuiCommand`, `TuiCommandRegistry` |
+| Actions and navigation | `Breadcrumb`, `BreadcrumbItem`, `Button`, `CommandPalette`, `CommandPaletteItem`, `ContextMenu`, `ContextMenuItem`, `MenuBar`, `Menu`, `MenuItem` |
 | Data and feedback | `GridView`, `Sparkline`, `BarChart`, `Gauge`, `Timeline`, `KeyValueList`, `ProgressBar`, `Spinner`, `StatusBar`, `Toast`, `PictureBox` |
 | Modal and transient UI | `Dialog`, `MessageBox`, `ModalPanel`, `Popover`, `Tooltip` |
+| Shared services and options | `TuiCultureOptions`, `TuiCommand`, `TuiCommandRegistry`, `TuiShortcutMap`, `TuiTheme` |
 
 Control constructors accept `System.Drawing.Color` values for foreground and background colors.
 
@@ -278,6 +279,61 @@ saveButton.Clicked += (_, _) =>
 Validation messages are rendered inline beside the control when there is room, or below it when the right side is full. Use `ShowValidationMessage`, `ValidationMessageForeColor`, and `ValidationMessageBackgroundColor` to control that display. Use `GetInvalidControls()` when application code needs to inspect the current invalid controls after validation.
 
 `TextBox`, `SearchBox`, `AutoCompleteBox`, `MaskedTextBox`, `PasswordBox`, `TextArea`, `DateBox`, `Calendar`, `DatePicker`, `DateRangePicker`, `MonthPicker`, `TimeBox`, `NumericBox`, `CheckBox`, `ToggleSwitch`, `RadioButton`, `ComboBox`, `MultiSelectComboBox`, `RadioGroup`, `ListBox`, `TreeView`, `Slider`, and `ColorPicker` expose their current value to validation rules. For checkboxes, toggle switches, and radio buttons, a required field means the value must be selected.
+
+## Localization and culture
+
+Use `TuiCultureOptions` when date, time, number, currency, or validation text should follow a specific culture. Existing explicit formats such as `DateBox.DateFormat.YYYYMMDD` remain invariant. Use `DateBox.DateFormat.CultureShortDate` and `MonthPicker.MonthFormat.CultureMonthYear` when the rendered value should follow the configured culture:
+
+```csharp
+var culture = new TuiCultureOptions("ca-ES")
+{
+    RequiredMessage = "Camp obligatori.",
+    InvalidNumberMessage = "El valor ha de ser numèric."
+};
+
+var deliveryDate = new DatePicker(
+    "deliveryDate",
+    new DateOnly(2026, 7, 1),
+    DateBox.DateFormat.CultureShortDate,
+    2, 2,
+    Color.Yellow, Color.Black,
+    width: 14,
+    cultureOptions: culture);
+
+var billingMonth = new MonthPicker(
+    "billingMonth",
+    new DateOnly(2026, 7, 1),
+    MonthPicker.MonthFormat.CultureMonthYear,
+    2, 4,
+    Color.Yellow, Color.Black,
+    width: 18,
+    cultureOptions: culture);
+
+var amount = new NumericBox(
+    "amount",
+    1234.56,
+    integerPlaces: 5,
+    decimalPlaces: 2,
+    X: 2,
+    Y: 6,
+    Color.Yellow,
+    Color.Black,
+    culture);
+
+string total = culture.FormatCurrency(1234.56m);
+```
+
+`Calendar`, `DatePicker`, `DateRangePicker`, and `MonthPicker` use the configured culture for month names, abbreviated day names, first day of week, and accessible summaries. `TimeBox` uses the configured time separator, and `NumericBox` can use the configured decimal separator through its culture-aware constructor or `UseCultureDecimalSeparator`.
+
+Validation messages can be set directly on `CultureOptions`, or generated per rule:
+
+```csharp
+amount.ValidationRules.Add(
+    value => value is double number && number >= 25,
+    (_, options) => $"Minimum amount is {options.FormatCurrency(25m)}.");
+```
+
+Use `TuiCultureOptions.Invariant` in tests or screenshot generation when deterministic invariant output is required.
 
 ## Additional input controls
 
@@ -1414,6 +1470,7 @@ The sample app also includes a documentation site at `/docs`. It summarizes the 
 | [DateRangePicker](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/DateRangePickerExample.razor) | Compact date range input with two-step calendar selection and typed value-change events |
 | [MonthPicker](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/MonthPickerExample.razor) | Compact month input with popup month-grid navigation and typed value-change events |
 | [Breadcrumb](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/Breadcrumbs.razor) | Hierarchical path navigation, keyboard selection, mouse activation, item mutation, and activation events |
+| [Localization](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/LocalizationExample.razor) | Culture-aware date, time, month, number, currency, and validation-message formatting |
 | [Themes](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/Themes.razor) | Runtime theme switching, predefined palettes, control roles, and visual states |
 | [Transient UI](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/TransientUi.razor) | Context menus, tooltips, toast notifications, popovers, and reusable modal panels |
 | [State persistence](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/StatePersistenceExample.razor) | Full restore, partial restore, schema migrations, payload slots, protected payloads, and silent restore |
@@ -1429,6 +1486,7 @@ Run `dotnet run --project SampleApp` from the repository root and open `/`, `/ex
 - Added query objects and operations-provider interfaces so consumers can push filtering, sorting, grouping, searching, paging, and visible-window prefetching into their own data layer.
 - Added async/cancellable `RefreshVirtualQueryAsync` hooks for virtual controls using operations providers.
 - Added a unified command model with `TuiCommand` and `TuiCommandRegistry`, plus command binding for buttons, menus, command palettes, context menus, status bars, and tooltips.
+- Added localization and culture support with `TuiCultureOptions`, culture-aware date/month/time/number/currency formatting, localized validation messages, and a focused localization example.
 - Updated NuGet consumer coverage and virtualization regression tests for the new provider-driven API.
 
 ### 0.8.15 — 2026-06-30

@@ -20,13 +20,58 @@ namespace BlazorTUI.TUI
         short decimalPlaces;
         char separator;
 
-        public NumericBox(string name, Double? value, short integerPlaces, short decimalPlaces, char separator, short X, short Y, Color forecolor, Color backgroundcolor) 
+        public short IntegerPlaces { get => integerPlaces; set => integerPlaces = value; }
+
+        public short DecimalPlaces { get => decimalPlaces; set => decimalPlaces = value; }
+
+        public char DecimalSeparator { get => separator; set => separator = value; }
+
+        public bool UseCultureDecimalSeparator { get; set; }
+
+        public NumericBox(
+            string name,
+            Double? value,
+            short integerPlaces,
+            short decimalPlaces,
+            short X,
+            short Y,
+            Color forecolor,
+            Color backgroundcolor,
+            TuiCultureOptions? cultureOptions = null)
+            : this(
+                name,
+                value,
+                integerPlaces,
+                decimalPlaces,
+                ResolveDecimalSeparator(cultureOptions),
+                X,
+                Y,
+                forecolor,
+                backgroundcolor,
+                cultureOptions)
+        {
+            UseCultureDecimalSeparator = true;
+        }
+
+        public NumericBox(
+            string name,
+            Double? value,
+            short integerPlaces,
+            short decimalPlaces,
+            char separator,
+            short X,
+            short Y,
+            Color forecolor,
+            Color backgroundcolor,
+            TuiCultureOptions? cultureOptions = null) 
             : base(name, "", X, Y, 1, forecolor, backgroundcolor)
         {
             this.value = value;
             this.integerPlaces = integerPlaces;
             this.decimalPlaces = decimalPlaces;
             this.separator = separator;
+            if (cultureOptions is not null)
+                CultureOptions = cultureOptions;
 
             if (decimalPlaces > 0)
                 this.width = (short)(integerPlaces + decimalPlaces + 2);
@@ -36,7 +81,7 @@ namespace BlazorTUI.TUI
             if (this.value != null)
             {
                 string format = $"{new string('0', integerPlaces)}.{new string('0', decimalPlaces)}";
-                text = this.value.Value.ToString(format, System.Globalization.CultureInfo.InvariantCulture).Replace('.', separator);
+                text = this.value.Value.ToString(format, System.Globalization.CultureInfo.InvariantCulture).Replace('.', EffectiveSeparator);
             }
         }
 
@@ -99,13 +144,13 @@ namespace BlazorTUI.TUI
 
                 if (text.Length == integerPlaces && decimalPlaces > 0)
                 {
-                    text += separator;
+                    text += EffectiveSeparator;
                     cursor++;
                 }
 
                 if (text.Length == integerPlaces + decimalPlaces + 1)
                 {
-                    this.value = double.Parse(text.Replace(separator, '.'), CultureInfo.InvariantCulture);
+                    this.value = double.Parse(text.Replace(EffectiveSeparator, '.'), CultureInfo.InvariantCulture);
                 }
 
                 if (cursor == integerPlaces && decimalPlaces > 0)
@@ -134,7 +179,7 @@ namespace BlazorTUI.TUI
                             string ch = (n < text.Length) ? text.Substring(n, 1) : " ";
 
                             if (n == integerPlaces && decimalPlaces > 0)
-                                ch = separator.ToString();
+                                ch = EffectiveSeparator.ToString();
 
                             if (Focus)
                             {
@@ -155,5 +200,10 @@ namespace BlazorTUI.TUI
         }
 
         protected override object? GetValidationValue() => value;
+
+        private char EffectiveSeparator => UseCultureDecimalSeparator ? CultureOptions.DecimalSeparator : separator;
+
+        private static char ResolveDecimalSeparator(TuiCultureOptions? cultureOptions)
+            => (cultureOptions ?? TuiCultureOptions.Current).DecimalSeparator;
     }
 }

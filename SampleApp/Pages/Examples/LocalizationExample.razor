@@ -1,0 +1,164 @@
+@page "/examples/localization"
+@using global::BlazorTUI.TUI
+@using System.Globalization
+@using Color = System.Drawing.Color
+
+<PageTitle>Localization example</PageTitle>
+
+<BlazorTUI.BlazorTUI
+    Screen="@screen"
+    AriaLabel="Localization example"
+    AriaDescription="Culture-aware dates, months, numbers, currency, and validation messages." />
+
+@code {
+    private Screen screen = null!;
+
+    protected override void OnInitialized()
+    {
+        var culture = new TuiCultureOptions("ca-ES")
+        {
+            RequiredMessage = "Camp obligatori.",
+            InvalidDateMessage = "La data no és vàlida.",
+            InvalidNumberMessage = "El valor ha de ser numèric."
+        };
+
+        screen = new Screen(60, 30);
+
+        var frame = new Frame(
+            "localizationFrame", "LOCALIZATION", 2, 2, 56, 25,
+            Frame.BorderStyle.Line, Color.Yellow, Color.DarkBlue);
+        screen.TopContainer.AddContainer(frame);
+
+        frame.AddControl(new Label(
+            "localizationDescription",
+            "The controls below use ca-ES culture options.",
+            3, 2, 48, Color.White, Color.DarkBlue));
+
+        frame.AddControl(new Label(
+            "dateLabel", "Date:",
+            3, 5, 14, Color.White, Color.DarkBlue));
+        var datePicker = new DatePicker(
+            "localizedDate",
+            new DateOnly(2026, 7, 1),
+            DateBox.DateFormat.CultureShortDate,
+            17,
+            5,
+            Color.Yellow,
+            Color.Black,
+            width: 14,
+            cultureOptions: culture);
+        frame.AddControl(datePicker);
+
+        frame.AddControl(new Label(
+            "monthLabel", "Month:",
+            3, 7, 14, Color.White, Color.DarkBlue));
+        var monthPicker = new MonthPicker(
+            "localizedMonth",
+            new DateOnly(2026, 7, 1),
+            MonthPicker.MonthFormat.CultureMonthYear,
+            17,
+            7,
+            Color.Yellow,
+            Color.Black,
+            width: 24,
+            cultureOptions: culture);
+        frame.AddControl(monthPicker);
+
+        frame.AddControl(new Label(
+            "timeLabel", "Time:",
+            3, 9, 14, Color.White, Color.DarkBlue));
+        frame.AddControl(new TimeBox(
+            "localizedTime",
+            new TimeOnly(14, 30),
+            17,
+            9,
+            Color.Yellow,
+            Color.Black,
+            culture));
+
+        frame.AddControl(new Label(
+            "numberLabel", "Number:",
+            3, 11, 14, Color.White, Color.DarkBlue));
+        frame.AddControl(new NumericBox(
+            "localizedNumber",
+            1234.56,
+            5,
+            2,
+            17,
+            11,
+            Color.Yellow,
+            Color.Black,
+            culture));
+
+        frame.AddControl(new Label(
+            "currencyLabel", "Currency:",
+            3, 13, 14, Color.White, Color.DarkBlue));
+        frame.AddControl(new Label(
+            "currencyValue",
+            culture.FormatCurrency(1234.56m),
+            17,
+            13,
+            18,
+            Color.Cyan,
+            Color.DarkBlue));
+
+        frame.AddControl(new Label(
+            "requiredLabel", "Required:",
+            3, 16, 14, Color.White, Color.DarkBlue));
+        var required = new TextBox(
+            "localizedRequired",
+            "",
+            17,
+            16,
+            18,
+            Color.Yellow,
+            Color.Black)
+        {
+            CultureOptions = culture,
+            IsRequired = true
+        };
+        required.Validate();
+        frame.AddControl(required);
+
+        frame.AddControl(new Label(
+            "ruleLabel", "Rule:",
+            3, 19, 14, Color.White, Color.DarkBlue));
+        var amount = new TextBox(
+            "localizedRule",
+            "10",
+            17,
+            19,
+            18,
+            Color.Yellow,
+            Color.Black)
+        {
+            CultureOptions = culture
+        };
+        amount.ValidationRules.Add(
+            value => Convert.ToString(value, CultureInfo.InvariantCulture) == "25",
+            (_, options) => $"Use exactly {options.FormatCurrency(25m)}");
+        amount.Validate();
+        frame.AddControl(amount);
+
+        var calendar = new global::BlazorTUI.TUI.Calendar(
+            "localizedCalendar",
+            new DateOnly(2026, 7, 1),
+            36,
+            5,
+            Color.Yellow,
+            Color.Black,
+            cultureOptions: culture);
+        frame.AddControl(calendar);
+
+        frame.AddControl(new Label(
+            "localizationFooter",
+            "Use TuiCultureOptions.Invariant for deterministic tests.",
+            3,
+            23,
+            50,
+            Color.Cyan,
+            Color.DarkBlue));
+
+        screen.SetFocus("localizedDate");
+    }
+}

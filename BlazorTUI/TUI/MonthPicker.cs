@@ -20,7 +20,8 @@ namespace BlazorTUI.TUI
         {
             YYYYMM,
             MMYYYY,
-            MMMYYYY
+            MMMYYYY,
+            CultureMonthYear
         }
 
         public DateOnly? Value
@@ -54,7 +55,7 @@ namespace BlazorTUI.TUI
         public override string GetAccessibilitySummary()
         {
             string selected = Value.HasValue
-                ? $"selected month {Value.Value.ToString("MMMM yyyy", CultureInfo.CurrentCulture)}"
+                ? $"selected month {CultureOptions.FormatMonth(Value.Value, MonthFormat.CultureMonthYear)}"
                 : "no month selected";
             string popupState = IsDropDownOpen ? "month grid open" : "month grid closed";
             return FormatAccessibilitySummary($"MonthPicker {Name}: {selected}, showing {DisplayedYear}, {popupState}.");
@@ -68,10 +69,14 @@ namespace BlazorTUI.TUI
             short Y,
             Color foreColor,
             Color backgroundColor,
-            short width = 10)
+            short width = 10,
+            TuiCultureOptions? cultureOptions = null)
         {
             ValidateFormat(format);
             ArgumentOutOfRangeException.ThrowIfLessThan(width, (short)10);
+
+            if (cultureOptions is not null)
+                CultureOptions = cultureOptions;
 
             DateOnly initialMonth = FirstDayOfMonth(value ?? DateOnly.FromDateTime(DateTime.Today));
             Name = name;
@@ -426,13 +431,7 @@ namespace BlazorTUI.TUI
         }
 
         private string FormatMonth(DateOnly month)
-            => format switch
-            {
-                MonthFormat.YYYYMM => month.ToString("yyyy/MM", CultureInfo.InvariantCulture),
-                MonthFormat.MMYYYY => month.ToString("MM/yyyy", CultureInfo.InvariantCulture),
-                MonthFormat.MMMYYYY => month.ToString("MMM yyyy", CultureInfo.CurrentCulture),
-                _ => month.ToString("yyyy/MM", CultureInfo.InvariantCulture)
-            };
+            => CultureOptions.FormatMonth(month, format);
 
         private bool TryGetCell(IList<Row> rows, int localX, int localY, out Cell cell)
         {
@@ -459,14 +458,8 @@ namespace BlazorTUI.TUI
         private static DateOnly FirstDayOfMonth(DateOnly date)
             => new(date.Year, date.Month, 1);
 
-        private static string GetMonthName(int month)
-        {
-            string[] names = CultureInfo.CurrentCulture.DateTimeFormat.AbbreviatedMonthNames;
-            string name = month >= 1 && month <= names.Length ? names[month - 1] : "";
-            return string.IsNullOrWhiteSpace(name)
-                ? CultureInfo.InvariantCulture.DateTimeFormat.AbbreviatedMonthNames[month - 1]
-                : name;
-        }
+        private string GetMonthName(int month)
+            => CultureOptions.GetMonthName(month);
 
         private static void ValidateFormat(MonthFormat format)
         {

@@ -56,13 +56,13 @@ namespace BlazorTUI.TUI
         {
             string selected = (StartValue, EndValue) switch
             {
-                ({ } start, { } end) => $"selected range {start.ToString("D", CultureInfo.CurrentCulture)} to {end.ToString("D", CultureInfo.CurrentCulture)}",
-                ({ } start, null) => $"start date {start.ToString("D", CultureInfo.CurrentCulture)}, no end date",
-                (null, { } end) => $"end date {end.ToString("D", CultureInfo.CurrentCulture)}, no start date",
+                ({ } start, { } end) => $"selected range {CultureOptions.FormatLongDate(start)} to {CultureOptions.FormatLongDate(end)}",
+                ({ } start, null) => $"start date {CultureOptions.FormatLongDate(start)}, no end date",
+                (null, { } end) => $"end date {CultureOptions.FormatLongDate(end)}, no start date",
                 _ => "no date range selected"
             };
             string popupState = IsDropDownOpen ? "calendar open" : "calendar closed";
-            return FormatAccessibilitySummary($"DateRangePicker {Name}: {selected}, selecting {SelectionTarget}, showing {DisplayedMonth.ToString("MMMM yyyy", CultureInfo.CurrentCulture)}, {popupState}.");
+            return FormatAccessibilitySummary($"DateRangePicker {Name}: {selected}, selecting {SelectionTarget}, showing {DisplayedMonth.ToString("MMMM yyyy", CultureOptions.ResolvedCulture)}, {popupState}.");
         }
 
         public DateRangePicker(
@@ -74,10 +74,14 @@ namespace BlazorTUI.TUI
             short Y,
             Color foreColor,
             Color backgroundColor,
-            short width = 25)
+            short width = 25,
+            TuiCultureOptions? cultureOptions = null)
         {
             ValidateFormat(format);
             ArgumentOutOfRangeException.ThrowIfLessThan(width, (short)25);
+
+            if (cultureOptions is not null)
+                CultureOptions = cultureOptions;
 
             Name = name;
             this.format = format;
@@ -401,7 +405,7 @@ namespace BlazorTUI.TUI
 
         private string GetHeaderText()
         {
-            string title = displayedMonth.ToString("MMM yyyy", CultureInfo.CurrentCulture);
+            string title = displayedMonth.ToString("MMM yyyy", CultureOptions.ResolvedCulture);
             return $"‹ {title} ›";
         }
 
@@ -416,8 +420,8 @@ namespace BlazorTUI.TUI
 
         private void DrawWeekDayRow(IList<Row> rows)
         {
-            string[] names = CultureInfo.CurrentCulture.DateTimeFormat.AbbreviatedDayNames;
-            int firstDay = (int)CultureInfo.CurrentCulture.DateTimeFormat.FirstDayOfWeek;
+            string[] names = CultureOptions.ResolvedCulture.DateTimeFormat.AbbreviatedDayNames;
+            int firstDay = (int)CultureOptions.ResolvedCulture.DateTimeFormat.FirstDayOfWeek;
             for (int day = 0; day < 7; day++)
             {
                 string name = names[(firstDay + day) % 7];
@@ -493,7 +497,7 @@ namespace BlazorTUI.TUI
 
         private DateOnly GetDateAt(int weekRow, int dayColumn)
         {
-            int firstDayOfWeek = (int)CultureInfo.CurrentCulture.DateTimeFormat.FirstDayOfWeek;
+            int firstDayOfWeek = (int)CultureOptions.ResolvedCulture.DateTimeFormat.FirstDayOfWeek;
             int monthStartDayOfWeek = (int)displayedMonth.DayOfWeek;
             int offset = (monthStartDayOfWeek - firstDayOfWeek + 7) % 7;
             return displayedMonth.AddDays(weekRow * 7 + dayColumn - offset);
@@ -560,13 +564,7 @@ namespace BlazorTUI.TUI
         }
 
         private string FormatDate(DateOnly date)
-            => format switch
-            {
-                DateBox.DateFormat.DDMMYYYY => date.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture),
-                DateBox.DateFormat.MMDDYYYY => date.ToString("MM/dd/yyyy", CultureInfo.InvariantCulture),
-                DateBox.DateFormat.YYYYMMDD => date.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture),
-                _ => date.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture)
-            };
+            => CultureOptions.FormatDate(date, format);
 
         private bool TryGetCell(IList<Row> rows, int localX, int localY, out Cell cell)
         {

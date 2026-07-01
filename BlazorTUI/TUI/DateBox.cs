@@ -18,33 +18,32 @@ namespace BlazorTUI.TUI
         {
             DDMMYYYY,
             MMDDYYYY,
-            YYYYMMDD
+            YYYYMMDD,
+            CultureShortDate
         }
 
         public DateFormat dateFormat { get; set; }
 
         public DateFormat Format { get => dateFormat; set => dateFormat = value; }
 
-        public DateBox(string name, DateOnly? value, DateFormat dateFormat, short X, short Y, Color forecolor, Color backgroundcolor) : base(name, "", X, Y, 11, forecolor, backgroundcolor)
+        public DateBox(
+            string name,
+            DateOnly? value,
+            DateFormat dateFormat,
+            short X,
+            short Y,
+            Color forecolor,
+            Color backgroundcolor,
+            TuiCultureOptions? cultureOptions = null)
+            : base(name, "", X, Y, 11, forecolor, backgroundcolor)
         {
             this.value = value;
             this.dateFormat = dateFormat;
+            if (cultureOptions is not null)
+                CultureOptions = cultureOptions;
 
             if (this.value != null)
-            {
-                switch (this.dateFormat)
-                {
-                    case DateFormat.DDMMYYYY:
-                        text = this.value.Value.ToString("DD/MM/YYYY");
-                        break;
-                    case DateFormat.MMDDYYYY:
-                        text = this.value.Value.ToString("MM/DD/YYYY");
-                        break;
-                    case DateFormat.YYYYMMDD:
-                        text = this.value.Value.ToString("YYYY/MM/DD");
-                        break;
-                }
-            }
+                text = CultureOptions.FormatDate(this.value.Value, this.dateFormat);
         }
 
         public override bool KeyDown(string key, bool shiftKey)
@@ -63,27 +62,11 @@ namespace BlazorTUI.TUI
 
                         if (cursor > 0)
                         {
+                            if (IsDateSeparatorIndex(cursor - 1))
+                                cursor--;
+
                             text = text.Remove(cursor - 1, 1);
                             cursor--;
-                        }
-
-                        switch (this.dateFormat)
-                        {
-                            case DateFormat.DDMMYYYY:
-                            case DateFormat.MMDDYYYY:
-                                if (cursor == 2 || cursor == 5)
-                                {
-                                    text = text.Remove(cursor - 1, 1);
-                                    cursor--;
-                                }
-                                break;
-                            case DateFormat.YYYYMMDD:
-                                if (cursor == 4 || cursor == 7)
-                                {
-                                    text = text.Remove(cursor - 1, 1);
-                                    cursor--;
-                                }
-                                break;
                         }
 
                         handled = true;
@@ -92,41 +75,24 @@ namespace BlazorTUI.TUI
                         if (cursor < (short)text.Length)
                             cursor++;
 
-                        switch (this.dateFormat)
-                        {
-                            case DateFormat.DDMMYYYY:
-                            case DateFormat.MMDDYYYY:
-                                if (cursor == 2 || cursor == 5)
-                                    cursor++;
-                                break;
-                            case DateFormat.YYYYMMDD:
-                                if (cursor == 4 || cursor == 7)
-                                    cursor++;
-                                break;
-                        }
+                        if (IsDateSeparatorIndex(cursor))
+                            cursor++;
                         break;
                     case "ArrowLeft":
                         if (cursor > 0)
                             cursor--;
 
-                        switch (this.dateFormat)
-                        {
-                            case DateFormat.DDMMYYYY:
-                            case DateFormat.MMDDYYYY:
-                                if (cursor == 2 || cursor == 5)
-                                    cursor--;
-                                break;
-                            case DateFormat.YYYYMMDD:
-                                if (cursor == 4 || cursor == 7)
-                                    cursor--;
-                                break;
-                        }
+                        if (IsDateSeparatorIndex(cursor))
+                            cursor--;
 
                         break;
                     default:
                         int n;
                         if (int.TryParse(key, out n))
                         {
+                            if (IsDateSeparatorIndex(cursor))
+                                cursor++;
+
                             if (cursor != text.Length)
                             {
                                 text = text.Insert(cursor, key);
@@ -144,62 +110,18 @@ namespace BlazorTUI.TUI
                         break;
                 }
 
-                switch (this.dateFormat)
-                {
-                    case DateFormat.DDMMYYYY:
-                    case DateFormat.MMDDYYYY:
-                        if (text.Length == 2)
-                            text += "/";
+                ApplyDateSeparators();
 
-                        if (text.Length == 5)
-                            text += "/";
-                        break;
-                    case DateFormat.YYYYMMDD:
-                        if (text.Length == 4)
-                            text += "/";
+                if (IsDateSeparatorIndex(cursor))
+                    cursor++;
 
-                        if (text.Length == 7)
-                            text += "/";
-                        break;
-                }
-
-                switch (this.dateFormat)
-                {
-                    case DateFormat.DDMMYYYY:
-                    case DateFormat.MMDDYYYY:
-                        if (cursor == 2 || cursor == 5)
-                        {
-                            cursor++;
-                        }
-                        break;
-                    case DateFormat.YYYYMMDD:
-                        if (cursor == 4 || cursor == 7)
-                        {
-                            cursor++;
-                        }
-                        break;
-                }
-
-                if (text.Length == 10)
+                if (text.Length == CultureOptions.GetDateTextLength(dateFormat))
                 {
                     DateOnly dt;
                     this.value = null;
 
-                    switch (this.dateFormat)
-                    {
-                        case DateFormat.DDMMYYYY:
-                            if (DateOnly.TryParseExact(text, "dd/MM/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out dt))
-                                this.value = dt;
-                            break;
-                        case DateFormat.MMDDYYYY:
-                            if (DateOnly.TryParseExact(text, "MM/dd/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out dt))
-                                this.value = dt;
-                            break;
-                        case DateFormat.YYYYMMDD:
-                            if (DateOnly.TryParseExact(text, "yyyy/MM/dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out dt))
-                                this.value = dt;
-                            break;
-                    }
+                    if (CultureOptions.TryParseDate(text, dateFormat, out dt))
+                        this.value = dt;
                 }
             }
 
@@ -222,24 +144,7 @@ namespace BlazorTUI.TUI
 
                             string ch = (n < text.Length) ? text.Substring(n, 1) : " ";
 
-                            switch (this.dateFormat)
-                            {
-                                case DateFormat.DDMMYYYY:
-                                case DateFormat.MMDDYYYY:
-                                    if (n == 2)
-                                        ch = "/";
-
-                                    if (n == 5)
-                                        ch = "/";
-                                    break;
-                                case DateFormat.YYYYMMDD:
-                                    if (n == 4)
-                                        ch = "/";
-
-                                    if (n == 7)
-                                        ch = "/";
-                                    break;
-                            }
+                            ch = GetDateSeparatorOrDefault(n, ch);
 
                             if (Focus)
                             {
@@ -260,5 +165,48 @@ namespace BlazorTUI.TUI
         }
 
         protected override object? GetValidationValue() => value;
+
+        private void ApplyDateSeparators()
+        {
+            string pattern = CultureOptions.GetDatePattern(dateFormat);
+            string digits = new(text.Where(char.IsDigit).Take(pattern.Count(IsPatternDigit)).ToArray());
+            var builder = new StringBuilder();
+            int digitIndex = 0;
+            foreach (char patternCharacter in pattern)
+            {
+                if (IsPatternDigit(patternCharacter))
+                {
+                    if (digitIndex >= digits.Length)
+                        break;
+
+                    builder.Append(digits[digitIndex]);
+                    digitIndex++;
+                }
+                else if (builder.Length > 0 || digitIndex > 0)
+                {
+                    builder.Append(patternCharacter);
+                }
+            }
+
+            text = builder.ToString();
+            if (cursor > text.Length)
+                cursor = (short)text.Length;
+        }
+
+        private bool IsDateSeparatorIndex(int index)
+            => index >= 0 && CultureOptions.GetDateSeparatorIndexes(dateFormat).Contains(index);
+
+        private string GetDateSeparatorOrDefault(int index, string fallback)
+        {
+            string pattern = CultureOptions.GetDatePattern(dateFormat);
+            return index >= 0 &&
+                index < pattern.Length &&
+                !IsPatternDigit(pattern[index])
+                    ? pattern[index].ToString()
+                    : fallback;
+        }
+
+        private static bool IsPatternDigit(char value)
+            => value is 'd' or 'M' or 'y';
     }
 }

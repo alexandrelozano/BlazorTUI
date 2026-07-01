@@ -66,9 +66,9 @@ namespace BlazorTUI.TUI
         public override string GetAccessibilitySummary()
         {
             string selected = Value.HasValue
-                ? $"selected date {Value.Value.ToString("D", CultureInfo.CurrentCulture)}"
+                ? $"selected date {CultureOptions.FormatLongDate(Value.Value)}"
                 : "no date selected";
-            return FormatAccessibilitySummary($"Calendar {Name}: {selected}, showing {DisplayedMonth.ToString("MMMM yyyy", CultureInfo.CurrentCulture)}, highlighted {HighlightedDate.ToString("D", CultureInfo.CurrentCulture)}.");
+            return FormatAccessibilitySummary($"Calendar {Name}: {selected}, showing {DisplayedMonth.ToString("MMMM yyyy", CultureOptions.ResolvedCulture)}, highlighted {CultureOptions.FormatLongDate(HighlightedDate)}.");
         }
 
         public Calendar(
@@ -80,11 +80,15 @@ namespace BlazorTUI.TUI
             Color backgroundColor,
             short width = CalendarWidth,
             DateOnly? minDate = null,
-            DateOnly? maxDate = null)
+            DateOnly? maxDate = null,
+            TuiCultureOptions? cultureOptions = null)
         {
             ArgumentOutOfRangeException.ThrowIfLessThan(width, (short)CalendarWidth);
             if (minDate.HasValue && maxDate.HasValue && minDate.Value > maxDate.Value)
                 throw new ArgumentOutOfRangeException(nameof(minDate));
+
+            if (cultureOptions is not null)
+                CultureOptions = cultureOptions;
 
             Name = name;
             this.X = X;
@@ -304,7 +308,7 @@ namespace BlazorTUI.TUI
 
         private string GetHeaderText()
         {
-            string title = displayedMonth.ToString("MMM yyyy", CultureInfo.CurrentCulture);
+            string title = displayedMonth.ToString("MMM yyyy", CultureOptions.ResolvedCulture);
             return $"‹ {title} ›";
         }
 
@@ -319,8 +323,8 @@ namespace BlazorTUI.TUI
 
         private void DrawWeekDayRow(IList<Row> rows)
         {
-            string[] names = CultureInfo.CurrentCulture.DateTimeFormat.AbbreviatedDayNames;
-            int firstDay = (int)CultureInfo.CurrentCulture.DateTimeFormat.FirstDayOfWeek;
+            string[] names = CultureOptions.ResolvedCulture.DateTimeFormat.AbbreviatedDayNames;
+            int firstDay = (int)CultureOptions.ResolvedCulture.DateTimeFormat.FirstDayOfWeek;
             for (int day = 0; day < 7; day++)
             {
                 string name = names[(firstDay + day) % 7];
@@ -374,7 +378,7 @@ namespace BlazorTUI.TUI
 
         private DateOnly GetDateAt(int weekRow, int dayColumn)
         {
-            int firstDayOfWeek = (int)CultureInfo.CurrentCulture.DateTimeFormat.FirstDayOfWeek;
+            int firstDayOfWeek = (int)CultureOptions.ResolvedCulture.DateTimeFormat.FirstDayOfWeek;
             int monthStartDayOfWeek = (int)displayedMonth.DayOfWeek;
             int offset = (monthStartDayOfWeek - firstDayOfWeek + 7) % 7;
             return displayedMonth.AddDays(weekRow * 7 + dayColumn - offset);

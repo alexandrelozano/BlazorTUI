@@ -52,7 +52,7 @@ namespace BlazorTUI.TUI
 
         public override string GetAccessibilitySummary()
             => FormatAccessibilitySummary(
-                $"Gauge {Name}: value {Value.ToString("R", CultureInfo.InvariantCulture)}, range {Minimum.ToString("R", CultureInfo.InvariantCulture)} to {Maximum.ToString("R", CultureInfo.InvariantCulture)}.");
+                $"Gauge {Name}: value {CultureOptions.FormatNumber(Value, "G")}, range {CultureOptions.FormatNumber(Minimum, "G")} to {CultureOptions.FormatNumber(Maximum, "G")}.");
 
         public Gauge(
             string name,
@@ -129,7 +129,7 @@ namespace BlazorTUI.TUI
             int innerWidth = Width - 2;
             int filled = (int)Math.Round(innerWidth * ratio, MidpointRounding.AwayFromZero);
             string text = ShowPercentage
-                ? $"{(ratio * 100.0).ToString("0", CultureInfo.InvariantCulture)}%"
+                ? $"{CultureOptions.FormatNumber(ratio * 100.0, "0")}%"
                 : "";
             int textStart = Math.Max(1, (Width - TuiText.VisualWidth(text)) / 2);
 

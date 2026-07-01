@@ -1,4 +1,5 @@
 using System.Drawing;
+using System.Globalization;
 
 namespace BlazorTUI.TUI
 {
@@ -46,11 +47,20 @@ namespace BlazorTUI.TUI
 
         public ValidationSummary? Summary { get; private set; }
 
+        public TuiCultureOptions CultureOptions { get; set; } = TuiCultureOptions.Current;
+
+        public CultureInfo? Culture
+        {
+            get => CultureOptions.Culture;
+            set => CultureOptions.Culture = value;
+        }
+
         public event EventHandler<DataFormModelUpdatedEventArgs<TModel>>? ModelUpdated;
 
         public void AddField(FormField<TModel> field)
         {
             ArgumentNullException.ThrowIfNull(field);
+            ApplyDefaultCulture(field);
             Control editor = CreateEditor(field);
             AddField(field, editor);
         }
@@ -59,6 +69,7 @@ namespace BlazorTUI.TUI
         {
             ArgumentNullException.ThrowIfNull(field);
             ArgumentNullException.ThrowIfNull(editor);
+            ApplyDefaultCulture(field);
 
             if (fields.Any(existing => existing.Name == field.Name))
                 throw new InvalidOperationException($"A form field named '{field.Name}' already exists.");
@@ -159,16 +170,7 @@ namespace BlazorTUI.TUI
                     context.Width,
                     context.ForeColor,
                     context.BackgroundColor),
-                FormFieldEditorKind.Number => new NumericBox(
-                    context.ControlName,
-                    ConvertToNullableDouble(value),
-                    context.Field.NumericIntegerPlaces,
-                    context.Field.NumericDecimalPlaces,
-                    context.Field.NumericSeparator,
-                    context.X,
-                    context.Y,
-                    context.ForeColor,
-                    context.BackgroundColor),
+                FormFieldEditorKind.Number => CreateNumericEditor(context, ConvertToNullableDouble(value)),
                 FormFieldEditorKind.CheckBox => new CheckBox(
                     context.ControlName,
                     "",
@@ -185,14 +187,16 @@ namespace BlazorTUI.TUI
                     context.X,
                     context.Y,
                     context.ForeColor,
-                    context.BackgroundColor),
+                    context.BackgroundColor,
+                    context.Field.CultureOptions),
                 FormFieldEditorKind.Time => new TimeBox(
                     context.ControlName,
                     ConvertToNullableTimeOnly(value),
                     context.X,
                     context.Y,
                     context.ForeColor,
-                    context.BackgroundColor),
+                    context.BackgroundColor,
+                    context.Field.CultureOptions),
                 FormFieldEditorKind.ComboBox => new ComboBox(
                     context.ControlName,
                     context.Field.Options,
@@ -216,6 +220,34 @@ namespace BlazorTUI.TUI
 
         private short GetFieldRow()
             => (short)(FirstFieldY + fields.Count * FieldSpacing);
+
+        private static NumericBox CreateNumericEditor(FormFieldEditorContext<TModel> context, double? value)
+        {
+            var editor = new NumericBox(
+                context.ControlName,
+                value,
+                context.Field.NumericIntegerPlaces,
+                context.Field.NumericDecimalPlaces,
+                context.Field.UseCultureNumericSeparator
+                    ? context.Field.CultureOptions.DecimalSeparator
+                    : context.Field.NumericSeparator,
+                context.X,
+                context.Y,
+                context.ForeColor,
+                context.BackgroundColor,
+                context.Field.CultureOptions)
+            {
+                UseCultureDecimalSeparator = context.Field.UseCultureNumericSeparator
+            };
+
+            return editor;
+        }
+
+        private void ApplyDefaultCulture(FormField<TModel> field)
+        {
+            if (!field.HasExplicitCultureOptions)
+                field.CultureOptions = CultureOptions;
+        }
 
         private void WireModelUpdates(FormField<TModel> field, Control editor)
         {
