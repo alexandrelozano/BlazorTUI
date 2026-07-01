@@ -10,6 +10,10 @@
         <div @key="cell"
              class="tilefs"
              aria-hidden="true"
+             @onmousedown="() => CellMouseDown.InvokeAsync(cell)"
+             @onmousedown:preventDefault="true"
+             @onmousemove="() => CellMouseMove.InvokeAsync(cell)"
+             @onmouseup="() => CellMouseUp.InvokeAsync(cell)"
              @onclick="() => CellClicked.InvokeAsync(cell)"
              @oncontextmenu="() => CellContextClicked.InvokeAsync(cell)"
              @oncontextmenu:preventDefault="true"
@@ -23,6 +27,15 @@
 
     [Parameter]
     public EventCallback<Cell> CellClicked { get; set; }
+
+    [Parameter]
+    public EventCallback<Cell> CellMouseDown { get; set; }
+
+    [Parameter]
+    public EventCallback<Cell> CellMouseMove { get; set; }
+
+    [Parameter]
+    public EventCallback<Cell> CellMouseUp { get; set; }
 
     [Parameter]
     public EventCallback<Cell> CellContextClicked { get; set; }

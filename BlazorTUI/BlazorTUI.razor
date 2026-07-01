@@ -31,10 +31,17 @@
          data-edit-history-enabled="@(ActiveUndoableControl is not null ? "true" : "false")"
          data-tab-navigation-enabled="@(ActiveTabControl is not null ? "true" : "false")"
          data-command-palette-enabled="@(ActiveCommandPalette is not null ? "true" : "false")"
-         @onkeydown="HandleKeyDown">
+         @onkeydown="HandleKeyDown"
+         @onmouseleave="OnGridMouseLeave">
         @foreach (Row row in Screen.Rows)
         {
-            <TuiRow @key="row" Row="row" CellClicked="OnClickCell" CellContextClicked="OnContextClickCell" />
+            <TuiRow @key="row"
+                    Row="row"
+                    CellClicked="OnClickCell"
+                    CellMouseDown="OnCellMouseDown"
+                    CellMouseMove="OnCellMouseMove"
+                    CellMouseUp="OnCellMouseUp"
+                    CellContextClicked="OnContextClickCell" />
         }
     </div>
 </div>
@@ -74,6 +81,12 @@
     private Screen? _accessibleScreen;
     private long _accessibleRevision = -1;
     private string _accessibleScreenText = "";
+    private TuiDragSession? _dragSession;
+    private short _dragStartScreenX;
+    private short _dragStartScreenY;
+    private short _lastDragScreenX;
+    private short _lastDragScreenY;
+    private bool _suppressNextClick;
     private bool _disposed;
 
     private string InstructionsId => $"{_accessibilityId}-instructions";
@@ -519,6 +532,12 @@
 
     private void OnClickCell(Cell cell)
     {
+        if (_suppressNextClick)
+        {
+            _suppressNextClick = false;
+            return;
+        }
+
         if (Screen.Dialogs.Count == 0)
         {
             bool handled = false;
@@ -537,6 +556,70 @@
 
         Screen.Render();
         UpdateFocusAnnouncement();
+    }
+
+    private void OnCellMouseDown(Cell cell)
+    {
+        _dragSession = Screen.Dialogs.Count == 0
+            ? Screen.TopContainer.BeginMouseDrag(cell.X, cell.Y)
+            : BeginDialogMouseDrag(cell);
+
+        if (_dragSession is null)
+            return;
+
+        _dragStartScreenX = cell.X;
+        _dragStartScreenY = cell.Y;
+        _lastDragScreenX = cell.X;
+        _lastDragScreenY = cell.Y;
+        _suppressNextClick = false;
+        RenderAfterControlChange(updateFocusAnnouncement: true);
+    }
+
+    private void OnCellMouseMove(Cell cell)
+    {
+        if (_dragSession is null)
+            return;
+
+        if (cell.X == _lastDragScreenX && cell.Y == _lastDragScreenY)
+            return;
+
+        _lastDragScreenX = cell.X;
+        _lastDragScreenY = cell.Y;
+        if (cell.X != _dragStartScreenX || cell.Y != _dragStartScreenY)
+            _dragSession.HasMoved = true;
+
+        if (_dragSession.Drag(cell.X, cell.Y))
+            RenderAfterControlChange(updateFocusAnnouncement: true);
+    }
+
+    private void OnCellMouseUp(Cell cell)
+    {
+        if (_dragSession is null)
+            return;
+
+        TuiDragSession session = _dragSession;
+        _dragSession = null;
+        _suppressNextClick = session.HasMoved;
+
+        if (session.EndDrag(cell.X, cell.Y))
+            RenderAfterControlChange(updateFocusAnnouncement: true);
+    }
+
+    private void OnGridMouseLeave()
+    {
+        if (_dragSession is null)
+            return;
+
+        _suppressNextClick = _dragSession.HasMoved;
+        _dragSession = null;
+    }
+
+    private TuiDragSession? BeginDialogMouseDrag(Cell cell)
+    {
+        Dialog dialog = Screen.Dialogs[^1];
+        return dialog.BeginMouseDrag(
+            (short)(cell.X - dialog.X),
+            (short)(cell.Y - dialog.Y));
     }
 
     private void OnContextClickCell(Cell cell)

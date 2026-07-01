@@ -12,6 +12,7 @@ BlazorTUI is a Razor Class Library for building retro text user interfaces in Bl
 - Character-cell rendering with foreground and background colors.
 - Nested frames and split panels with relative coordinates and z-order.
 - Keyboard focus, `Tab`/`Shift+Tab` navigation, and mouse interaction.
+- Additive mouse drag gestures for splitters, grid columns, list ranges, scrollbars, and calendars.
 - Required fields, custom validation rules, inline error messages, and first-invalid focus.
 - Menu bars with shortcuts and keyboard navigation.
 - Modal dialogs and configurable message boxes.
@@ -138,7 +139,7 @@ Use layout panels when you want the library to calculate child coordinates for c
 - `GridPanel` places children in rows and columns using fixed, auto, and star-like `GridPanelLength` definitions.
 - `DockPanel` docks children to `Top`, `Bottom`, `Left`, `Right`, or `Fill`.
 - `WrapPanel` flows children across lines when the current row or column is full.
-- `ScrollViewer` clips oversized content and exposes `ScrollTo` and `ScrollBy` offsets.
+- `ScrollViewer` clips oversized content, exposes `ScrollTo` and `ScrollBy` offsets, and renders draggable scrollbar thumbs.
 
 ```csharp
 var form = new GridPanel(
@@ -194,7 +195,7 @@ split.SecondPanel.AddControl(new TextArea(
 split.MoveSplitter(2);
 ```
 
-Use `FirstPanel` and `SecondPanel` as normal containers for controls or nested containers. `SplitterPosition` is the size of the first pane, measured in columns for vertical splits and rows for horizontal splits. `MoveSplitter` clamps movement to the configured pane minimums, while direct `SplitterPosition` assignment validates the requested position. `SplitterMoved` reports previous and current splitter positions through `SplitPanelResizedEventArgs`.
+Use `FirstPanel` and `SecondPanel` as normal containers for controls or nested containers. `SplitterPosition` is the size of the first pane, measured in columns for vertical splits and rows for horizontal splits. Users can drag the splitter with the mouse; set `EnableMouseResize = false` when you want programmatic-only resizing. `MoveSplitter` clamps movement to the configured pane minimums, while direct `SplitterPosition` assignment validates the requested position. `SplitterMoved` reports previous and current splitter positions through `SplitPanelResizedEventArgs`.
 
 ## Available controls
 
@@ -512,7 +513,7 @@ Call `form.Submit()` to validate the generated controls, focus the first invalid
 
 ## Calendar
 
-`Calendar` is a standalone month view for direct date selection. It supports keyboard navigation, mouse selection, optional `MinDate` and `MaxDate`, disabled dates, and typed date-selection events:
+`Calendar` is a standalone month view for direct date selection. It supports keyboard navigation, mouse click or drag selection, optional `MinDate` and `MaxDate`, disabled dates, and typed date-selection events:
 
 ```csharp
 var bookingCalendar = new Calendar(
@@ -539,7 +540,7 @@ Use `Value` or `SelectedDate`, `DisplayedMonth`, `HighlightedDate`, `DisplayMont
 
 ## Date picker
 
-`DatePicker` is a compact date input that opens a monthly calendar popup. Users open it with `Enter`, `Space`, `F4`, or `ArrowDown`, move with the arrow keys, change month with `PageUp` and `PageDown`, select with `Enter` or `Space`, and cancel with `Escape`:
+`DatePicker` is a compact date input that opens a monthly calendar popup. Users open it with `Enter`, `Space`, `F4`, or `ArrowDown`, move with the arrow keys, change month with `PageUp` and `PageDown`, select with `Enter`, `Space`, click, or drag, and cancel with `Escape`:
 
 ```csharp
 var deliveryDate = new DatePicker(
@@ -563,7 +564,7 @@ Use `Value`, `Format`, `OpenCalendar`, `CloseCalendar`, `ToggleCalendar`, `Displ
 
 ## Date range picker
 
-`DateRangePicker` is a compact range input that opens a monthly calendar popup. Users select the start date first, then the end date. The control keeps `StartValue` and `EndValue` ordered, so selecting an end date before the start date normalizes the range automatically:
+`DateRangePicker` is a compact range input that opens a monthly calendar popup. Users select the start date first, then the end date, or drag across days to select a range in one gesture. The control keeps `StartValue` and `EndValue` ordered, so selecting an end date before the start date normalizes the range automatically:
 
 ```csharp
 var travelRange = new DateRangePicker(
@@ -791,6 +792,7 @@ The snapshot restores current control values, focus, text selections, selected i
 - `Ctrl+Z` and `Ctrl+Y`: undo and redo text edits. On macOS, use `Command+Z` and `Command+Shift+Z`.
 - `Alt`: show menu shortcut keys.
 - Mouse click: focus or activate the control under the selected cell.
+- Mouse drag: resize split panels, resize or reorder `GridView` columns, select ranges in multi-select `ListBox`, move `ScrollViewer` thumbs, and select dates or date ranges in calendar controls. Drag behavior is additive; keyboard navigation and simple clicks keep their normal behavior.
 
 When a dialog is open, it receives input until it is closed.
 
@@ -1120,7 +1122,7 @@ orders.ClearFilters();
 frame.AddControl(orders);
 ```
 
-Use `SortByColumn(columnIndex)` to toggle ascending/descending sorting, or `SortByColumn(columnIndex, direction)` for an explicit `GridSortDirection`. `ClearSort` restores the original row order. Use `SetTextFilter`, `SetExactFilter`, `SetColumnFilter`, `SetRowFilter`, `ClearFilter`, `ClearRowFilter`, and `ClearFilters` to control filtering. `Filters`, `RowFilter`, `HasActiveFilters`, and `FilteredRowCount` expose the current filtered state. Filtered columns show a `◊` marker in the header; sorted columns show `▲` or `▼`. `NextPage`, `PreviousPage`, `GoToPage`, `PageIndex`, `PageSize`, and `PageCount` manage pagination. `SelectedRow`, `SelectedRowIndex`, `SelectedSourceRowIndex`, `SelectedColumnIndex`, `SelectRow`, `SelectSourceRow`, and `SelectCell` manage selection. Use `BeginEdit`, `CommitEdit`, and `CancelEdit` for programmatic cell editing; users can start editing an editable cell with `Enter`, commit with `Enter`, and cancel with `Escape`. Column editors support `TextBox`, `ComboBox`, `CheckBox`, `NumericBox`, and `DateBox` modes through `GridViewCellEditorKind`, plus per-column validation rules and typed `CellEditStarted`, `CellEditCommitted`, and `CellEditCanceled` events. Clicking a column header sorts it, clicking the up/down glyphs changes pages, and `PageUp`/`PageDown` work from the keyboard.
+Use `SortByColumn(columnIndex)` to toggle ascending/descending sorting, or `SortByColumn(columnIndex, direction)` for an explicit `GridSortDirection`. `ClearSort` restores the original row order. Use `SetTextFilter`, `SetExactFilter`, `SetColumnFilter`, `SetRowFilter`, `ClearFilter`, `ClearRowFilter`, and `ClearFilters` to control filtering. `Filters`, `RowFilter`, `HasActiveFilters`, and `FilteredRowCount` expose the current filtered state. Filtered columns show a `◊` marker in the header; sorted columns show `▲` or `▼`. `NextPage`, `PreviousPage`, `GoToPage`, `PageIndex`, `PageSize`, and `PageCount` manage pagination. `SelectedRow`, `SelectedRowIndex`, `SelectedSourceRowIndex`, `SelectedColumnIndex`, `SelectRow`, `SelectSourceRow`, and `SelectCell` manage selection. Use `BeginEdit`, `CommitEdit`, and `CancelEdit` for programmatic cell editing; users can start editing an editable cell with `Enter`, commit with `Enter`, and cancel with `Escape`. Column editors support `TextBox`, `ComboBox`, `CheckBox`, `NumericBox`, and `DateBox` modes through `GridViewCellEditorKind`, plus per-column validation rules and typed `CellEditStarted`, `CellEditCommitted`, and `CellEditCanceled` events. Clicking a column header sorts it, dragging a header separator resizes that column, dragging a header cell reorders columns, clicking the up/down glyphs changes pages, and `PageUp`/`PageDown` work from the keyboard. Set `EnableMouseColumnResize` or `EnableMouseColumnReorder` to `false` when those mouse gestures should be disabled.
 
 Advanced grid operations are available without changing the existing row and column model:
 
@@ -1501,22 +1503,22 @@ The sample app also includes a documentation site at `/docs`. It summarizes the 
 | [Form validation](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/FormValidation.razor) | Required fields, custom validation rules, inline error messages, and first-invalid focus |
 | [DataForm](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/DataFormExample.razor) | Model-bound generated form fields, validation summary, submit-time updates, and editor factories |
 | [Workflow navigation](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/WorkflowNavigationExample.razor) | Focus scopes, validation groups, first-control focus, and wizard-step navigation |
-| [GridView](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/GridViewExample.razor) | Sorting, pagination, row selection, filter row UI, editable cells, column layout, grouping, aggregate footers, export helpers, async loading, validation, and edit events |
+| [GridView](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/GridViewExample.razor) | Sorting, pagination, row selection, filter row UI, editable cells, mouse column resize/reorder, grouping, aggregate footers, export helpers, async loading, validation, and edit events |
 | [Data visualizations](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/DataVisualizations.razor) | Sparklines, bar charts, gauges, timelines, and aligned key/value details |
 | [Dialogs and menus](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/DialogsAndMenus.razor) | Menu shortcuts, custom modal dialogs, and message boxes |
 | [Images](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/Images.razor) | Loading encoded image bytes into a `PictureBox` |
 | [TabControl](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/Tabs.razor) | Tab pages, nested controls, focus changes, mouse selection, and keyboard navigation |
 | [TreeView](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/TreeViewExample.razor) | Hierarchical nodes, dynamic expansion, selection events, mouse input, and keyboard navigation |
 | [Slider](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/Sliders.razor) | Horizontal and vertical ranges, direct mouse selection, small and large keyboard changes, and value events |
-| [SplitPanel](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/SplitPanels.razor) | Vertical and horizontal panes, nested layouts, shared focus navigation, and programmatic resizing |
+| [SplitPanel](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/SplitPanels.razor) | Vertical and horizontal panes, nested layouts, shared focus navigation, mouse splitter dragging, and programmatic resizing |
 | [StackPanel](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/StackPanelExample.razor) | Vertical and horizontal child flow with spacing and alignment |
 | [GridPanel](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/GridPanelExample.razor) | Fixed, auto, and star-like rows and columns |
 | [DockPanel](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/DockPanelExample.razor) | Top, bottom, left, right, and fill regions |
 | [WrapPanel](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/WrapPanelExample.razor) | Flow layout that wraps items across lines |
-| [ScrollViewer](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/ScrollViewerExample.razor) | Clipped viewport over larger content with scroll offsets |
-| [Calendar](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/CalendarExample.razor) | Standalone month view with min/max dates, disabled dates, keyboard navigation, and typed selection events |
-| [DatePicker](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/DatePickerExample.razor) | Compact date input with popup calendar navigation and typed value-change events |
-| [DateRangePicker](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/DateRangePickerExample.razor) | Compact date range input with two-step calendar selection and typed value-change events |
+| [ScrollViewer](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/ScrollViewerExample.razor) | Clipped viewport over larger content with scroll offsets and draggable thumbs |
+| [Calendar](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/CalendarExample.razor) | Standalone month view with min/max dates, disabled dates, keyboard navigation, drag selection, and typed selection events |
+| [DatePicker](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/DatePickerExample.razor) | Compact date input with popup calendar navigation, drag selection, and typed value-change events |
+| [DateRangePicker](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/DateRangePickerExample.razor) | Compact date range input with two-step or drag calendar selection and typed value-change events |
 | [MonthPicker](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/MonthPickerExample.razor) | Compact month input with popup month-grid navigation and typed value-change events |
 | [Breadcrumb](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/Breadcrumbs.razor) | Hierarchical path navigation, keyboard selection, mouse activation, item mutation, and activation events |
 | [Localization](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/LocalizationExample.razor) | Culture-aware date, time, month, number, currency, and validation-message formatting |
@@ -1532,6 +1534,7 @@ Run `dotnet run --project SampleApp` from the repository root and open `/`, `/ex
 ### 1.0.1 — 2026-07-01
 
 - Added focus scopes, validation groups, first/last focus helpers, and `TuiWizard` step navigation for form and modal workflows.
+- Added additive mouse drag gestures for splitters, `GridView` column resizing/reordering, multi-select `ListBox` range selection, `ScrollViewer` thumbs, and `Calendar`/`DatePicker`/`DateRangePicker` date selection.
 
 ### 1.0.0 — 2026-07-01
 

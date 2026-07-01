@@ -159,6 +159,59 @@ namespace BlazorTUI.TUI
             return false;
         }
 
+        public virtual bool BeginDrag(short X, short Y) => false;
+
+        public virtual bool Drag(short startX, short startY, short currentX, short currentY) => false;
+
+        public virtual bool EndDrag(short startX, short startY, short currentX, short currentY) => false;
+
+        internal virtual TuiDragSession? BeginMouseDrag(short X, short Y)
+        {
+            if (!Visible)
+                return null;
+
+            TuiDragSession? popupSession = TryBeginDragOpenPopup(X, Y);
+            if (popupSession is not null)
+                return popupSession;
+
+            foreach (Container container in containers
+                .Where(container => container.Visible)
+                .OrderByDescending(container => container.ZOrder))
+            {
+                if (X < container.X || X >= container.X + container.Width ||
+                    Y < container.Y || Y >= container.Y + container.Height)
+                {
+                    continue;
+                }
+
+                TuiDragSession? session = container.BeginMouseDrag(
+                    (short)(X - container.X),
+                    (short)(Y - container.Y));
+                if (session is not null)
+                    return session;
+            }
+
+            foreach (Control control in controls
+                .Where(control => control.Visible)
+                .OrderByDescending(control => control.ZOrder))
+            {
+                if (control.X > X || control.X + control.Width <= X ||
+                    control.Y > Y || control.Y + control.Height <= Y)
+                {
+                    continue;
+                }
+
+                short localX = (short)(X - control.X);
+                short localY = (short)(Y - control.Y);
+                if (control.BeginDrag(localX, localY))
+                    return new TuiDragSession(control, localX, localY);
+            }
+
+            return BeginDrag(X, Y)
+                ? new TuiDragSession(this, X, Y)
+                : null;
+        }
+
         public virtual void KeyDown(string key, bool shiftKey)
         {
             ArgumentException.ThrowIfNullOrEmpty(key);
@@ -355,6 +408,39 @@ namespace BlazorTUI.TUI
             }
 
             return false;
+        }
+
+        private TuiDragSession? TryBeginDragOpenPopup(short X, short Y)
+        {
+            foreach (Control control in controls.OrderByDescending(control => control.ZOrder))
+            {
+                if (control is not IPopupControl { IsPopupOpen: true } popup)
+                    continue;
+
+                if (popup.ContainsPopupPoint(X, Y))
+                {
+                    short localX = (short)(X - control.X);
+                    short localY = (short)(Y - control.Y);
+                    return control.BeginDrag(localX, localY)
+                        ? new TuiDragSession(control, localX, localY)
+                        : null;
+                }
+
+                popup.ClosePopup();
+            }
+
+            foreach (Container container in containers
+                .Where(container => container.Visible)
+                .OrderByDescending(container => container.ZOrder))
+            {
+                TuiDragSession? session = container.TryBeginDragOpenPopup(
+                    (short)(X - container.X),
+                    (short)(Y - container.Y));
+                if (session is not null)
+                    return session;
+            }
+
+            return null;
         }
 
         private bool TryRouteOpenContextMenuKey(string key, bool shiftKey)

@@ -73,6 +73,8 @@ namespace BlazorTUI.TUI
 
         public Color BackgroundColor { get; set; }
 
+        public bool EnableMouseResize { get; set; } = true;
+
         public string VerticalSplitterCharacter
         {
             get => verticalSplitterCharacter;
@@ -153,6 +155,33 @@ namespace BlazorTUI.TUI
             SetSplitterPosition(clampedTarget);
         }
 
+        public override bool BeginDrag(short X, short Y)
+            => EnableMouseResize &&
+                Visible &&
+                X >= 0 &&
+                X < Width &&
+                Y >= 0 &&
+                Y < Height &&
+                (orientation == SplitPanelOrientation.Vertical
+                    ? X == splitterPosition
+                    : Y == splitterPosition);
+
+        public override bool Drag(short startX, short startY, short currentX, short currentY)
+        {
+            if (!EnableMouseResize)
+                return false;
+
+            short previousPosition = splitterPosition;
+            short targetPosition = orientation == SplitPanelOrientation.Vertical
+                ? ClampSplitterPosition(currentX)
+                : ClampSplitterPosition(currentY);
+            SetSplitterPosition(targetPosition);
+            return previousPosition != splitterPosition;
+        }
+
+        public override bool EndDrag(short startX, short startY, short currentX, short currentY)
+            => Drag(startX, startY, currentX, currentY);
+
         public override void Render(IList<Row> rows)
         {
             ArgumentNullException.ThrowIfNull(rows);
@@ -203,6 +232,9 @@ namespace BlazorTUI.TUI
                 MaximumSplitterPosition);
             SetSplitterPosition(clampedPosition);
         }
+
+        private short ClampSplitterPosition(short position)
+            => (short)Math.Clamp(position, MinimumSplitterPosition, MaximumSplitterPosition);
 
         private int AxisLength => orientation == SplitPanelOrientation.Vertical ? Width : Height;
 

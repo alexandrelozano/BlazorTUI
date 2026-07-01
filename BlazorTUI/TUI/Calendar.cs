@@ -14,6 +14,7 @@ namespace BlazorTUI.TUI
         private DateOnly displayedMonth;
         private DateOnly? minDate;
         private DateOnly? maxDate;
+        private bool mouseDateSelectionMoved;
 
         public DateOnly? Value
         {
@@ -58,6 +59,8 @@ namespace BlazorTUI.TUI
         }
 
         public IReadOnlyCollection<DateOnly> DisabledDates => disabledDates;
+
+        public bool EnableMouseDateSelection { get; set; } = true;
 
         public event EventHandler<CalendarDateSelectedEventArgs>? DateSelected;
 
@@ -261,6 +264,43 @@ namespace BlazorTUI.TUI
             return true;
         }
 
+        public override bool BeginDrag(short X, short Y)
+        {
+            mouseDateSelectionMoved = false;
+            if (!EnableMouseDateSelection || !Visible || !TryGetCalendarDateAtLocalPoint(X, Y, out _))
+                return false;
+
+            container.TopContainer().SetFocus(Name);
+            return true;
+        }
+
+        public override bool Drag(short startX, short startY, short currentX, short currentY)
+        {
+            if (!TryGetCalendarDateAtLocalPoint(currentX, currentY, out DateOnly date))
+                return false;
+
+            if (currentX == startX && currentY == startY && !mouseDateSelectionMoved)
+                return false;
+
+            DateOnly? previousValue = value;
+            DateOnly previousHighlight = highlightedDate;
+            mouseDateSelectionMoved = true;
+            Highlight(date);
+            SelectHighlightedDate();
+            bool changed = previousValue != value || previousHighlight != highlightedDate;
+            if (changed)
+                NotifyClicked();
+
+            return changed;
+        }
+
+        public override bool EndDrag(short startX, short startY, short currentX, short currentY)
+        {
+            bool changed = mouseDateSelectionMoved && Drag(startX, startY, currentX, currentY);
+            mouseDateSelectionMoved = false;
+            return changed;
+        }
+
         public override void Render(IList<Row> rows)
         {
             ArgumentNullException.ThrowIfNull(rows);
@@ -382,6 +422,21 @@ namespace BlazorTUI.TUI
             int monthStartDayOfWeek = (int)displayedMonth.DayOfWeek;
             int offset = (monthStartDayOfWeek - firstDayOfWeek + 7) % 7;
             return displayedMonth.AddDays(weekRow * 7 + dayColumn - offset);
+        }
+
+        private bool TryGetCalendarDateAtLocalPoint(short X, short Y, out DateOnly date)
+        {
+            date = default;
+            if (X < 0 || X >= CalendarWidth || Y < 2 || Y >= CalendarHeight)
+                return false;
+
+            int weekRow = Y - 2;
+            int dayColumn = X / 3;
+            if (dayColumn < 0 || dayColumn >= 7 || weekRow < 0 || weekRow >= 6)
+                return false;
+
+            date = GetDateAt(weekRow, dayColumn);
+            return IsDateEnabled(date);
         }
 
         private void SelectHighlightedDate()

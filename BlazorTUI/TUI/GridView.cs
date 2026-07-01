@@ -7,6 +7,13 @@ namespace BlazorTUI.TUI
 {
     public class GridView : Control
     {
+        private enum GridColumnMouseDragMode
+        {
+            None,
+            Resize,
+            Reorder
+        }
+
         public class GridRow
         {
             internal string[] cells = Array.Empty<string>();
@@ -93,6 +100,10 @@ namespace BlazorTUI.TUI
         private bool isReadOnly = true;
         private bool showFilterRow;
         private bool isLoading;
+        private GridColumnMouseDragMode columnDragMode;
+        private int dragColumnIndex = -1;
+        private int dragStartVisibleIndex = -1;
+        private short dragStartColumnWidth;
         private CellEditState? editState;
 
         public IReadOnlyList<GridColumn> Columns => columns;
@@ -130,6 +141,10 @@ namespace BlazorTUI.TUI
         }
 
         public bool IsFilterEditing => filterEditColumnIndex >= 0;
+
+        public bool EnableMouseColumnResize { get; set; } = true;
+
+        public bool EnableMouseColumnReorder { get; set; } = true;
 
         public int EditingFilterColumnIndex => filterEditColumnIndex;
 
@@ -1354,6 +1369,82 @@ namespace BlazorTUI.TUI
             return true;
         }
 
+        public override bool BeginDrag(short X, short Y)
+        {
+            columnDragMode = GridColumnMouseDragMode.None;
+            dragColumnIndex = -1;
+            dragStartVisibleIndex = -1;
+
+            if (!Visible || Y != 0 || X < 0 || X >= Width - 1)
+                return false;
+
+            if (EnableMouseColumnResize && TryGetResizableColumnAt(X, out int resizeColumnIndex))
+            {
+                columnDragMode = GridColumnMouseDragMode.Resize;
+                dragColumnIndex = resizeColumnIndex;
+                dragStartColumnWidth = columns[resizeColumnIndex].Width;
+                container.TopContainer().SetFocus(Name);
+                return true;
+            }
+
+            if (!EnableMouseColumnReorder)
+                return false;
+
+            int reorderColumnIndex = GetColumnIndexAt(X);
+            if (reorderColumnIndex < 0)
+                return false;
+
+            columnDragMode = GridColumnMouseDragMode.Reorder;
+            dragColumnIndex = reorderColumnIndex;
+            dragStartVisibleIndex = columnOrder.IndexOf(reorderColumnIndex);
+            container.TopContainer().SetFocus(Name);
+            return true;
+        }
+
+        public override bool Drag(short startX, short startY, short currentX, short currentY)
+        {
+            if (columnDragMode != GridColumnMouseDragMode.Resize || dragColumnIndex < 0)
+                return false;
+
+            short previousWidth = columns[dragColumnIndex].Width;
+            int width = dragStartColumnWidth + currentX - startX;
+            SetColumnWidth(dragColumnIndex, (short)Math.Clamp(width, 1, short.MaxValue));
+            bool changed = previousWidth != columns[dragColumnIndex].Width;
+            if (changed)
+                NotifyClicked();
+
+            return changed;
+        }
+
+        public override bool EndDrag(short startX, short startY, short currentX, short currentY)
+        {
+            if (columnDragMode == GridColumnMouseDragMode.Resize)
+            {
+                bool resized = Drag(startX, startY, currentX, currentY);
+                ResetColumnDrag();
+                return resized;
+            }
+
+            if (columnDragMode != GridColumnMouseDragMode.Reorder ||
+                dragColumnIndex < 0 ||
+                dragStartVisibleIndex < 0)
+            {
+                ResetColumnDrag();
+                return false;
+            }
+
+            int targetVisibleIndex = GetColumnDropVisibleIndex(currentX);
+            bool changed = targetVisibleIndex >= 0 && targetVisibleIndex != dragStartVisibleIndex;
+            if (changed)
+            {
+                MoveColumn(dragColumnIndex, targetVisibleIndex);
+                NotifyClicked();
+            }
+
+            ResetColumnDrag();
+            return changed;
+        }
+
         public override void Render(IList<Row> rows)
         {
             ArgumentNullException.ThrowIfNull(rows);
@@ -2147,6 +2238,53 @@ namespace BlazorTUI.TUI
             }
 
             return -1;
+        }
+
+        private bool TryGetResizableColumnAt(short localX, out int columnIndex)
+        {
+            int cursor = 0;
+            foreach (int index in columnOrder)
+            {
+                int separatorX = cursor + columns[index].Width - 1;
+                if (localX == separatorX && separatorX < Width - 1)
+                {
+                    columnIndex = index;
+                    return true;
+                }
+
+                cursor += columns[index].Width;
+            }
+
+            columnIndex = -1;
+            return false;
+        }
+
+        private int GetColumnDropVisibleIndex(short localX)
+        {
+            if (columnOrder.Count == 0)
+                return -1;
+
+            int cursor = 0;
+            for (int visibleIndex = 0; visibleIndex < columnOrder.Count; visibleIndex++)
+            {
+                int columnIndex = columnOrder[visibleIndex];
+                int width = columns[columnIndex].Width;
+                int midpoint = cursor + Math.Max(1, width / 2);
+                if (localX < midpoint)
+                    return visibleIndex;
+
+                cursor += width;
+            }
+
+            return columnOrder.Count - 1;
+        }
+
+        private void ResetColumnDrag()
+        {
+            columnDragMode = GridColumnMouseDragMode.None;
+            dragColumnIndex = -1;
+            dragStartVisibleIndex = -1;
+            dragStartColumnWidth = 0;
         }
 
         private int GetColumnStart(int columnIndex)

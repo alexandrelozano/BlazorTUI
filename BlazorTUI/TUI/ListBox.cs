@@ -14,12 +14,15 @@ namespace BlazorTUI.TUI
         private readonly List<int> viewItemIndexes = new();
         private readonly List<string> selectedKeys = new();
         private string searchText = "";
+        private int rangeSelectionAnchorIndex = -1;
 
         private bool multipleSelection;
 
         public bool AllowsMultipleSelection => multipleSelection;
 
         public bool IsVirtualized => virtualItems is not null;
+
+        public bool EnableMouseRangeSelection { get; set; } = true;
 
         public int ItemCount
             => virtualItemOperations is not null
@@ -211,6 +214,47 @@ namespace BlazorTUI.TUI
             return handled;
         }
 
+        public override bool BeginDrag(short X, short Y)
+        {
+            if (!EnableMouseRangeSelection ||
+                !multipleSelection ||
+                !Visible ||
+                X < 0 ||
+                X >= width - 1 ||
+                Y < 0 ||
+                Y >= height)
+            {
+                rangeSelectionAnchorIndex = -1;
+                return false;
+            }
+
+            int itemIndex = Y + scrollY;
+            if (itemIndex < 0 || itemIndex >= ItemCount)
+            {
+                rangeSelectionAnchorIndex = -1;
+                return false;
+            }
+
+            rangeSelectionAnchorIndex = itemIndex;
+            return true;
+        }
+
+        public override bool Drag(short startX, short startY, short currentX, short currentY)
+        {
+            if (rangeSelectionAnchorIndex < 0 || ItemCount == 0)
+                return false;
+
+            int targetIndex = Math.Clamp(currentY + scrollY, 0, ItemCount - 1);
+            return SelectRange(rangeSelectionAnchorIndex, targetIndex);
+        }
+
+        public override bool EndDrag(short startX, short startY, short currentX, short currentY)
+        {
+            bool changed = Drag(startX, startY, currentX, currentY);
+            rangeSelectionAnchorIndex = -1;
+            return changed;
+        }
+
         public void SelectKey(string key)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(key);
@@ -374,6 +418,36 @@ namespace BlazorTUI.TUI
         }
 
         protected override object? GetValidationValue() => SelectedItems;
+
+        private bool SelectRange(int firstIndex, int lastIndex)
+        {
+            int startIndex = Math.Clamp(Math.Min(firstIndex, lastIndex), 0, Math.Max(0, ItemCount - 1));
+            int endIndex = Math.Clamp(Math.Max(firstIndex, lastIndex), 0, Math.Max(0, ItemCount - 1));
+            string[] previousSelectedItems = itemsSelected.ToArray();
+            string[] previousSelectedKeys = selectedKeys.ToArray();
+
+            itemsSelected.Clear();
+            selectedKeys.Clear();
+            for (int index = startIndex; index <= endIndex; index++)
+            {
+                string item = GetItem(index);
+                string key = GetItemKey(index);
+                if (!itemsSelected.Contains(item))
+                    itemsSelected.Add(item);
+                if (!selectedKeys.Contains(key))
+                    selectedKeys.Add(key);
+            }
+
+            cursorY = lastIndex;
+            EnsureCursorVisible();
+            virtualItemOperations?.ApplyQuery(CreateVirtualListBoxQuery());
+            bool changed = !previousSelectedItems.SequenceEqual(itemsSelected) ||
+                !previousSelectedKeys.SequenceEqual(selectedKeys);
+            if (changed)
+                NotifyClicked();
+
+            return changed;
+        }
 
         private string GetItem(int index)
             => virtualItemOperations is not null

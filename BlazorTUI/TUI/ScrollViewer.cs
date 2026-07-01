@@ -4,8 +4,16 @@ namespace BlazorTUI.TUI
 {
     public class ScrollViewer : LayoutPanel
     {
+        private enum ScrollDragMode
+        {
+            None,
+            Vertical,
+            Horizontal
+        }
+
         private int horizontalOffset;
         private int verticalOffset;
+        private ScrollDragMode dragMode;
 
         public ScrollViewer(
             string name,
@@ -32,6 +40,8 @@ namespace BlazorTUI.TUI
         }
 
         public bool ShowScrollIndicators { get; set; } = true;
+
+        public bool EnableMouseThumbScrolling { get; set; } = true;
 
         public int ScrollableContentWidth => Math.Max(Width, GetContentRight());
 
@@ -61,6 +71,50 @@ namespace BlazorTUI.TUI
             short contentX = ToShort(X + horizontalOffset);
             short contentY = ToShort(Y + verticalOffset);
             base.Click(contentX, contentY);
+        }
+
+        public override bool BeginDrag(short X, short Y)
+        {
+            if (!EnableMouseThumbScrolling || !ShowScrollIndicators || !Visible)
+                return false;
+
+            if (IsVerticalTrackCell(X, Y))
+            {
+                dragMode = ScrollDragMode.Vertical;
+                SetVerticalOffsetFromTrack(Y);
+                return true;
+            }
+
+            if (IsHorizontalTrackCell(X, Y))
+            {
+                dragMode = ScrollDragMode.Horizontal;
+                SetHorizontalOffsetFromTrack(X);
+                return true;
+            }
+
+            return false;
+        }
+
+        public override bool Drag(short startX, short startY, short currentX, short currentY)
+        {
+            if (!EnableMouseThumbScrolling || !ShowScrollIndicators || dragMode == ScrollDragMode.None)
+                return false;
+
+            int previousHorizontalOffset = horizontalOffset;
+            int previousVerticalOffset = verticalOffset;
+            if (dragMode == ScrollDragMode.Vertical)
+                SetVerticalOffsetFromTrack(currentY);
+            else
+                SetHorizontalOffsetFromTrack(currentX);
+
+            return previousHorizontalOffset != horizontalOffset || previousVerticalOffset != verticalOffset;
+        }
+
+        public override bool EndDrag(short startX, short startY, short currentX, short currentY)
+        {
+            bool changed = Drag(startX, startY, currentX, currentY);
+            dragMode = ScrollDragMode.None;
+            return changed;
         }
 
         public override void Render(IList<Row> rows)
@@ -105,6 +159,8 @@ namespace BlazorTUI.TUI
                     ScrollBy(0, 1);
                     return true;
                 }
+
+                return true;
             }
 
             if (Y == Height - 1 && MaximumHorizontalOffset > 0)
@@ -120,9 +176,110 @@ namespace BlazorTUI.TUI
                     ScrollBy(1, 0);
                     return true;
                 }
+
+                return true;
             }
 
             return false;
+        }
+
+        private bool IsVerticalTrackCell(short X, short Y)
+        {
+            if (X != Width - 1 || MaximumVerticalOffset <= 0)
+                return false;
+
+            return TryGetVerticalTrack(out int trackStart, out int trackEnd) &&
+                Y >= trackStart &&
+                Y <= trackEnd &&
+                Y == GetVerticalThumbRow();
+        }
+
+        private bool IsHorizontalTrackCell(short X, short Y)
+        {
+            if (Y != Height - 1 || MaximumHorizontalOffset <= 0)
+                return false;
+
+            return TryGetHorizontalTrack(out int trackStart, out int trackEnd) &&
+                X >= trackStart &&
+                X <= trackEnd &&
+                X == GetHorizontalThumbColumn();
+        }
+
+        private bool SetVerticalOffsetFromTrack(short Y)
+        {
+            if (!TryGetVerticalTrack(out int trackStart, out int trackEnd))
+                return false;
+
+            int offset = GetOffsetFromTrack(Y, trackStart, trackEnd, MaximumVerticalOffset);
+            int previousOffset = verticalOffset;
+            ScrollTo(horizontalOffset, offset);
+            return previousOffset != verticalOffset;
+        }
+
+        private bool SetHorizontalOffsetFromTrack(short X)
+        {
+            if (!TryGetHorizontalTrack(out int trackStart, out int trackEnd))
+                return false;
+
+            int offset = GetOffsetFromTrack(X, trackStart, trackEnd, MaximumHorizontalOffset);
+            int previousOffset = horizontalOffset;
+            ScrollTo(offset, verticalOffset);
+            return previousOffset != horizontalOffset;
+        }
+
+        private bool TryGetVerticalTrack(out int trackStart, out int trackEnd)
+        {
+            trackStart = 1;
+            int downArrowRow = MaximumHorizontalOffset > 0 ? Height - 2 : Height - 1;
+            trackEnd = downArrowRow - 1;
+            return trackEnd >= trackStart;
+        }
+
+        private bool TryGetHorizontalTrack(out int trackStart, out int trackEnd)
+        {
+            trackStart = 1;
+            trackEnd = Width - 2;
+            return trackEnd >= trackStart;
+        }
+
+        private static int GetOffsetFromTrack(int coordinate, int trackStart, int trackEnd, int maximumOffset)
+        {
+            int clampedCoordinate = Math.Clamp(coordinate, trackStart, trackEnd);
+            int trackLength = trackEnd - trackStart;
+            if (trackLength <= 0)
+                return clampedCoordinate <= trackStart ? 0 : maximumOffset;
+
+            double ratio = (clampedCoordinate - trackStart) / (double)trackLength;
+            return Math.Clamp((int)Math.Round(ratio * maximumOffset), 0, maximumOffset);
+        }
+
+        private int GetVerticalThumbRow()
+        {
+            if (!TryGetVerticalTrack(out int trackStart, out int trackEnd))
+                return -1;
+
+            return GetThumbCoordinate(verticalOffset, MaximumVerticalOffset, trackStart, trackEnd);
+        }
+
+        private int GetHorizontalThumbColumn()
+        {
+            if (!TryGetHorizontalTrack(out int trackStart, out int trackEnd))
+                return -1;
+
+            return GetThumbCoordinate(horizontalOffset, MaximumHorizontalOffset, trackStart, trackEnd);
+        }
+
+        private static int GetThumbCoordinate(int offset, int maximumOffset, int trackStart, int trackEnd)
+        {
+            if (maximumOffset <= 0)
+                return trackStart;
+
+            int trackLength = trackEnd - trackStart;
+            if (trackLength <= 0)
+                return trackStart;
+
+            double ratio = offset / (double)maximumOffset;
+            return trackStart + (int)Math.Round(ratio * trackLength);
         }
 
         private int GetContentRight()
@@ -191,6 +348,7 @@ namespace BlazorTUI.TUI
                 int x = originX + Width - 1;
                 bool hasHorizontalScrollBar = MaximumHorizontalOffset > 0;
                 int downArrowRow = hasHorizontalScrollBar ? Height - 2 : Height - 1;
+                int thumbRow = GetVerticalThumbRow();
                 for (int y = 0; y < Height; y++)
                 {
                     if (!TryGetCell(rows, x, originY + y, out Cell cell))
@@ -202,13 +360,16 @@ namespace BlazorTUI.TUI
                         ? "↑"
                         : y == downArrowRow
                             ? "↓"
-                            : "│";
+                            : y == thumbRow
+                                ? "█"
+                                : "│";
                 }
             }
 
             if (MaximumHorizontalOffset > 0)
             {
                 int y = originY + Height - 1;
+                int thumbColumn = GetHorizontalThumbColumn();
                 for (int x = 0; x < Width; x++)
                 {
                     if (!TryGetCell(rows, originX + x, y, out Cell cell))
@@ -220,7 +381,9 @@ namespace BlazorTUI.TUI
                         ? "←"
                         : x == Width - 1
                             ? "→"
-                            : "─";
+                            : x == thumbColumn
+                                ? "█"
+                                : "─";
                 }
             }
         }

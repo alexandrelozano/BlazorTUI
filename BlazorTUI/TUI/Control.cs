@@ -158,6 +158,12 @@ namespace BlazorTUI.TUI
 
         public virtual bool Click(short X, short Y) => false;
 
+        public virtual bool BeginDrag(short X, short Y) => false;
+
+        public virtual bool Drag(short startX, short startY, short currentX, short currentY) => false;
+
+        public virtual bool EndDrag(short startX, short startY, short currentX, short currentY) => false;
+
         public virtual bool Validate()
         {
             if (!Visible)
