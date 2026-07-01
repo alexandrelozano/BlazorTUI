@@ -167,10 +167,9 @@ namespace BlazorTUI.TUI
         public CommandPaletteItem AddCommand(
             string name,
             string title,
-            string description = "",
-            Action<CommandPaletteItem>? action = null)
+            string description = "")
         {
-            var command = new CommandPaletteItem(name, title, description, action);
+            var command = new CommandPaletteItem(name, title, description);
             AddCommand(command);
             return command;
         }

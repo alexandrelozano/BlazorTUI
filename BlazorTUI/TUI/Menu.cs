@@ -8,19 +8,19 @@ namespace BlazorTUI.TUI
 {
     public class Menu
     {
-        public string text;
+        internal string text;
         public string Text { get => text.TrimEnd('│'); set => text = $"{value ?? ""}│"; }
 
-        public List<MenuItem> menuItems;
+        internal List<MenuItem> menuItems;
         public IReadOnlyList<MenuItem> Items => menuItems;
 
-        public bool opended;
+        internal bool opended;
         public bool IsOpen { get => opended; set => opended = value; }
 
-        public char? shortCutKey = null;
+        internal char? shortCutKey = null;
         public char? ShortcutKey { get => shortCutKey; set => shortCutKey = value; }
 
-        public int selectedItem;
+        internal int selectedItem;
         public int SelectedIndex { get => selectedItem; set => selectedItem = value; }
 
         public Menu(string text, char? shortCutKey = null)

@@ -13,11 +13,13 @@ public class TransientUiTests
         screen.TopContainer.AddControl(button);
 
         bool invoked = false;
+        var refreshItem = new ContextMenuItem("refresh", "Refresh");
+        refreshItem.Clicked += (_, _) => invoked = true;
         var menu = new ContextMenu(
             "actionsMenu",
             new[]
             {
-                new ContextMenuItem("refresh", "Refresh") { OnClick = () => invoked = true },
+                refreshItem,
                 new ContextMenuItem("separator", "", ContextMenuItemType.Separator),
                 new ContextMenuItem("disabled", "Disabled") { Enabled = false }
             },
@@ -47,12 +49,16 @@ public class TransientUiTests
         screen.TopContainer.AddControl(button);
 
         string selected = "";
+        var openItem = new ContextMenuItem("open", "Open");
+        openItem.Clicked += (_, _) => selected = "open";
+        var archiveItem = new ContextMenuItem("archive", "Archive");
+        archiveItem.Clicked += (_, _) => selected = "archive";
         var menu = new ContextMenu(
             "actionsMenu",
             new[]
             {
-                new ContextMenuItem("open", "Open") { OnClick = () => selected = "open" },
-                new ContextMenuItem("archive", "Archive") { OnClick = () => selected = "archive" }
+                openItem,
+                archiveItem
             },
             0, 0, 10,
             Color.Yellow, Color.Black,

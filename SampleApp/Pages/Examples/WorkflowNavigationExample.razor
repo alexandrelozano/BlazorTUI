@@ -1,0 +1,120 @@
+@page "/examples/workflow-navigation"
+@using global::BlazorTUI.TUI
+@using Color = System.Drawing.Color
+
+<PageTitle>Workflow navigation example</PageTitle>
+
+<BlazorTUI.BlazorTUI
+    Screen="@screen"
+    AriaLabel="Workflow navigation example"
+    AriaDescription="Shows focus scopes, validation groups, and wizard-step navigation." />
+
+@code {
+    private Screen screen = null!;
+    private TuiWizard wizard = null!;
+    private TextBox customerName = null!;
+    private TextBox street = null!;
+    private StatusBar status = null!;
+
+    protected override void OnInitialized()
+    {
+        screen = new Screen(60, 30);
+
+        var frame = new Frame(
+            "workflowFrame", "WORKFLOW NAVIGATION", 3, 3, 54, 23,
+            Frame.BorderStyle.Line, Color.Yellow, Color.DarkBlue);
+        screen.TopContainer.AddContainer(frame);
+
+        frame.AddControl(new Label(
+            "workflowDescription",
+            "Step containers are focus scopes; Next validates the current group.",
+            3, 2, 48,
+            Color.White, Color.DarkBlue));
+
+        var customerStep = new Frame(
+            "customerStep", "CUSTOMER", 4, 5, 46, 12,
+            Frame.BorderStyle.Line, Color.Yellow, Color.DarkBlue);
+        frame.AddContainer(customerStep);
+
+        customerStep.AddControl(new Label(
+            "customerNameLabel", "Name:", 3, 3, 8,
+            Color.White, Color.DarkBlue));
+        customerName = new TextBox(
+            "customerName", "", 14, 3, 22,
+            Color.Yellow, Color.Black)
+        {
+            IsRequired = true,
+            RequiredMessage = "Name required",
+            ValidationGroup = "customer"
+        };
+        customerStep.AddControl(customerName);
+
+        var nextButton = new Button(
+            "customerNext", "Next", 31, 8, 10,
+            Color.White, Color.DarkGreen);
+        nextButton.Clicked += (_, _) => MoveNext();
+        customerStep.AddControl(nextButton);
+
+        var addressStep = new Frame(
+            "addressStep", "ADDRESS", 4, 5, 46, 12,
+            Frame.BorderStyle.Line, Color.Yellow, Color.DarkBlue);
+        frame.AddContainer(addressStep);
+
+        addressStep.AddControl(new Label(
+            "streetLabel", "Street:", 3, 3, 9,
+            Color.White, Color.DarkBlue));
+        street = new TextBox(
+            "street", "", 14, 3, 22,
+            Color.Yellow, Color.Black)
+        {
+            IsRequired = true,
+            RequiredMessage = "Street required",
+            ValidationGroup = "address"
+        };
+        addressStep.AddControl(street);
+
+        var backButton = new Button(
+            "addressBack", "Back", 20, 8, 10,
+            Color.White, Color.DarkCyan);
+        backButton.Clicked += (_, _) =>
+        {
+            wizard.MovePrevious();
+            status.Value = "Back to customer step";
+        };
+        addressStep.AddControl(backButton);
+
+        var finishButton = new Button(
+            "addressFinish", "Finish", 31, 8, 10,
+            Color.White, Color.DarkGreen);
+        finishButton.Clicked += (_, _) => Finish();
+        addressStep.AddControl(finishButton);
+
+        status = new StatusBar(
+            "workflowStatus", "Customer step. Tab stays inside the step.",
+            3, 19, 48,
+            Color.Black, Color.Cyan);
+        status.AddItem("tabHint", "Tab scoped");
+        status.AddItem("nextHint", "Next validates");
+        frame.AddControl(status);
+
+        wizard = new TuiWizard();
+        wizard.AddStep("customer", customerStep, "customer");
+        wizard.AddStep("address", addressStep, "address");
+
+        screen.SetFocus("customerName");
+    }
+
+    private void MoveNext()
+    {
+        status.Value = wizard.MoveNext()
+            ? "Address step. Focus moved to Street."
+            : "Fix customer fields first.";
+    }
+
+    private void Finish()
+    {
+        status.Value = wizard.ValidateCurrentStep()
+            ? $"Saved {customerName.Value} at {street.Value}"
+            : "Fix address fields first.";
+    }
+}

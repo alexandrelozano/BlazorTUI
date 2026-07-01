@@ -5,31 +5,27 @@ namespace BlazorTUI.TUI
 {
     public class Frame : Container
     {
-        public string title { get; set; }
+        internal string title { get; set; }
 
         public string Title { get => title; set => title = value ?? ""; }
 
-        public Color foreColor { get; set; }
+        internal Color foreColor { get; set; }
 
         public Color ForeColor { get => foreColor; set => foreColor = value; }
 
-        public Color backgroundColor { get; set; }
+        internal Color backgroundColor { get; set; }
 
         public Color BackgroundColor { get => backgroundColor; set => backgroundColor = value; }
 
         public enum BorderStyle
         {
-            none,
-            line,
-            doubleline,
-            solid,
-            None = none,
-            Line = line,
-            DoubleLine = doubleline,
-            Solid = solid
+            None,
+            Line,
+            DoubleLine,
+            Solid
         }
 
-        public BorderStyle borderStyle { get; set; }
+        internal BorderStyle borderStyle { get; set; }
 
         public BorderStyle Border { get => borderStyle; set => borderStyle = value; }
 
@@ -74,13 +70,13 @@ namespace BlazorTUI.TUI
                             {
                                 switch (borderStyle)
                                 {
-                                    case BorderStyle.none:
+                                    case BorderStyle.None:
                                         break;
-                                    case BorderStyle.solid:
+                                    case BorderStyle.Solid:
                                         cell.backgroundColor = foreColor;
                                         cell.character = " ";
                                         break;
-                                    case BorderStyle.line:
+                                    case BorderStyle.Line:
                                         if (r == YI)
                                         {
                                             if (c == XI) 
@@ -100,7 +96,7 @@ namespace BlazorTUI.TUI
                                             cell.character = "│";
                                         }
                                         break;
-                                    case BorderStyle.doubleline:
+                                    case BorderStyle.DoubleLine:
                                         if (r == YI)
                                         {
                                             if (c == XI)
@@ -126,16 +122,16 @@ namespace BlazorTUI.TUI
                             {
                                 switch (borderStyle)
                                 {
-                                    case BorderStyle.none:
+                                    case BorderStyle.None:
                                         break;
-                                    case BorderStyle.solid:
+                                    case BorderStyle.Solid:
                                         cell.backgroundColor = foreColor;
                                         cell.character = " ";
                                         break;
-                                    case BorderStyle.line:
+                                    case BorderStyle.Line:
                                         cell.character = "─";
                                         break;
-                                    case BorderStyle.doubleline:
+                                    case BorderStyle.DoubleLine:
                                         cell.character = "═";
                                         break;
                                 }
@@ -154,7 +150,7 @@ namespace BlazorTUI.TUI
                     Cell cell = rows[YI].Cells[titleStart + c];
                     cell.character = TuiText.CellAt(title, c);
 
-                    if (borderStyle == BorderStyle.solid)
+                    if (borderStyle == BorderStyle.Solid)
                     {
                         cell.backgroundColor = foreColor;
                         cell.foreColor = backgroundColor;

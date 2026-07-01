@@ -40,6 +40,7 @@
             ThemeState = TuiThemeState.Error,
             CultureOptions = culture,
             IsRequired = true,
+            ValidationGroup = "customer",
             ScreenReaderDescription = "Customer name used on the order."
         };
         _ = input.GetAccessibilitySummary();
@@ -172,6 +173,27 @@
         terminal.TopContainer.AddControl(input);
         terminal.TopContainer.AddControl(password);
         terminal.TopContainer.AddControl(button);
+        var workflowStep = new Container("consumerWorkflowStep")
+        {
+            X = 18,
+            Y = 18,
+            Width = 10,
+            Height = 3,
+            IsFocusScope = true
+        };
+        workflowStep.AddControl(new TextBox(
+            "consumerWorkflowInput", "", 0, 0, 8,
+            System.Drawing.Color.White, System.Drawing.Color.Black)
+        {
+            ValidationGroup = "consumerWorkflow"
+        });
+        terminal.TopContainer.AddContainer(workflowStep);
+        var wizard = new TuiWizard();
+        wizard.AddStep("consumerWorkflow", workflowStep, "consumerWorkflow");
+        _ = workflowStep.FocusFirstControl();
+        _ = workflowStep.FocusLastControl();
+        _ = wizard.ValidateCurrentStep(focusFirstInvalid: false);
+        _ = terminal.Validate("customer", focusFirstInvalid: false);
         var contextMenu = new ContextMenu(
             "consumerContextMenu",
             new[]

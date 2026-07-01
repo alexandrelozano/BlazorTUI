@@ -18,7 +18,7 @@ public class BlazorTUIComponentTests : BunitContext
     {
         var screen = new Screen(8, 4);
         var textBox = new TextBox("text", "", 0, 0, 4, Color.White, Color.Black);
-        screen.topContainer.AddControl(textBox);
+        screen.TopContainer.AddControl(textBox);
         screen.SetFocus("text");
         screen.Render();
 
@@ -47,7 +47,7 @@ public class BlazorTUIComponentTests : BunitContext
     {
         var screen = new Screen(8, 4);
         var label = new Label("label", "X", 0, 0, 1, Color.White, Color.Black);
-        screen.topContainer.AddControl(label);
+        screen.TopContainer.AddControl(label);
         var component = Render<global::BlazorTUI.BlazorTUI>(parameters =>
             parameters.Add(instance => instance.Screen, screen));
         IReadOnlyList<IRenderedComponent<global::BlazorTUI.TuiRow>> rows =
@@ -55,7 +55,7 @@ public class BlazorTUIComponentTests : BunitContext
         int firstRowRenderCount = rows[0].RenderCount;
         int secondRowRenderCount = rows[1].RenderCount;
 
-        label.foreColor = Color.Yellow;
+        label.ForeColor = Color.Yellow;
         component.Render(parameters => parameters.Add(instance => instance.Screen, screen));
 
         Assert.Equal(firstRowRenderCount + 1, rows[0].RenderCount);
@@ -67,7 +67,7 @@ public class BlazorTUIComponentTests : BunitContext
     public void ComponentRendersOneTilePerCell()
     {
         var screen = new Screen(4, 2);
-        screen.topContainer.AddControl(new Label("label", "OK", 0, 0, 2, Color.White, Color.Black));
+        screen.TopContainer.AddControl(new Label("label", "OK", 0, 0, 2, Color.White, Color.Black));
 
         var component = Render<global::BlazorTUI.BlazorTUI>(parameters =>
             parameters.Add(instance => instance.Screen, screen));
@@ -87,7 +87,6 @@ public class BlazorTUIComponentTests : BunitContext
         var component = Render<global::BlazorTUI.BlazorTUI>(parameters =>
             parameters.Add(instance => instance.Screen, screen));
 
-        Assert.Same(screen, component.Instance.screen);
         Assert.Same(screen, component.Instance.Screen);
         Assert.Contains(">O</div>", component.Markup);
     }
@@ -234,13 +233,11 @@ public class BlazorTUIComponentTests : BunitContext
         var first = new TextBox("first", "", 0, 0, 4, Color.White, Color.Black);
         var second = new TextBox("second", "", 0, 1, 4, Color.White, Color.Black);
         bool clicked = false;
-        var button = new Button("button", "Go", 0, 2, 4, Color.White, Color.DarkGreen)
-        {
-            OnClick = _ => clicked = true
-        };
-        screen.topContainer.AddControl(first);
-        screen.topContainer.AddControl(second);
-        screen.topContainer.AddControl(button);
+        var button = new Button("button", "Go", 0, 2, 4, Color.White, Color.DarkGreen);
+        button.Clicked += (_, _) => clicked = true;
+        screen.TopContainer.AddControl(first);
+        screen.TopContainer.AddControl(second);
+        screen.TopContainer.AddControl(button);
         screen.SetFocus("first");
 
         var component = Render<global::BlazorTUI.BlazorTUI>(parameters =>

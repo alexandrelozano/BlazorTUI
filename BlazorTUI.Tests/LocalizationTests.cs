@@ -153,7 +153,9 @@ public class LocalizationTests
         Assert.True(grid.BeginEdit(0, 0));
         Assert.True(grid.CommitEdit());
 
-        rows[0].cells[0] = "abc";
+        string[] invalidCells = rows[0].Cells.ToArray();
+        invalidCells[0] = "abc";
+        rows[0].Cells = invalidCells;
         Assert.True(grid.BeginEdit(0, 0));
         Assert.False(grid.CommitEdit());
         Assert.Equal("El valor ha de ser numèric.", grid.EditValidationMessage);

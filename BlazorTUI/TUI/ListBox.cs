@@ -5,9 +5,9 @@ namespace BlazorTUI.TUI
 {
     public class ListBox : Control
     {
-        public List<string> items = new List<string>();
+        internal List<string> items = new List<string>();
         public IReadOnlyList<string> Items => items;
-        public List<string> itemsSelected = new List<string>();
+        internal List<string> itemsSelected = new List<string>();
         public IReadOnlyList<string> SelectedItems => itemsSelected;
         private readonly IVirtualListBoxDataProvider? virtualItems;
         private readonly IVirtualListBoxDataOperationsProvider? virtualItemOperations;

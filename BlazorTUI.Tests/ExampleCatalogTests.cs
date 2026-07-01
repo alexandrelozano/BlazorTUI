@@ -25,6 +25,7 @@ public class ExampleCatalogTests : BunitContext
         Assert.Contains("Additional inputs", accessibleText);
         Assert.Contains("Form validation", accessibleText);
         Assert.Contains("DataForm", accessibleText);
+        Assert.Contains("Workflow", accessibleText);
         Assert.Contains("GridView", accessibleText);
         Assert.Contains("Data visualizations", accessibleText);
         Assert.Contains("Dialogs and menus", accessibleText);
@@ -55,6 +56,7 @@ public class ExampleCatalogTests : BunitContext
     [InlineData("additionalInputsExample", "/examples/additional-inputs")]
     [InlineData("validationExample", "/examples/form-validation")]
     [InlineData("dataFormExample", "/examples/data-form")]
+    [InlineData("workflowExample", "/examples/workflow-navigation")]
     [InlineData("gridViewExample", "/examples/grid-view")]
     [InlineData("dataVisualizationsExample", "/examples/data-visualizations")]
     [InlineData("dialogsExample", "/examples/dialogs-menus")]
@@ -84,7 +86,7 @@ public class ExampleCatalogTests : BunitContext
         NavigationManager navigation = Services.GetRequiredService<NavigationManager>();
         IRenderedComponent<global::BlazorTUI.BlazorTUI> terminal =
             component.FindComponent<global::BlazorTUI.BlazorTUI>();
-        Button button = Assert.IsType<Button>(terminal.Instance.screen.TopContainer.GetControl(controlName));
+        Button button = Assert.IsType<Button>(terminal.Instance.Screen.TopContainer.GetControl(controlName));
 
         button.Click(0, 0);
 

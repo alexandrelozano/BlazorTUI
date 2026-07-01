@@ -7,7 +7,7 @@ namespace BlazorTUI.TUI
     {
         private CellState[] _renderedCells = Array.Empty<CellState>();
 
-        public short y { get; set; }
+        internal short y { get; set; }
 
         public short Y { get => y; set => y = value; }
 

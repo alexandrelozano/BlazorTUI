@@ -7,27 +7,27 @@ namespace BlazorTUI.TUI
         private Row[] _renderedRows = Array.Empty<Row>();
         private long[] _renderedRowRevisions = Array.Empty<long>();
 
-        public short width { get; set; }
+        internal short width { get; set; }
 
         public short Width => width;
 
-        public short height { get; set; }
+        internal short height { get; set; }
 
         public short Height => height;
 
-        public IList<Row> rows;
+        internal IList<Row> rows;
 
         public IReadOnlyList<Row> Rows => rows as IReadOnlyList<Row> ?? rows.ToArray();
 
-        public Container topContainer { get; set; }
+        internal Container topContainer { get; set; }
 
         public Container TopContainer => topContainer;
 
-        public IList<Dialog> dialogs;
+        internal IList<Dialog> dialogs;
 
         public IReadOnlyList<Dialog> Dialogs => dialogs as IReadOnlyList<Dialog> ?? dialogs.ToArray();
 
-        public MenuBar? menuBar;
+        internal MenuBar? menuBar;
 
         public MenuBar? MenuBar { get => menuBar; set => menuBar = value; }
 
@@ -76,7 +76,7 @@ namespace BlazorTUI.TUI
             Theme = TuiTheme.Classic;
             DialogService = new TuiDialogService(this);
 
-            topContainer = new Frame("TopContainer", "", 0, 0, width, height, Frame.BorderStyle.none, Theme.Border.ForeColor, Theme.Surface.BackgroundColor);
+            topContainer = new Frame("TopContainer", "", 0, 0, width, height, Frame.BorderStyle.None, Theme.Border.ForeColor, Theme.Surface.BackgroundColor);
 
             this.topContainer = topContainer;
 
@@ -106,10 +106,38 @@ namespace BlazorTUI.TUI
                 ? topContainer.Validate(focusFirstInvalid)
                 : dialogs.ElementAt(dialogs.Count - 1).Validate(focusFirstInvalid);
 
+        public bool Validate(string validationGroup, bool focusFirstInvalid = true)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(validationGroup);
+
+            return dialogs.Count == 0
+                ? topContainer.Validate(validationGroup, focusFirstInvalid)
+                : dialogs.ElementAt(dialogs.Count - 1).Validate(validationGroup, focusFirstInvalid);
+        }
+
         public IReadOnlyList<Control> GetInvalidControls()
             => dialogs.Count == 0
                 ? topContainer.GetInvalidControls()
                 : dialogs.ElementAt(dialogs.Count - 1).GetInvalidControls();
+
+        public IReadOnlyList<Control> GetInvalidControls(string validationGroup)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(validationGroup);
+
+            return dialogs.Count == 0
+                ? topContainer.GetInvalidControls(validationGroup)
+                : dialogs.ElementAt(dialogs.Count - 1).GetInvalidControls(validationGroup);
+        }
+
+        public bool FocusFirstControl()
+            => dialogs.Count == 0
+                ? topContainer.FocusFirstControl()
+                : dialogs.ElementAt(dialogs.Count - 1).FocusFirstControl();
+
+        public bool FocusLastControl()
+            => dialogs.Count == 0
+                ? topContainer.FocusLastControl()
+                : dialogs.ElementAt(dialogs.Count - 1).FocusLastControl();
 
         public TuiScreenState ExportState()
             => TuiStatePersistence.Export(this);

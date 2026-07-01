@@ -18,6 +18,7 @@
         new("additionalInputsExample", "Additional inputs", "Search, masks, multi", "/examples/additional-inputs"),
         new("validationExample", "Form validation", "Required fields", "/examples/form-validation"),
         new("dataFormExample", "DataForm", "Model-bound fields", "/examples/data-form"),
+        new("workflowExample", "Workflow", "Scoped steps", "/examples/workflow-navigation"),
         new("gridViewExample", "GridView", "Advanced data grid", "/examples/grid-view"),
         new("dataVisualizationsExample", "Data visualizations", "Charts and metrics", "/examples/data-visualizations"),
         new("dialogsExample", "Dialogs and menus", "Modal interactions", "/examples/dialogs-menus"),
@@ -47,10 +48,10 @@
 
     protected override void OnInitialized()
     {
-        screen = new Screen(80, 38);
+        screen = new Screen(92, 38);
 
         var frame = new Frame(
-            "examplesFrame", "BLAZORTUI EXAMPLES", 1, 2, 78, 34,
+            "examplesFrame", "BLAZORTUI EXAMPLES", 1, 2, 90, 34,
             Frame.BorderStyle.Line, Color.Yellow, Color.DarkBlue);
         screen.TopContainer.AddContainer(frame);
 
@@ -65,8 +66,8 @@
         for (int index = 0; index < Destinations.Length; index++)
         {
             ExampleDestination destination = Destinations[index];
-            short column = (short)(3 + (index / 9) * 25);
-            short row = (short)(5 + (index % 9) * 3);
+            short column = (short)(3 + (index / 7) * 22);
+            short row = (short)(5 + (index % 7) * 4);
             var button = new Button(
                 destination.ControlName, destination.Title,
                 column, row, 21, Color.Yellow, Color.Black);

@@ -9,19 +9,19 @@ public class DialogAndMenuTests
     public void DialogIsCenteredRenderedAndRemovedFromModalStack()
     {
         var screen = new Screen(20, 10);
-        var dialog = new Dialog("dialog", "TITLE", 6, 4, BorderStyle.line, Color.Yellow, Color.DarkBlue, screen);
+        var dialog = new Dialog("dialog", "TITLE", 6, 4, BorderStyle.Line, Color.Yellow, Color.DarkBlue, screen);
 
         dialog.Show();
         screen.Render();
 
-        Assert.Same(dialog, Assert.Single(screen.dialogs));
+        Assert.Same(dialog, Assert.Single(screen.Dialogs));
         Assert.True(dialog.Visible);
         Assert.Equal((short)7, dialog.X);
         Assert.Equal((short)3, dialog.Y);
-        Assert.Equal("┌", screen.rows[3].Cells[7].character);
+        Assert.Equal("┌", screen.Rows[3].Cells[7].Character);
 
         dialog.Close();
-        Assert.Empty(screen.dialogs);
+        Assert.Empty(screen.Dialogs);
         Assert.False(dialog.Visible);
     }
 
@@ -33,18 +33,18 @@ public class DialogAndMenuTests
             "Saved",
             "Result",
             MessageBox.Buttons.OKOnly,
-            BorderStyle.line,
+            BorderStyle.Line,
             Color.White,
             Color.DarkGreen,
             screen);
 
         messageBox.Show();
-        Dialog dialog = Assert.Single(screen.dialogs);
-        Button button = Assert.Single(dialog.controls.OfType<Button>());
+        Dialog dialog = Assert.Single(screen.Dialogs);
+        Button button = Assert.Single(dialog.Controls.OfType<Button>());
         button.Click(0, 0);
 
-        Assert.Empty(screen.dialogs);
-        Assert.Equal(MessageBox.Result.OK, messageBox.result);
+        Assert.Empty(screen.Dialogs);
+        Assert.Equal(MessageBox.Result.OK, messageBox.DialogResult);
     }
 
     [Fact]
@@ -123,9 +123,11 @@ public class DialogAndMenuTests
         var menuBar = new MenuBar(Color.White, Color.DarkBlue, screen);
         var menu = new Menu("File", 'F');
         bool invoked = false;
-        menu.menuItems.Add(new MenuItem("Open", MenuItem.MenuItemType.Item, 'O') { OnClick = () => invoked = true });
-        menuBar.menus.Add(menu);
-        screen.menuBar = menuBar;
+        var openItem = new MenuItem("Open", MenuItem.MenuItemType.Item, 'O');
+        openItem.Clicked += (_, _) => invoked = true;
+        menu.AddItem(openItem);
+        menuBar.AddMenu(menu);
+        screen.MenuBar = menuBar;
 
         screen.KeyDown("Alt", false);
         screen.KeyDown("ArrowDown", false);
@@ -133,8 +135,8 @@ public class DialogAndMenuTests
         screen.KeyDown("Enter", false);
 
         Assert.True(invoked);
-        Assert.False(menu.opended);
-        Assert.False(menuBar.showShortCutkeys);
+        Assert.False(menu.IsOpen);
+        Assert.False(menuBar.ShowShortcutKeys);
     }
 
     [Fact]

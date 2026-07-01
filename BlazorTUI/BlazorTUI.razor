@@ -32,7 +32,7 @@
          data-tab-navigation-enabled="@(ActiveTabControl is not null ? "true" : "false")"
          data-command-palette-enabled="@(ActiveCommandPalette is not null ? "true" : "false")"
          @onkeydown="HandleKeyDown">
-        @foreach (Row row in screen.rows)
+        @foreach (Row row in Screen.Rows)
         {
             <TuiRow @key="row" Row="row" CellClicked="OnClickCell" CellContextClicked="OnContextClickCell" />
         }
@@ -40,14 +40,8 @@
 </div>
 
 @code {
-    public Screen screen { get; set; } = null!;
-
     [Parameter]
-    public Screen Screen
-    {
-        get => screen;
-        set => screen = value;
-    }
+    public Screen Screen { get; set; } = null!;
 
     [Parameter]
     public string AriaLabel { get; set; } = "Text user interface";
@@ -101,7 +95,7 @@
     private string AriaKeyShortcuts
         => string.Join(
             " ",
-            screen.Shortcuts
+            Screen.Shortcuts
                 .ToAriaKeyShortcuts()
                 .Split(' ', StringSplitOptions.RemoveEmptyEntries)
                 .Concat([
@@ -123,20 +117,20 @@
                 .Distinct(StringComparer.OrdinalIgnoreCase));
 
     private string ShortcutDescriptorsJson
-        => System.Text.Json.JsonSerializer.Serialize(screen.Shortcuts.GetDescriptors());
+        => System.Text.Json.JsonSerializer.Serialize(Screen.Shortcuts.GetDescriptors());
 
     private string AccessibleScreenText
     {
         get
         {
-            if (!ReferenceEquals(_accessibleScreen, screen) || _accessibleRevision != screen.Revision)
+            if (!ReferenceEquals(_accessibleScreen, Screen) || _accessibleRevision != Screen.Revision)
             {
                 _accessibleScreenText = string.Join(
                     Environment.NewLine,
-                    screen.Rows.Select(row => string.Concat(row.ReadOnlyCells.Select(cell => cell.IsVisible ? cell.Character : "")).TrimEnd()))
+                    Screen.Rows.Select(row => string.Concat(row.ReadOnlyCells.Select(cell => cell.IsVisible ? cell.Character : "")).TrimEnd()))
                     .TrimEnd();
-                _accessibleScreen = screen;
-                _accessibleRevision = screen.Revision;
+                _accessibleScreen = Screen;
+                _accessibleRevision = Screen.Revision;
             }
 
             return _accessibleScreenText;
@@ -144,7 +138,7 @@
     }
 
     private string SemanticControlText
-        => screen is null
+        => Screen is null
             ? ""
             : string.Join(Environment.NewLine, EnumerateAccessibilitySummaries());
 
@@ -152,10 +146,10 @@
     {
         get
         {
-            if (screen.Dialogs.Count > 0)
-                return $"Dialog opened: {screen.Dialogs[^1].Title}";
+            if (Screen.Dialogs.Count > 0)
+                return $"Dialog opened: {Screen.Dialogs[^1].Title}";
 
-            Menu? openMenu = screen.MenuBar?.OpenMenu;
+            Menu? openMenu = Screen.MenuBar?.OpenMenu;
             if (openMenu is not null)
                 return $"Menu opened: {openMenu.Text}";
 
@@ -172,7 +166,7 @@
     {
         get
         {
-            Container activeContainer = screen.Dialogs.Count == 0 ? screen.TopContainer : screen.Dialogs[^1];
+            Container activeContainer = Screen.Dialogs.Count == 0 ? Screen.TopContainer : Screen.Dialogs[^1];
             return activeContainer.GetCurrentFocusControl() as IClipboardControl;
         }
     }
@@ -181,7 +175,7 @@
     {
         get
         {
-            Container activeContainer = screen.Dialogs.Count == 0 ? screen.TopContainer : screen.Dialogs[^1];
+            Container activeContainer = Screen.Dialogs.Count == 0 ? Screen.TopContainer : Screen.Dialogs[^1];
             return activeContainer.GetCurrentFocusControl() as IUndoableControl;
         }
     }
@@ -198,7 +192,7 @@
     {
         get
         {
-            Container activeContainer = screen.Dialogs.Count == 0 ? screen.TopContainer : screen.Dialogs[^1];
+            Container activeContainer = Screen.Dialogs.Count == 0 ? Screen.TopContainer : Screen.Dialogs[^1];
             Container? currentContainer = activeContainer.GetCurrentFocusControl()?.ParentContainer;
             while (currentContainer is not null)
             {
@@ -216,7 +210,7 @@
     {
         get
         {
-            Container activeContainer = screen.Dialogs.Count == 0 ? screen.TopContainer : screen.Dialogs[^1];
+            Container activeContainer = Screen.Dialogs.Count == 0 ? Screen.TopContainer : Screen.Dialogs[^1];
             return FindCommandPalette(activeContainer);
         }
     }
@@ -266,13 +260,13 @@
     {
         get
         {
-            double width = Math.Max(1d, screen.width);
-            double height = Math.Max(1d, screen.height);
+            double width = Math.Max(1d, Screen.Width);
+            double height = Math.Max(1d, Screen.Height);
             double aspectRatio = width / (height * 2);
             double inverseAspectRatio = 1 / aspectRatio;
             double fontSize = 100 / height;
 
-            return FormattableString.Invariant($"--tui-columns:{screen.width}; --tui-rows:{screen.height}; --tui-width-from-height:{aspectRatio * 100}cqh; --tui-height-from-width:{inverseAspectRatio * 100}cqw; --tui-font-size:{fontSize}cqh;");
+            return FormattableString.Invariant($"--tui-columns:{Screen.Width}; --tui-rows:{Screen.Height}; --tui-width-from-height:{aspectRatio * 100}cqh; --tui-height-from-width:{inverseAspectRatio * 100}cqw; --tui-font-size:{fontSize}cqh;");
         }
     }
 
@@ -284,11 +278,11 @@
     }
 
     protected override void OnParametersSet()
-        => screen.Render();
+        => Screen.Render();
 
     protected override bool ShouldRender()
-        => !ReferenceEquals(_renderedScreen, screen) ||
-            _renderedRevision != screen.Revision ||
+        => !ReferenceEquals(_renderedScreen, Screen) ||
+            _renderedRevision != Screen.Revision ||
             _renderedSemanticControlText != SemanticControlText ||
             _renderedFocusAnnouncement != _focusAnnouncement ||
             !ReferenceEquals(_renderedClipboardControl, ActiveClipboardControl) ||
@@ -300,8 +294,8 @@
 
     protected override void OnAfterRender(bool firstRender)
     {
-        _renderedScreen = screen;
-        _renderedRevision = screen.Revision;
+        _renderedScreen = Screen;
+        _renderedRevision = Screen.Revision;
         _renderedSemanticControlText = SemanticControlText;
         _renderedFocusAnnouncement = _focusAnnouncement;
         _renderedClipboardControl = ActiveClipboardControl;
@@ -420,10 +414,10 @@
         if (_disposed)
             return;
 
-        long previousRevision = screen.Revision;
-        screen.Render();
+        long previousRevision = Screen.Revision;
+        Screen.Render();
 
-        if (screen.Revision != previousRevision)
+        if (Screen.Revision != previousRevision)
             StateHasChanged();
     }
 
@@ -433,7 +427,7 @@
             return;
 
         TuiKeyGesture gesture = TuiKeyGesture.FromKeyboardEvent(e.Key, e.CtrlKey, e.ShiftKey, e.AltKey, e.MetaKey);
-        if (screen.Shortcuts.TryGetAction(gesture, out TuiShortcutAction action))
+        if (Screen.Shortcuts.TryGetAction(gesture, out TuiShortcutAction action))
         {
             if (IsBrowserRoutedGesture(gesture))
                 return;
@@ -446,8 +440,8 @@
         if (e.CtrlKey || e.MetaKey || (e.AltKey && e.Key != "Alt"))
             return;
 
-        screen.KeyDown(e.Key, e.ShiftKey);
-        screen.Render();
+        Screen.KeyDown(e.Key, e.ShiftKey);
+        Screen.Render();
         UpdateFocusAnnouncement();
     }
 
@@ -482,7 +476,7 @@
                 RedoTextEdit();
                 break;
             default:
-                if (screen.ExecuteShortcut(action))
+                if (Screen.ExecuteShortcut(action))
                     RenderAfterControlChange(updateFocusAnnouncement: true);
                 break;
         }
@@ -508,7 +502,7 @@
 
     private string DescribeShortcut(TuiShortcutAction action, string fallback)
     {
-        IReadOnlyList<TuiKeyGesture> bindings = screen.Shortcuts.GetBindings(action);
+        IReadOnlyList<TuiKeyGesture> bindings = Screen.Shortcuts.GetBindings(action);
         if (bindings.Count == 0)
             return fallback;
 
@@ -517,7 +511,7 @@
 
     private void RenderAfterControlChange(bool updateFocusAnnouncement = false)
     {
-        screen.Render();
+        Screen.Render();
         if (updateFocusAnnouncement)
             UpdateFocusAnnouncement();
         StateHasChanged();
@@ -525,48 +519,48 @@
 
     private void OnClickCell(Cell cell)
     {
-        if (screen.dialogs.Count == 0)
+        if (Screen.Dialogs.Count == 0)
         {
             bool handled = false;
-            MenuBar? menuBar = screen.menuBar;
-            if (menuBar != null && menuBar.visible)
-                handled = menuBar.Click(cell.x, cell.y);
+            MenuBar? menuBar = Screen.MenuBar;
+            if (menuBar != null && menuBar.IsVisible)
+                handled = menuBar.Click(cell.X, cell.Y);
 
             if (!handled)
-                screen.topContainer.Click(cell.x, cell.y);
+                Screen.TopContainer.Click(cell.X, cell.Y);
         }
         else
         {
-            Dialog dialog = screen.dialogs[^1];
-            dialog.Click((short)(cell.x - dialog.X), (short)(cell.y - dialog.Y));
+            Dialog dialog = Screen.Dialogs[^1];
+            dialog.Click((short)(cell.X - dialog.X), (short)(cell.Y - dialog.Y));
         }
 
-        screen.Render();
+        Screen.Render();
         UpdateFocusAnnouncement();
     }
 
     private void OnContextClickCell(Cell cell)
     {
-        if (screen.dialogs.Count == 0)
+        if (Screen.Dialogs.Count == 0)
         {
-            screen.topContainer.ContextClick(cell.x, cell.y);
+            Screen.TopContainer.ContextClick(cell.X, cell.Y);
         }
         else
         {
-            Dialog dialog = screen.dialogs[^1];
-            dialog.ContextClick((short)(cell.x - dialog.X), (short)(cell.y - dialog.Y));
+            Dialog dialog = Screen.Dialogs[^1];
+            dialog.ContextClick((short)(cell.X - dialog.X), (short)(cell.Y - dialog.Y));
         }
 
-        screen.Render();
+        Screen.Render();
         UpdateFocusAnnouncement();
     }
 
     private IEnumerable<string> EnumerateAccessibilitySummaries()
     {
-        foreach (string summary in EnumerateContainerAccessibilitySummaries(screen.TopContainer))
+        foreach (string summary in EnumerateContainerAccessibilitySummaries(Screen.TopContainer))
             yield return summary;
 
-        foreach (Dialog dialog in screen.Dialogs)
+        foreach (Dialog dialog in Screen.Dialogs)
         {
             foreach (string summary in EnumerateContainerAccessibilitySummaries(dialog))
                 yield return summary;
@@ -622,7 +616,7 @@
     }
 
     private Container GetActiveContainer()
-        => screen.Dialogs.Count == 0 ? screen.TopContainer : screen.Dialogs[^1];
+        => Screen.Dialogs.Count == 0 ? Screen.TopContainer : Screen.Dialogs[^1];
 
     private void AddFocusHistoryAnnouncement(string announcement)
     {

@@ -12,7 +12,7 @@ namespace BlazorTUI.TUI
 {
     public class TimeBox : TextBox
     {
-        public new TimeOnly? value;
+        internal new TimeOnly? value;
 
         public new TimeOnly? Value { get => value; set => this.value = value; }
 

@@ -23,7 +23,9 @@ public class StatePersistenceTests
         fixture.Grid.SortByColumn(1);
         fixture.Grid.SelectSourceRow(2);
         fixture.Grid.SelectedColumnIndex = 1;
-        fixture.Grid.Rows[2].cells[1] = "Veggie";
+        string[] savedGridCells = fixture.Grid.Rows[2].Cells.ToArray();
+        savedGridCells[1] = "Veggie";
+        fixture.Grid.Rows[2].Cells = savedGridCells;
         fixture.Tabs.SelectedIndex = 1;
         fixture.Split.SplitterPosition = 14;
         fixture.Path.SelectValue("/docs/api");
@@ -44,7 +46,9 @@ public class StatePersistenceTests
         fixture.RootNode.IsExpanded = false;
         fixture.Grid.ClearFilters();
         fixture.Grid.ClearSort();
-        fixture.Grid.Rows[2].cells[1] = "Changed";
+        string[] dirtyGridCells = fixture.Grid.Rows[2].Cells.ToArray();
+        dirtyGridCells[1] = "Changed";
+        fixture.Grid.Rows[2].Cells = dirtyGridCells;
         fixture.Grid.SelectRow(0);
         fixture.Grid.SelectedColumnIndex = 0;
         fixture.Tabs.SelectedIndex = 0;

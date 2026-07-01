@@ -10,7 +10,7 @@ namespace BlazorTUI.TUI
 {
     public class DateBox : TextBox
     {
-        public new DateOnly? value;
+        internal new DateOnly? value;
 
         public new DateOnly? Value { get => value; set => this.value = value; }
 
@@ -22,7 +22,7 @@ namespace BlazorTUI.TUI
             CultureShortDate
         }
 
-        public DateFormat dateFormat { get; set; }
+        internal DateFormat dateFormat { get; set; }
 
         public DateFormat Format { get => dateFormat; set => dateFormat = value; }
 

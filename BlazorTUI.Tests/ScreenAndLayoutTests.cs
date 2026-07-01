@@ -9,14 +9,14 @@ public class ScreenAndLayoutTests
     public void FrameTitleWritesExactlyOneCharacterPerCell()
     {
         var screen = new Screen(12, 6);
-        var frame = new Frame("frame", "FRAME", 1, 1, 9, 4, Frame.BorderStyle.line, Color.White, Color.Black);
-        screen.topContainer.AddContainer(frame);
+        var frame = new Frame("frame", "FRAME", 1, 1, 9, 4, Frame.BorderStyle.Line, Color.White, Color.Black);
+        screen.TopContainer.AddContainer(frame);
 
         screen.Render();
 
-        string title = string.Concat(screen.rows[1].Cells.Skip(3).Take(5).Select(cell => cell.character));
+        string title = string.Concat(screen.Rows[1].Cells.Skip(3).Take(5).Select(cell => cell.Character));
         Assert.Equal("FRAME", title);
-        Assert.All(screen.rows.SelectMany(row => row.Cells), cell => Assert.True(cell.character.Length <= 1));
+        Assert.All(screen.Rows.SelectMany(row => row.Cells), cell => Assert.True(cell.Character.Length <= 1));
     }
 
     [Fact]
@@ -24,7 +24,7 @@ public class ScreenAndLayoutTests
     {
         var screen = new Screen(8, 4);
         var label = new Label("label", "OK", 0, 0, 2, Color.White, Color.Black);
-        screen.topContainer.AddControl(label);
+        screen.TopContainer.AddControl(label);
 
         screen.Render();
         long renderedRevision = screen.Revision;
@@ -32,7 +32,7 @@ public class ScreenAndLayoutTests
         screen.Render();
         Assert.Equal(renderedRevision, screen.Revision);
 
-        label.foreColor = Color.Yellow;
+        label.ForeColor = Color.Yellow;
         screen.Render();
         Assert.True(screen.Revision > renderedRevision);
     }
@@ -42,41 +42,41 @@ public class ScreenAndLayoutTests
     {
         var screen = new Screen(8, 4);
 
-        Assert.Equal(8, screen.width);
-        Assert.Equal(4, screen.height);
-        Assert.Equal(4, screen.rows.Count);
-        Assert.All(screen.rows, row => Assert.Equal(8, row.Cells.Count));
-        Assert.Equal((short)7, screen.rows[3].Cells[7].x);
-        Assert.Equal((short)3, screen.rows[3].Cells[7].y);
+        Assert.Equal(8, screen.Width);
+        Assert.Equal(4, screen.Height);
+        Assert.Equal(4, screen.Rows.Count);
+        Assert.All(screen.Rows, row => Assert.Equal(8, row.Cells.Count));
+        Assert.Equal((short)7, screen.Rows[3].Cells[7].X);
+        Assert.Equal((short)3, screen.Rows[3].Cells[7].Y);
     }
 
     [Fact]
     public void NestedControlRendersAtParentRelativeCoordinates()
     {
         var screen = new Screen(12, 6);
-        var frame = new Frame("frame", "", 2, 1, 8, 4, Frame.BorderStyle.none, Color.White, Color.DarkBlue);
+        var frame = new Frame("frame", "", 2, 1, 8, 4, Frame.BorderStyle.None, Color.White, Color.DarkBlue);
         frame.AddControl(new Label("label", "HELLO", 1, 1, 5, Color.Yellow, Color.DarkBlue));
-        screen.topContainer.AddContainer(frame);
+        screen.TopContainer.AddContainer(frame);
 
         screen.Render();
 
-        string rendered = string.Concat(screen.rows[2].Cells.Skip(3).Take(5).Select(cell => cell.character));
+        string rendered = string.Concat(screen.Rows[2].Cells.Skip(3).Take(5).Select(cell => cell.Character));
         Assert.Equal("HELLO", rendered);
-        Assert.Equal(Color.Yellow, screen.rows[2].Cells[3].foreColor);
+        Assert.Equal(Color.Yellow, screen.Rows[2].Cells[3].ForeColor);
     }
 
     [Fact]
     public void ChildRenderingIsClippedAtContainerBoundary()
     {
         var screen = new Screen(8, 4);
-        var frame = new Frame("frame", "", 0, 0, 4, 3, Frame.BorderStyle.none, Color.White, Color.Black);
+        var frame = new Frame("frame", "", 0, 0, 4, 3, Frame.BorderStyle.None, Color.White, Color.Black);
         frame.AddControl(new Label("label", "ABCDE", 2, 1, 5, Color.Yellow, Color.Black));
-        screen.topContainer.AddContainer(frame);
+        screen.TopContainer.AddContainer(frame);
 
         screen.Render();
 
-        Assert.Equal("A", screen.rows[1].Cells[2].character);
-        Assert.Equal("B", screen.rows[1].Cells[3].character);
-        Assert.Equal(" ", screen.rows[1].Cells[4].character);
+        Assert.Equal("A", screen.Rows[1].Cells[2].Character);
+        Assert.Equal("B", screen.Rows[1].Cells[3].Character);
+        Assert.Equal(" ", screen.Rows[1].Cells[4].Character);
     }
 }

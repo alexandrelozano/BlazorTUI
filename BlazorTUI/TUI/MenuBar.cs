@@ -5,17 +5,17 @@ namespace BlazorTUI.TUI
 {
     public class MenuBar
     {
-        public List<Menu> menus;
+        internal List<Menu> menus;
         public IReadOnlyList<Menu> Menus => menus;
-        public bool visible;
+        internal bool visible;
         public bool IsVisible { get => visible; set => visible = value; }
-        public Color foreColor;
+        internal Color foreColor;
         public Color ForeColor { get => foreColor; set => foreColor = value; }
-        public Color backgroundColor;
+        internal Color backgroundColor;
         public Color BackgroundColor { get => backgroundColor; set => backgroundColor = value; }
 
         private Screen screen;
-        public bool showShortCutkeys;
+        internal bool showShortCutkeys;
         public bool ShowShortcutKeys { get => showShortCutkeys; set => showShortCutkeys = value; }
 
         public MenuBar(Color foreColor, Color backgroundColor, Screen screen)

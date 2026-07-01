@@ -168,7 +168,7 @@ namespace BlazorTUI.TUI
             base.Render(rows);
         }
 
-        internal IReadOnlyList<Control> GetFocusableControlsInTabOrder()
+        public override IReadOnlyList<Control> GetFocusableControlsInTabOrder()
             => EnumerateFocusableControls(this)
                 .OrderBy(control => control.TabIndex)
                 .ThenBy(control => control.Name)

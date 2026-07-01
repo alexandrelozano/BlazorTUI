@@ -101,6 +101,7 @@
                 <h3>Forms and data</h3>
                 <ul>
                     <li>Validation supports required fields, custom rules, inline messages, and first-invalid focus.</li>
+                    <li>Focus scopes, validation groups, and `TuiWizard` help constrain multi-step workflows.</li>
                     <li>`DataForm&lt;TModel&gt;` composes generated or explicit editors while keeping normal controls.</li>
                     <li>`GridView` supports sorting, filters, filter-row UI, selection, pagination, editing, grouping, export, and async loading.</li>
                 </ul>
@@ -124,6 +125,10 @@
                 <pre><code>@ValidationSnippet</code></pre>
             </article>
             <article>
+                <h3>Workflow navigation</h3>
+                <pre><code>@WorkflowSnippet</code></pre>
+            </article>
+            <article>
                 <h3>Advanced GridView</h3>
                 <pre><code>@GridViewSnippet</code></pre>
             </article>
@@ -137,9 +142,9 @@
     <section class="docs-section" id="migration">
         <h2>Migration guidance</h2>
         <ol>
-            <li>Use the component parameter `Screen="@@screen"`; the lowercase `screen` attribute spelling remains accepted only for compatibility.</li>
-            <li>Prefer PascalCase APIs such as `TopContainer`, `Rows`, `Cells`, `ForeColor`, `Clicked`, `GotFocus`, and `LostFocus`.</li>
-            <li>The 1.0 line keeps existing lowercase members, legacy callbacks, and lowercase enum values for compatibility, but new code should avoid them.</li>
+            <li>Use the component parameter `Screen="@@screen"`; the lowercase `screen` attribute spelling was removed in 1.0.</li>
+            <li>Use PascalCase APIs such as `TopContainer`, `Rows`, `Cells`, `ForeColor`, `Clicked`, `GotFocus`, and `LostFocus`.</li>
+            <li>Replace lowercase members, legacy callbacks, and lowercase enum values before upgrading to the 1.0 package.</li>
             <li>Move from direct list mutation such as `menu.menuItems` and `menuBar.menus` to `AddItem`, `AddMenu`, `Items`, and `Menus`.</li>
             <li>Use the optional `BlazorTUI.Analyzers` package to catch duplicate names, invalid literal dimensions, and static focus mistakes.</li>
             <li>Use `System.Drawing.Color` from `System.Drawing.Primitives`; do not add `System.Drawing.Common`.</li>
@@ -158,6 +163,7 @@
         new("Additional inputs", "SearchBox, AutoCompleteBox, MaskedTextBox, ToggleSwitch, and MultiSelectComboBox.", "/examples/additional-inputs", "SampleApp/Pages/Examples/AdditionalInputs.razor"),
         new("Form validation", "Required fields, custom rules, inline errors, and first-invalid focus.", "/examples/form-validation", "SampleApp/Pages/Examples/FormValidation.razor"),
         new("DataForm", "Model-bound fields, generated editors, validation summary, and submit updates.", "/examples/data-form", "SampleApp/Pages/Examples/DataFormExample.razor"),
+        new("Workflow navigation", "Focus scopes, validation groups, and wizard steps.", "/examples/workflow-navigation", "SampleApp/Pages/Examples/WorkflowNavigationExample.razor"),
         new("GridView", "Sorting, filters, filter row UI, editing, grouping, export, and async loading.", "/examples/grid-view", "SampleApp/Pages/Examples/GridViewExample.razor"),
         new("Data visualizations", "Sparkline, BarChart, Gauge, Timeline, and KeyValueList.", "/examples/data-visualizations", "SampleApp/Pages/Examples/DataVisualizations.razor"),
         new("Dialogs and menus", "Menu shortcuts, modal dialogs, and message boxes.", "/examples/dialogs-menus", "SampleApp/Pages/Examples/DialogsAndMenus.razor"),
@@ -213,6 +219,17 @@
 
         bool valid = screen.Validate(focusFirstInvalid: true);
         IReadOnlyList<Control> invalidControls = screen.GetInvalidControls();
+        """;
+
+    private static readonly string WorkflowSnippet = """
+        customerStep.IsFocusScope = true;
+        nameInput.ValidationGroup = "customer";
+
+        var wizard = new TuiWizard();
+        wizard.AddStep("customer", customerStep, "customer");
+        wizard.AddStep("address", addressStep, "address");
+
+        bool moved = wizard.MoveNext(); // validates the current step first
         """;
 
     private static readonly string GridViewSnippet = """

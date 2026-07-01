@@ -14,8 +14,9 @@ namespace BlazorTUI.TUI
         private TuiThemeState validationPreviousThemeState;
         private TuiCultureOptions cultureOptions = TuiCultureOptions.Current;
         private string? requiredMessage;
+        private string validationGroup = "";
 
-        public string name { get; set; } = "";
+        internal string name { get; set; } = "";
 
         public string Name
         {
@@ -23,7 +24,7 @@ namespace BlazorTUI.TUI
             set => name = ValidateName(value);
         }
 
-        public Container container { get; set; } = null!;
+        internal Container container { get; set; } = null!;
 
         public Container? ParentContainer => container;
 
@@ -31,19 +32,19 @@ namespace BlazorTUI.TUI
 
         public short Y { get; set; }
 
-        public short width { get; set; }
+        internal short width { get; set; }
 
         public short Width { get => width; set => width = value; }
 
-        public short height { get; set; }
+        internal short height { get; set; }
 
         public short Height { get => height; set => height = value; }
 
-        public Color foreColor { get; set; }
+        internal Color foreColor { get; set; }
 
         public Color ForeColor { get => foreColor; set => foreColor = value; }
 
-        public Color backgroundColor { get; set; }
+        internal Color backgroundColor { get; set; }
 
         public Color BackgroundColor { get => backgroundColor; set => backgroundColor = value; }
 
@@ -61,12 +62,10 @@ namespace BlazorTUI.TUI
 
                 if (value)
                 {
-                    OnFocus?.Invoke();
                     GotFocus?.Invoke(this, EventArgs.Empty);
                 }
                 else
                 {
-                    OnLostFocus?.Invoke();
                     LostFocus?.Invoke(this, EventArgs.Empty);
                 }
             }
@@ -87,6 +86,12 @@ namespace BlazorTUI.TUI
         public TuiThemeState ThemeState { get; set; } = TuiThemeState.Normal;
 
         public bool IsRequired { get; set; }
+
+        public string ValidationGroup
+        {
+            get => validationGroup;
+            set => validationGroup = NormalizeOptionalName(value);
+        }
 
         public string RequiredMessage
         {
@@ -135,12 +140,6 @@ namespace BlazorTUI.TUI
         public Color ValidationMessageForeColor { get; set; } = Color.White;
 
         public Color ValidationMessageBackgroundColor { get; set; } = Color.DarkRed;
-
-        public Action<Control>? OnClick;
-
-        public Action? OnFocus;
-
-        public Action? OnLostFocus;
 
         public event EventHandler? Clicked;
 
@@ -195,7 +194,6 @@ namespace BlazorTUI.TUI
             if (TuiEventScope.EventsSuppressed)
                 return;
 
-            OnClick?.Invoke(this);
             Clicked?.Invoke(this, EventArgs.Empty);
         }
 
@@ -204,6 +202,9 @@ namespace BlazorTUI.TUI
             ArgumentException.ThrowIfNullOrWhiteSpace(value);
             return value;
         }
+
+        private static string NormalizeOptionalName(string? value)
+            => string.IsNullOrWhiteSpace(value) ? "" : value.Trim();
 
         protected virtual object? GetValidationValue() => null;
 

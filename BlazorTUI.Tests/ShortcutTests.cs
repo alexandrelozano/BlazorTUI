@@ -38,7 +38,9 @@ public class ShortcutTests
         bool menuInvoked = false;
         var menuBar = new MenuBar(Color.White, Color.Blue, screen);
         var fileMenu = new Menu("File");
-        fileMenu.AddItem(new MenuItem("Open", MenuItem.MenuItemType.Item) { OnClick = () => menuInvoked = true });
+        var openItem = new MenuItem("Open", MenuItem.MenuItemType.Item);
+        openItem.Clicked += (_, _) => menuInvoked = true;
+        fileMenu.AddItem(openItem);
         menuBar.AddMenu(fileMenu);
         screen.MenuBar = menuBar;
 

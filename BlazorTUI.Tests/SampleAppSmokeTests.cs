@@ -29,7 +29,7 @@ public class SampleAppSmokeTests : IClassFixture<WebApplicationFactory<Program>>
         Assert.Contains("<title>BlazorTUI examples</title>", html);
         Assert.Contains("_framework/blazor.server.js", html);
         Assert.Contains("class=\"gridfs\"", html);
-        Assert.Contains("--tui-columns:80; --tui-rows:38", html);
+        Assert.Contains("--tui-columns:92; --tui-rows:38", html);
         Assert.Contains("aria-label=\"BlazorTUI example catalog\"", html);
     }
 
@@ -42,7 +42,7 @@ public class SampleAppSmokeTests : IClassFixture<WebApplicationFactory<Program>>
 
         Assert.Contains("<title>BlazorTUI examples</title>", html);
         Assert.Contains("class=\"gridfs\"", html);
-        Assert.Contains("--tui-columns:80; --tui-rows:38", html);
+        Assert.Contains("--tui-columns:92; --tui-rows:38", html);
         Assert.Contains("aria-label=\"BlazorTUI example catalog\"", html);
     }
 
@@ -61,7 +61,7 @@ public class SampleAppSmokeTests : IClassFixture<WebApplicationFactory<Program>>
         Assert.Contains("API notes", html);
         Assert.Contains("Migration guidance", html);
         Assert.Contains("Screen=&quot;@screen&quot;", html);
-        Assert.Contains("The 1.0 line keeps existing lowercase members", html);
+        Assert.Contains("Replace lowercase members, legacy callbacks, and lowercase enum values", html);
         Assert.Contains("BlazorTUI.Analyzers", html);
         Assert.Contains("href=\"/examples/grid-view\"", html);
         Assert.Contains("GridView", html);
@@ -73,6 +73,7 @@ public class SampleAppSmokeTests : IClassFixture<WebApplicationFactory<Program>>
     [InlineData("/examples/additional-inputs", "Additional input controls example")]
     [InlineData("/examples/form-validation", "Form validation example")]
     [InlineData("/examples/data-form", "DataForm example")]
+    [InlineData("/examples/workflow-navigation", "Workflow navigation example")]
     [InlineData("/examples/grid-view", "GridView example")]
     [InlineData("/examples/data-visualizations", "Data visualizations example")]
     [InlineData("/examples/dialogs-menus", "Dialogs and menus example")]

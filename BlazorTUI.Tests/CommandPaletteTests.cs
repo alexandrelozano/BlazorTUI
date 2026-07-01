@@ -10,13 +10,19 @@ public class CommandPaletteTests
     {
         var screen = new Screen(40, 8);
         string executed = "";
+        var newFileCommand = new CommandPaletteItem("newFile", "New file", "Create");
+        newFileCommand.Executed += (_, _) => executed = newFileCommand.Name;
+        var openFileCommand = new CommandPaletteItem("openFile", "Open file", "Load");
+        openFileCommand.Executed += (_, _) => executed = openFileCommand.Name;
+        var saveFileCommand = new CommandPaletteItem("saveFile", "Save file", "Write");
+        saveFileCommand.Executed += (_, _) => executed = saveFileCommand.Name;
         var palette = new CommandPalette(
             "commands",
             new[]
             {
-                new CommandPaletteItem("newFile", "New file", "Create", command => executed = command.Name),
-                new CommandPaletteItem("openFile", "Open file", "Load", command => executed = command.Name),
-                new CommandPaletteItem("saveFile", "Save file", "Write", command => executed = command.Name)
+                newFileCommand,
+                openFileCommand,
+                saveFileCommand
             },
             1, 1, 28,
             Color.Yellow, Color.Black);
@@ -102,7 +108,8 @@ public class CommandPaletteTests
             Color.White, Color.Black);
         string executed = "";
 
-        palette.AddCommand("build", "Build", action: command => executed = command.Name);
+        CommandPaletteItem buildCommand = palette.AddCommand("build", "Build");
+        buildCommand.Executed += (_, _) => executed = buildCommand.Name;
         palette.AddCommand("test", "Test");
         Assert.True(palette.ExecuteCommand("build"));
         Assert.True(palette.RemoveCommand("test"));

@@ -10,14 +10,14 @@ public class PictureBoxTests
     {
         var screen = new Screen(8, 4);
         var picture = new PictureBox("picture", [1, 2, 3], 1, 1, 2, 2, Color.White, Color.Black);
-        screen.topContainer.AddControl(picture);
+        screen.TopContainer.AddControl(picture);
 
         screen.Render();
 
-        Cell cell = screen.rows[1].Cells[1];
-        Assert.Equal("data:image/png;base64,AQID", cell.backgroundImage);
-        Assert.Equal(2, cell.scaleX);
-        Assert.Equal(2, cell.scaleY);
+        Cell cell = screen.Rows[1].Cells[1];
+        Assert.Equal("data:image/png;base64,AQID", cell.BackgroundImage);
+        Assert.Equal(2, cell.ScaleX);
+        Assert.Equal(2, cell.ScaleY);
     }
 
     [Fact]

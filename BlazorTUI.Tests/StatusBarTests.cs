@@ -96,7 +96,7 @@ public class StatusBarTests
         var screen = new Screen(12, 4);
         var frame = new Frame(
             "frame", "", 2, 1, 8, 2,
-            Frame.BorderStyle.none, Color.White, Color.Blue);
+            Frame.BorderStyle.None, Color.White, Color.Blue);
         screen.TopContainer.AddContainer(frame);
         var statusBar = new StatusBar(
             "status", "0123456789", 4, 0, 10,

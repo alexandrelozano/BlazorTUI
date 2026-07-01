@@ -6,7 +6,7 @@ namespace BlazorTUI.TUI
 {
     public class Container
     {
-        public string name { get; set; } = "";
+        internal string name { get; set; } = "";
 
         public string Name
         {
@@ -22,11 +22,11 @@ namespace BlazorTUI.TUI
 
         public short Y { get; set; }
 
-        public short width { get; set; }
+        internal short width { get; set; }
 
         public short Width { get => width; set => width = value; }
 
-        public short height { get; set; }
+        internal short height { get; set; }
 
         public short Height { get => height; set => height = value; }
 
@@ -38,15 +38,17 @@ namespace BlazorTUI.TUI
 
         public string ScreenReaderDescription { get; set; } = "";
 
-        public List<Control> controls { get; set; } = new List<Control>();
+        public bool IsFocusScope { get; set; }
+
+        internal List<Control> controls { get; set; } = new List<Control>();
 
         public IReadOnlyList<Control> Controls => controls;
 
-        public List<Container> containers { get; set; } = new List<Container>();
+        internal List<Container> containers { get; set; } = new List<Container>();
 
         public IReadOnlyList<Container> Containers => containers;
 
-        public Container? parent { get; set; } = null;
+        internal Container? parent { get; set; } = null;
 
         public Container? Parent => parent;
 
@@ -289,7 +291,21 @@ namespace BlazorTUI.TUI
         public virtual bool Validate(bool focusFirstInvalid = true)
         {
             List<Control> invalidControls = new();
-            ValidateInto(invalidControls);
+            ValidateInto(invalidControls, validationGroup: null);
+
+            Control? firstFocusableInvalidControl = invalidControls.FirstOrDefault(control => control.TabStop);
+            if (focusFirstInvalid && firstFocusableInvalidControl is not null)
+                TopContainer().SetFocus(firstFocusableInvalidControl.Name);
+
+            return invalidControls.Count == 0;
+        }
+
+        public virtual bool Validate(string validationGroup, bool focusFirstInvalid = true)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(validationGroup);
+
+            List<Control> invalidControls = new();
+            ValidateInto(invalidControls, validationGroup.Trim());
 
             Control? firstFocusableInvalidControl = invalidControls.FirstOrDefault(control => control.TabStop);
             if (focusFirstInvalid && firstFocusableInvalidControl is not null)
@@ -301,7 +317,16 @@ namespace BlazorTUI.TUI
         public IReadOnlyList<Control> GetInvalidControls()
         {
             List<Control> invalidControls = new();
-            AddInvalidControls(invalidControls);
+            AddInvalidControls(invalidControls, validationGroup: null);
+            return invalidControls;
+        }
+
+        public IReadOnlyList<Control> GetInvalidControls(string validationGroup)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(validationGroup);
+
+            List<Control> invalidControls = new();
+            AddInvalidControls(invalidControls, validationGroup.Trim());
             return invalidControls;
         }
 
@@ -479,53 +504,113 @@ namespace BlazorTUI.TUI
         }
 
         public void FocusNextControl()
+            => TryFocusNextControl();
+
+        public bool TryFocusNextControl()
         {
-            List<Control> focusableControls = GetFocusScopeControls();
-            if (focusableControls.Count > 0)
-            {
-                Container focusScope = GetFocusScopeContainer();
-                Control? currentFocusControl = focusScope.GetCurrentFocusControl();
-                int currentIndex = currentFocusControl is null
-                    ? -1
-                    : focusableControls.FindIndex(control => control.name == currentFocusControl.name);
+            List<Control> focusableControls = GetFocusNavigationControls();
+            if (focusableControls.Count == 0)
+                return false;
 
-                Control nextControl = focusableControls[(currentIndex + 1) % focusableControls.Count];
+            Container focusScope = GetFocusNavigationContainer();
+            Control? currentFocusControl = focusScope.GetCurrentFocusControl();
+            int currentIndex = currentFocusControl is null
+                ? -1
+                : focusableControls.FindIndex(control => control.name == currentFocusControl.name);
 
-                focusScope.SetFocus(nextControl.name);
-            }
+            Control nextControl = focusableControls[(currentIndex + 1) % focusableControls.Count];
+            focusScope.SetFocus(nextControl.name);
+            return true;
         }
 
         public void FocusPreviousControl()
+            => TryFocusPreviousControl();
+
+        public bool TryFocusPreviousControl()
         {
-            List<Control> focusableControls = GetFocusScopeControls();
-            if (focusableControls.Count > 0)
-            {
-                Container focusScope = GetFocusScopeContainer();
-                Control? currentFocusControl = focusScope.GetCurrentFocusControl();
-                int currentIndex = currentFocusControl is null
-                    ? 0
-                    : focusableControls.FindIndex(control => control.name == currentFocusControl.name);
+            List<Control> focusableControls = GetFocusNavigationControls();
+            if (focusableControls.Count == 0)
+                return false;
 
-                if (currentIndex < 0)
-                    currentIndex = 0;
+            Container focusScope = GetFocusNavigationContainer();
+            Control? currentFocusControl = focusScope.GetCurrentFocusControl();
+            int currentIndex = currentFocusControl is null
+                ? 0
+                : focusableControls.FindIndex(control => control.name == currentFocusControl.name);
 
-                Control previousControl = focusableControls[(currentIndex - 1 + focusableControls.Count) % focusableControls.Count];
+            if (currentIndex < 0)
+                currentIndex = 0;
 
-                focusScope.SetFocus(previousControl.name);
-            }
+            Control previousControl = focusableControls[(currentIndex - 1 + focusableControls.Count) % focusableControls.Count];
+            focusScope.SetFocus(previousControl.name);
+            return true;
         }
 
-        private Container GetFocusScopeContainer()
-            => parent is SplitPanel splitPanel ? splitPanel : this;
+        public bool FocusFirstControl()
+        {
+            IReadOnlyList<Control> focusableControls = GetFocusableControlsInTabOrder();
+            if (focusableControls.Count == 0)
+                return false;
 
-        private List<Control> GetFocusScopeControls()
-            => parent is SplitPanel splitPanel
-                ? splitPanel.GetFocusableControlsInTabOrder().ToList()
+            TopContainer().SetFocus(focusableControls[0].Name);
+            return true;
+        }
+
+        public bool FocusLastControl()
+        {
+            IReadOnlyList<Control> focusableControls = GetFocusableControlsInTabOrder();
+            if (focusableControls.Count == 0)
+                return false;
+
+            TopContainer().SetFocus(focusableControls[^1].Name);
+            return true;
+        }
+
+        public virtual IReadOnlyList<Control> GetFocusableControlsInTabOrder()
+            => EnumerateFocusableControlsInTabOrder(this).ToList();
+
+        private Container GetFocusNavigationContainer()
+        {
+            for (Container? current = this; current is not null; current = current.parent)
+            {
+                if (current.IsFocusScope)
+                    return current;
+            }
+
+            return parent is SplitPanel splitPanel ? splitPanel : this;
+        }
+
+        private List<Control> GetFocusNavigationControls()
+        {
+            Container focusScope = GetFocusNavigationContainer();
+            return focusScope.IsFocusScope || focusScope is SplitPanel
+                ? focusScope.GetFocusableControlsInTabOrder().ToList()
                 : controls
-                    .Where(control => control.TabStop)
+                    .Where(control => control.Visible && control.TabStop)
                     .OrderBy(control => control.TabIndex)
                     .ThenBy(control => control.name)
                     .ToList();
+        }
+
+        private static IEnumerable<Control> EnumerateFocusableControlsInTabOrder(Container container)
+        {
+            foreach (Control control in container.Controls
+                .Where(control => control.Visible && control.TabStop)
+                .OrderBy(control => control.TabIndex)
+                .ThenBy(control => control.Name, StringComparer.Ordinal))
+            {
+                yield return control;
+            }
+
+            foreach (Container child in container.Containers
+                .Where(child => child.Visible)
+                .OrderBy(child => child.ZOrder)
+                .ThenBy(child => child.Name, StringComparer.Ordinal))
+            {
+                foreach (Control control in child.GetFocusableControlsInTabOrder())
+                    yield return control;
+            }
+        }
 
         public short YOffset()
         {
@@ -571,29 +656,41 @@ namespace BlazorTUI.TUI
                 RestoreCellsOutsideClip(rows, snapshots, clipBounds);
         }
 
-        private void ValidateInto(List<Control> invalidControls)
+        private void ValidateInto(List<Control> invalidControls, string? validationGroup)
         {
             foreach (Control control in controls)
             {
-                if (control.Visible && !control.Validate())
+                if (control.Visible &&
+                    ShouldValidateControl(control, validationGroup) &&
+                    !control.Validate())
+                {
                     invalidControls.Add(control);
+                }
             }
 
             foreach (Container container in containers.Where(container => container.Visible))
-                container.ValidateInto(invalidControls);
+                container.ValidateInto(invalidControls, validationGroup);
         }
 
-        private void AddInvalidControls(List<Control> invalidControls)
+        private void AddInvalidControls(List<Control> invalidControls, string? validationGroup)
         {
             foreach (Control control in controls)
             {
-                if (control.Visible && !control.IsValid)
+                if (control.Visible &&
+                    ShouldValidateControl(control, validationGroup) &&
+                    !control.IsValid)
+                {
                     invalidControls.Add(control);
+                }
             }
 
             foreach (Container container in containers.Where(container => container.Visible))
-                container.AddInvalidControls(invalidControls);
+                container.AddInvalidControls(invalidControls, validationGroup);
         }
+
+        private static bool ShouldValidateControl(Control control, string? validationGroup)
+            => validationGroup is null ||
+                string.Equals(control.ValidationGroup, validationGroup, StringComparison.Ordinal);
 
         private void RenderValidationMessage(IList<Row> rows, Control control, ClipBounds clipBounds)
         {

@@ -59,22 +59,18 @@ namespace BlazorTUI.TUI
             }
         }
 
-        public Action<CommandPaletteItem>? Action { get; set; }
-
         public event EventHandler? Executed;
 
         public CommandPaletteItem(
             string name,
             string title,
-            string description = "",
-            Action<CommandPaletteItem>? action = null)
+            string description = "")
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(name);
 
             Name = name;
             Title = title;
             Description = description;
-            Action = action;
         }
 
         public CommandPaletteItem(TuiCommand command)
@@ -94,9 +90,6 @@ namespace BlazorTUI.TUI
 
             if (Command is not null && !Command.Execute())
                 return;
-
-            if (Command is null)
-                Action?.Invoke(this);
 
             Executed?.Invoke(this, EventArgs.Empty);
         }

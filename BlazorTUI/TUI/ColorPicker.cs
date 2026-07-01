@@ -11,12 +11,12 @@ namespace BlazorTUI.TUI
 {
     public class ColorPicker : Control
     {
-        public Color color;
+        private Color color;
         public Color Color { get => color; set => color = value; }
-        public bool showColorName;
+        private bool showColorName;
         public bool ShowColorName { get => showColorName; set => showColorName = value; }
 
-        public new Color foreColor;
+        private new Color foreColor;
         public new Color ForeColor
         {
             get => foreColor;
@@ -26,7 +26,7 @@ namespace BlazorTUI.TUI
                 base.foreColor = value;
             }
         }
-        public new Color backgroundColor;
+        private new Color backgroundColor;
         public new Color BackgroundColor
         {
             get => backgroundColor;
@@ -61,11 +61,11 @@ namespace BlazorTUI.TUI
             short widthDlg = (short)(container.TopContainer().width / 2);
             short heigthDlg = (short)(container.TopContainer().height / 2);
 
-            Dialog dialog = new Dialog("dlgColors", "Pick a color", widthDlg, heigthDlg, BorderStyle.line, foreColor, backgroundColor, screen);
+            Dialog dialog = new Dialog("dlgColors", "Pick a color", widthDlg, heigthDlg, BorderStyle.Line, foreColor, backgroundColor, screen);
             dlgColors = dialog;
 
             Button bttCancel = new Button("bttCancel", "Cancel", 2, (short)(dialog.height - 2), 10, foreColor, backgroundColor);
-            bttCancel.OnClick = bttCancel_OnClick;
+            bttCancel.Clicked += (_, _) => bttCancel_OnClick();
             bttCancel.Focus = true;
             dialog.AddControl(bttCancel);
 
@@ -76,7 +76,7 @@ namespace BlazorTUI.TUI
             foreach (Color myColor in colors)
             {
                 Button bttColor = new Button($"{myColor.Name}", " ", xc, yc, 3, foreColor, myColor);
-                bttColor.OnClick = bttDlgColor_OnClick;
+                bttColor.Clicked += (sender, _) => bttDlgColor_OnClick((Control)sender!);
                 dialog.AddControl(bttColor);
 
                 xc += 3;
@@ -90,13 +90,13 @@ namespace BlazorTUI.TUI
             dialog.Show();
         }
 
-        public void bttDlgColor_OnClick(Control sender)
+        private void bttDlgColor_OnClick(Control sender)
         {
             color = Color.FromName(sender.name);
             dlgColors?.Close();
         }
 
-        public void bttCancel_OnClick(Control sender)
+        private void bttCancel_OnClick()
         {
             dlgColors?.Close();
         }

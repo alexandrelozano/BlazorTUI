@@ -9,7 +9,7 @@ namespace BlazorTUI.TUI
     {
         public class GridRow
         {
-            public string[] cells = Array.Empty<string>();
+            internal string[] cells = Array.Empty<string>();
 
             public IReadOnlyList<string> Cells
             {
@@ -20,11 +20,11 @@ namespace BlazorTUI.TUI
 
         public class GridColumn
         {
-            public string title = "";
+            internal string title = "";
             public string Title { get => title; set => title = value ?? ""; }
-            public short width;
+            internal short width;
             public short Width { get => width; set => width = value; }
-            public bool isEditable;
+            internal bool isEditable;
             public bool IsEditable { get => isEditable; set => isEditable = value; }
             private GridViewCellEditorKind editorKind = GridViewCellEditorKind.TextBox;
             public GridViewCellEditorKind EditorKind
@@ -36,7 +36,7 @@ namespace BlazorTUI.TUI
                     editorKind = value;
                 }
             }
-            public string[] editorOptions = Array.Empty<string>();
+            internal string[] editorOptions = Array.Empty<string>();
             public IReadOnlyList<string> EditorOptions
             {
                 get => editorOptions;

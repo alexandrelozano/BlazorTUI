@@ -207,7 +207,7 @@ Use `FirstPanel` and `SecondPanel` as normal containers for controls or nested c
 | Actions and navigation | `Breadcrumb`, `BreadcrumbItem`, `Button`, `CommandPalette`, `CommandPaletteItem`, `ContextMenu`, `ContextMenuItem`, `MenuBar`, `Menu`, `MenuItem` |
 | Data and feedback | `GridView`, `Sparkline`, `BarChart`, `Gauge`, `Timeline`, `KeyValueList`, `ProgressBar`, `Spinner`, `StatusBar`, `Toast`, `PictureBox` |
 | Modal and transient UI | `Dialog`, `MessageBox`, `ModalPanel`, `Popover`, `Tooltip` |
-| Shared services and options | `TuiCultureOptions`, `TuiCommand`, `TuiCommandRegistry`, `TuiShortcutMap`, `TuiTheme` |
+| Shared services and options | `TuiCultureOptions`, `TuiCommand`, `TuiCommandRegistry`, `TuiShortcutMap`, `TuiTheme`, `TuiWizard`, `TuiWizardStep` |
 
 Control constructors accept `System.Drawing.Color` values for foreground and background colors.
 
@@ -223,15 +223,13 @@ The recommended API follows standard .NET naming and event conventions:
 - Use `MenuBar.AddMenu` and `Menu.AddItem` to build menus. Their `Menus` and `Items` properties provide read-only views.
 - Use PascalCase enum members such as `BorderStyle.Line` and `Frame.BorderStyle.Solid`.
 
-## 1.0 compatibility and migration
+## 1.0 API migration
 
-BlazorTUI keeps the current `0.8.x` public surface compatible for the 1.0 release. Existing lowercase members, legacy callback properties, lowercase enum values, and the lowercase `screen` component attribute spelling remain available so current applications can upgrade without source or binary breaks. They are compatibility shims; new code should use the PascalCase API, standard events, and read-only collection views.
+BlazorTUI 1.0 exposes the PascalCase API only. Compatibility shims from pre-1.0 releases were removed: lowercase members, legacy callback properties, lowercase enum values, and the lowercase `screen` component attribute are no longer part of the public contract.
 
-No new lowercase public API is planned for 1.0. The test suite freezes the existing lowercase compatibility surface so new public members require an explicit compatibility decision.
+When upgrading from `0.8.x`, migrate old source patterns before referencing the 1.0 package:
 
-Recommended migrations:
-
-| Legacy style | 1.0-ready style |
+| Pre-1.0 style | 1.0 style |
 | --- | --- |
 | `<BlazorTUI.BlazorTUI screen="@screen" />` | `<BlazorTUI.BlazorTUI Screen="@screen" />` |
 | `screen.topContainer` | `screen.TopContainer` |
@@ -279,6 +277,46 @@ saveButton.Clicked += (_, _) =>
 Validation messages are rendered inline beside the control when there is room, or below it when the right side is full. Use `ShowValidationMessage`, `ValidationMessageForeColor`, and `ValidationMessageBackgroundColor` to control that display. Use `GetInvalidControls()` when application code needs to inspect the current invalid controls after validation.
 
 `TextBox`, `SearchBox`, `AutoCompleteBox`, `MaskedTextBox`, `PasswordBox`, `TextArea`, `DateBox`, `Calendar`, `DatePicker`, `DateRangePicker`, `MonthPicker`, `TimeBox`, `NumericBox`, `CheckBox`, `ToggleSwitch`, `RadioButton`, `ComboBox`, `MultiSelectComboBox`, `RadioGroup`, `ListBox`, `TreeView`, `Slider`, and `ColorPicker` expose their current value to validation rules. For checkboxes, toggle switches, and radio buttons, a required field means the value must be selected.
+
+## Focus scopes and workflow navigation
+
+Use focus scopes when a form section or modal workflow should keep `Tab` and `Shift+Tab` inside a container. Set `Container.IsFocusScope = true`; the normal global focus behavior remains unchanged for containers that are not explicit scopes. `FocusFirstControl()` and `FocusLastControl()` move focus to the first or last focusable control inside a container, including visible child containers:
+
+```csharp
+var step = new Frame(
+    "customerStep", "CUSTOMER", 2, 2, 40, 10,
+    Frame.BorderStyle.Line, Color.Yellow, Color.DarkBlue)
+{
+    IsFocusScope = true
+};
+
+step.FocusFirstControl();
+step.FocusLastControl();
+```
+
+Validation groups let workflows validate one section at a time. Assign `Control.ValidationGroup`, then call `screen.Validate("groupName")` or `container.Validate("groupName")`:
+
+```csharp
+nameInput.ValidationGroup = "customer";
+streetInput.ValidationGroup = "address";
+
+if (!screen.Validate("customer"))
+    return;
+```
+
+`TuiWizard` is a non-visual helper for step-based screens. Each step owns a normal container, automatically becomes a focus scope, can be tied to a validation group, and is shown or hidden as the wizard moves:
+
+```csharp
+var wizard = new TuiWizard();
+wizard.AddStep("customer", customerStep, "customer");
+wizard.AddStep("address", addressStep, "address");
+
+nextButton.Clicked += (_, _) =>
+{
+    if (wizard.MoveNext())
+        status.Value = $"Step: {wizard.CurrentStep?.Name}";
+};
+```
 
 ## Localization and culture
 
@@ -878,7 +916,7 @@ frame.AddControl(new Tooltip(
 status.AddCommand(save);
 ```
 
-Changing `save.Label`, `save.Description`, `save.Enabled`, or `save.Visible` updates bound controls the next time they render or execute. `Enabled = false` prevents execution; `Visible = false` hides command-backed entries from palettes, context menus, status bars, tooltips, and buttons. Existing direct callback APIs such as `Button.Clicked`, `MenuItem.OnClick`, `ContextMenuItem.OnClick`, and `CommandPaletteItem.Action` remain available for simple one-off actions.
+Changing `save.Label`, `save.Description`, `save.Enabled`, or `save.Visible` updates bound controls the next time they render or execute. `Enabled = false` prevents execution; `Visible = false` hides command-backed entries from palettes, context menus, status bars, tooltips, and buttons. For one-off actions, subscribe to standard events such as `Button.Clicked`, `MenuItem.Clicked`, `ContextMenuItem.Clicked`, and `CommandPaletteItem.Executed`.
 
 ## Transient and contextual UI
 
@@ -890,13 +928,19 @@ var actions = new Button(
     Color.White, Color.DarkGreen);
 frame.AddControl(actions);
 
+var refreshItem = new ContextMenuItem("refresh", "Refresh");
+refreshItem.Clicked += (_, _) => status.Value = "Refresh";
+
+var archiveItem = new ContextMenuItem("archive", "Archive");
+archiveItem.Clicked += (_, _) => status.Value = "Archive";
+
 var menu = new ContextMenu(
     "actionsMenu",
     new[]
     {
-        new ContextMenuItem("refresh", "Refresh") { OnClick = () => status.Value = "Refresh" },
+        refreshItem,
         new ContextMenuItem("separator", "", ContextMenuItemType.Separator),
-        new ContextMenuItem("archive", "Archive") { OnClick = () => status.Value = "Archive" }
+        archiveItem
     },
     3,
     5,
@@ -943,14 +987,18 @@ panel.Closed += (_, args) => status.Value = $"Closed: {args.Reason}";
 `CommandPalette` provides a searchable list of actions that users can open with the configured command-palette shortcut. By default this is `F2`, with `Ctrl+K` and `Command+K` also supported when the browser does not reserve those shortcuts:
 
 ```csharp
+var focusNameCommand = new CommandPaletteItem("focusName", "Focus name", "Move focus");
+focusNameCommand.Executed += (_, _) => screen.SetFocus("nameInput");
+
+var saveCommand = new CommandPaletteItem("save", "Save", "Submit form");
+saveCommand.Executed += (_, _) => status.Value = "Saved";
+
 var commands = new CommandPalette(
     "commands",
     new[]
     {
-        new CommandPaletteItem("focusName", "Focus name", "Move focus", _ =>
-            screen.SetFocus("nameInput")),
-        new CommandPaletteItem("save", "Save", "Submit form", _ =>
-            status.Value = "Saved")
+        focusNameCommand,
+        saveCommand
     },
     28,
     17,
@@ -1452,6 +1500,7 @@ The sample app also includes a documentation site at `/docs`. It summarizes the 
 | [Additional inputs](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/AdditionalInputs.razor) | Search boxes, autocomplete suggestions, masked input, toggle switches, and multi-select combo boxes |
 | [Form validation](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/FormValidation.razor) | Required fields, custom validation rules, inline error messages, and first-invalid focus |
 | [DataForm](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/DataFormExample.razor) | Model-bound generated form fields, validation summary, submit-time updates, and editor factories |
+| [Workflow navigation](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/WorkflowNavigationExample.razor) | Focus scopes, validation groups, first-control focus, and wizard-step navigation |
 | [GridView](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/GridViewExample.razor) | Sorting, pagination, row selection, filter row UI, editable cells, column layout, grouping, aggregate footers, export helpers, async loading, validation, and edit events |
 | [Data visualizations](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/DataVisualizations.razor) | Sparklines, bar charts, gauges, timelines, and aligned key/value details |
 | [Dialogs and menus](https://github.com/alexandrelozano/BlazorTUI/blob/master/SampleApp/Pages/Examples/DialogsAndMenus.razor) | Menu shortcuts, custom modal dialogs, and message boxes |
@@ -1487,6 +1536,8 @@ Run `dotnet run --project SampleApp` from the repository root and open `/`, `/ex
 - Added async/cancellable `RefreshVirtualQueryAsync` hooks for virtual controls using operations providers.
 - Added a unified command model with `TuiCommand` and `TuiCommandRegistry`, plus command binding for buttons, menus, command palettes, context menus, status bars, and tooltips.
 - Added localization and culture support with `TuiCultureOptions`, culture-aware date/month/time/number/currency formatting, localized validation messages, and a focused localization example.
+- Added focus scopes, validation groups, first/last focus helpers, and `TuiWizard` step navigation for form and modal workflows.
+- Removed pre-1.0 compatibility shims: lowercase public members, legacy callback properties, lowercase enum values, and the lowercase `screen` component attribute.
 - Updated NuGet consumer coverage and virtualization regression tests for the new provider-driven API.
 
 ### 0.8.15 — 2026-06-30
@@ -1498,7 +1549,7 @@ Run `dotnet run --project SampleApp` from the repository root and open `/`, `/ex
 - Documented accessible terminal patterns for consumer applications and added regression coverage for semantic summaries, custom descriptions, validation summaries, and focus announcements.
 - Added `BlazorTUI.Analyzers`, an optional Roslyn analyzer package for duplicate control/container names, invalid dimensions, duplicate menu/item/node names, and missing static `SetFocus` targets.
 - Added analyzer package documentation, CI artifact publishing, and regression tests for diagnostics `BTUI001` through `BTUI004`.
-- Stabilized the 1.0 API compatibility policy, added the PascalCase `Screen` component parameter while preserving lowercase `screen` attribute compatibility, documented migration guidance, and froze the approved lowercase compatibility surface in regression tests.
+- Prepared 1.0 API migration guidance around the PascalCase `Screen` component parameter and standard .NET event patterns.
 
 ### 0.8.14 — 2026-06-30
 

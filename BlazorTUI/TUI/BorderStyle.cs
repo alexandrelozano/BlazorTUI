@@ -8,13 +8,9 @@ namespace BlazorTUI.TUI
 {
     public enum BorderStyle
     {
-        none,
-        line,
-        doubleline,
-        solid,
-        None = none,
-        Line = line,
-        DoubleLine = doubleline,
-        Solid = solid
+        None,
+        Line,
+        DoubleLine,
+        Solid
     }
 }

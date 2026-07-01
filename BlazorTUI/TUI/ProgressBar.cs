@@ -15,7 +15,7 @@ namespace BlazorTUI.TUI
 
         public ProgressBarType Type { get => progessBarType; set => progessBarType = value; }
 
-        public Double value;
+        internal Double value;
         public double Value { get => value; set => this.value = value; }
         public Double MaxValue;
         public double Maximum { get => MaxValue; set => MaxValue = value; }

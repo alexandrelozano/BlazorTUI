@@ -7,14 +7,13 @@ namespace BlazorTUI.TUI
     {
         string text;
         public string Text { get => text[4..]; set => text = $"    {value ?? ""}"; }
-        private readonly Action onClick;
         bool value { get; set; }
 
         public bool Value { get => value; set => this.value = value; }
 
         protected override object? GetValidationValue() => value;
 
-        public RadioButton(string name, string text, short X, short Y, short width, Color forecolor, Color backgroundcolor, Action OnClick, bool value)
+        public RadioButton(string name, string text, short X, short Y, short width, Color forecolor, Color backgroundcolor, bool value = false)
         {
             this.Name = name;
             this.X = X;
@@ -33,16 +32,9 @@ namespace BlazorTUI.TUI
             this.text = $"    {text}";
             this.foreColor = forecolor;
             this.backgroundColor = backgroundcolor;
-            this.onClick = OnClick;
-
             this.Focus = false;
             this.TabStop = true;
             this.value = value;
-        }
-
-        public RadioButton(string name, string text, short X, short Y, short width, Color forecolor, Color backgroundcolor, bool value = false)
-            : this(name, text, X, Y, width, forecolor, backgroundcolor, () => { }, value)
-        {
         }
 
         public override bool Click(short X, short Y)
@@ -53,7 +45,6 @@ namespace BlazorTUI.TUI
             {
                 Check();
                 container.TopContainer().SetFocus(name);
-                onClick.Invoke();
                 handled = true;
             }
 
@@ -76,7 +67,6 @@ namespace BlazorTUI.TUI
                     case "Enter":
                         Check();
                         container.TopContainer().SetFocus(name);
-                        onClick.Invoke();
                         NotifyClicked();
                         handled = true;
                         break;
@@ -84,7 +74,6 @@ namespace BlazorTUI.TUI
                     case " ":
                         Check();
                         container.TopContainer().SetFocus(name);
-                        onClick.Invoke();
                         NotifyClicked();
                         handled = true;
                         break;

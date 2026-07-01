@@ -18,7 +18,7 @@ namespace BlazorTUI.TUI
             AbortRetryIgnore
         }
 
-        public Buttons buttons { get; set; }
+        internal Buttons buttons { get; set; }
 
         public Buttons ButtonSet { get => buttons; set => buttons = value; }
 
@@ -39,7 +39,7 @@ namespace BlazorTUI.TUI
 
         private string internalId {  get; set; }
 
-        public Result result { get; set; }  
+        internal Result result { get; set; }
 
         public Result DialogResult => result;
 
@@ -92,66 +92,66 @@ namespace BlazorTUI.TUI
             {
                 case Buttons.OKOnly:
                     bttOk = new Button($"bttOk{internalId}", "Ok", (short)((width/2) - 2), (short)(heigth - 2), 4, foreColor, backgroundColor);
-                    bttOk.OnClick = bttOk_OnClick;
+                    bttOk.Clicked += (_, _) => bttOk_OnClick();
                     dialog.AddControl(bttOk);
                     defaultButton = bttOk;
                     break;
                 case Buttons.OKCancel:
                     bttOk = new Button($"bttOk{internalId}", "Ok", (short)((width / 4) - 2), (short)(heigth - 2), 4, foreColor, backgroundColor);
-                    bttOk.OnClick = bttOk_OnClick;
+                    bttOk.Clicked += (_, _) => bttOk_OnClick();
                     dialog.AddControl(bttOk);
                     defaultButton = bttOk;
 
                     bttCancel = new Button($"bttCancel{internalId}", "Cancel", (short)(((width / 4) * 3) - 4), (short)(heigth - 2), 8, foreColor, backgroundColor);
-                    bttCancel.OnClick = bttCancel_OnClick;
+                    bttCancel.Clicked += (_, _) => bttCancel_OnClick();
                     dialog.AddControl(bttCancel);
                     break;
                 case Buttons.YesNo:
                     bttYes = new Button($"bttYes{internalId}", "Yes", (short)((width / 4) - 3), (short)(heigth - 2), 5, foreColor, backgroundColor);
-                    bttYes.OnClick = bttYes_OnClick;
+                    bttYes.Clicked += (_, _) => bttYes_OnClick();
                     dialog.AddControl(bttYes);
                     defaultButton = bttYes;
 
                     bttNo = new Button($"bttNo{internalId}", "No", (short)(((width / 4) * 3) - 2), (short)(heigth - 2), 4, foreColor, backgroundColor);
-                    bttNo.OnClick = bttNo_OnClick;
+                    bttNo.Clicked += (_, _) => bttNo_OnClick();
                     dialog.AddControl(bttNo);
                     break;
                 case Buttons.YesNoCancel:
                     bttYes = new Button($"bttYes{internalId}", "Yes", 2, (short)(heigth - 2), 5, foreColor, backgroundColor);
-                    bttYes.OnClick = bttYes_OnClick;
+                    bttYes.Clicked += (_, _) => bttYes_OnClick();
                     dialog.AddControl(bttYes);
                     defaultButton = bttYes;
 
                     bttNo = new Button($"bttNo{internalId}", "No", (short)((width / 2) - 2), (short)(heigth - 2), 4, foreColor, backgroundColor);
-                    bttNo.OnClick = bttNo_OnClick;
+                    bttNo.Clicked += (_, _) => bttNo_OnClick();
                     dialog.AddControl(bttNo);
                     
                     bttCancel = new Button($"bttCancel{internalId}", "Cancel", (short)(width - 10), (short)(heigth - 2), 8, foreColor, backgroundColor);
-                    bttCancel.OnClick = bttCancel_OnClick;
+                    bttCancel.Clicked += (_, _) => bttCancel_OnClick();
                     dialog.AddControl(bttCancel);
                     break;
                 case Buttons.RetryCancel:
                     bttRetry = new Button($"bttRetry{internalId}", "Retry", (short)((width / 4) - 5), (short)(heigth - 2), 7, foreColor, backgroundColor);
-                    bttRetry.OnClick = bttRetry_OnClick;
+                    bttRetry.Clicked += (_, _) => bttRetry_OnClick();
                     dialog.AddControl(bttRetry);
                     defaultButton = bttRetry;
 
                     bttCancel = new Button($"bttCancel{internalId}", "Cancel", (short)(((width / 4) * 3) - 4), (short)(heigth - 2), 8, foreColor, backgroundColor);
-                    bttCancel.OnClick = bttCancel_OnClick;
+                    bttCancel.Clicked += (_, _) => bttCancel_OnClick();
                     dialog.AddControl(bttCancel);
                     break;
                 case Buttons.AbortRetryIgnore:
                     bttAbort = new Button($"bttAbort{internalId}", "Abort", 2, (short)(heigth - 2), 7, foreColor, backgroundColor);
-                    bttAbort.OnClick = bttAbort_OnClick;
+                    bttAbort.Clicked += (_, _) => bttAbort_OnClick();
                     dialog.AddControl(bttAbort);
                     defaultButton = bttAbort;
 
                     bttRetry = new Button($"bttRetry{internalId}", "Retry", (short)((width / 2) - 4), (short)(heigth - 2), 7, foreColor, backgroundColor);
-                    bttRetry.OnClick = bttRetry_OnClick;
+                    bttRetry.Clicked += (_, _) => bttRetry_OnClick();
                     dialog.AddControl(bttRetry);
 
                     bttIgnore = new Button($"bttIgnore{internalId}", "Ignore", (short)(width - 10), (short)(heigth - 2), 8, foreColor, backgroundColor);
-                    bttIgnore.OnClick = bttIgnore_OnClick;
+                    bttIgnore.Clicked += (_, _) => bttIgnore_OnClick();
                     dialog.AddControl(bttIgnore);
                     break;
                 default:
@@ -168,25 +168,25 @@ namespace BlazorTUI.TUI
         public void Close(Result result = Result.Cancel)
             => Complete(result);
 
-        private void bttOk_OnClick(Control sender)
+        private void bttOk_OnClick()
             => Complete(Result.OK);
 
-        private void bttCancel_OnClick(Control sender)
+        private void bttCancel_OnClick()
             => Complete(Result.Cancel);
 
-        private void bttYes_OnClick(Control sender)
+        private void bttYes_OnClick()
             => Complete(Result.Yes);
 
-        private void bttNo_OnClick(Control sender)
+        private void bttNo_OnClick()
             => Complete(Result.No);
 
-        private void bttRetry_OnClick(Control sender)
+        private void bttRetry_OnClick()
             => Complete(Result.Retry);
 
-        private void bttIgnore_OnClick(Control sender)
+        private void bttIgnore_OnClick()
             => Complete(Result.Ignore);
 
-        private void bttAbort_OnClick(Control sender)
+        private void bttAbort_OnClick()
             => Complete(Result.Abort);
 
         private void Complete(Result selectedResult)

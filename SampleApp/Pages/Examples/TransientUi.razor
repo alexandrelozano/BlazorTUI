@@ -44,14 +44,23 @@
             18, 5, 30,
             Color.Black, Color.Cyan));
 
+        var refreshItem = new ContextMenuItem("refresh", "Refresh");
+        refreshItem.Clicked += (_, _) => AddNotice("Refresh selected");
+
+        var showPopoverItem = new ContextMenuItem("showPopover", "Show popover");
+        showPopoverItem.Clicked += (_, _) => ShowPopover();
+
+        var showModalItem = new ContextMenuItem("showModal", "Open modal");
+        showModalItem.Clicked += (_, _) => ShowDetailsModal();
+
         var contextMenu = new ContextMenu(
             "actionsContextMenu",
             new[]
             {
-                new ContextMenuItem("refresh", "Refresh") { OnClick = () => AddNotice("Refresh selected") },
+                refreshItem,
                 new ContextMenuItem("separator", "", ContextMenuItemType.Separator),
-                new ContextMenuItem("showPopover", "Show popover") { OnClick = ShowPopover },
-                new ContextMenuItem("showModal", "Open modal") { OnClick = ShowDetailsModal },
+                showPopoverItem,
+                showModalItem,
                 new ContextMenuItem("disabledAction", "Disabled") { Enabled = false }
             },
             4, 7, 16,

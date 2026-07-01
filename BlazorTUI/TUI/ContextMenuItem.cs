@@ -53,8 +53,6 @@ namespace BlazorTUI.TUI
             }
         }
 
-        public Action? OnClick { get; set; }
-
         public event EventHandler? Clicked;
 
         public ContextMenuItem(
@@ -86,9 +84,6 @@ namespace BlazorTUI.TUI
 
             if (Command is not null && !Command.Execute())
                 return false;
-
-            if (Command is null)
-                OnClick?.Invoke();
 
             Clicked?.Invoke(this, EventArgs.Empty);
             return true;

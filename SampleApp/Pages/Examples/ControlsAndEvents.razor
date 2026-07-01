@@ -82,16 +82,22 @@
         greetButton.Clicked += (_, _) => ShowGreeting();
         frame.AddControl(greetButton);
 
+        var focusNameCommand = new CommandPaletteItem("focusName", "Focus name", "Move focus");
+        focusNameCommand.Executed += (_, _) =>
+        {
+            screen.SetFocus("nameInput");
+            eventStatus.Value = "Name focused";
+        };
+
+        var greetCommand = new CommandPaletteItem("greet", "Greet", "Show message");
+        greetCommand.Executed += (_, _) => ShowGreeting();
+
         var commands = new CommandPalette(
             "commands",
             new[]
             {
-                new CommandPaletteItem("focusName", "Focus name", "Move focus", _ =>
-                {
-                    screen.SetFocus("nameInput");
-                    eventStatus.Value = "Name focused";
-                }),
-                new CommandPaletteItem("greet", "Greet", "Show message", _ => ShowGreeting())
+                focusNameCommand,
+                greetCommand
             },
             20, 17, 27,
             Color.Yellow, Color.Black,

@@ -12,7 +12,7 @@ namespace BlazorTUI.TUI
 {
     public class NumericBox : TextBox
     {
-        public new Double? value;
+        internal new Double? value;
 
         public new double? Value { get => value; set => this.value = value; }
 

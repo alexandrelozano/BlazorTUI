@@ -12,7 +12,7 @@ namespace BlazorTUI.TUI
         private bool enabled = true;
         private bool visible = true;
 
-        public string text;
+        internal string text;
         public string Text
         {
             get => command?.Label ?? text;
@@ -51,7 +51,7 @@ namespace BlazorTUI.TUI
             }
         }
 
-        public char? shortCutKey = null;
+        internal char? shortCutKey = null;
         public char? ShortcutKey { get => shortCutKey; set => shortCutKey = value; }
 
         public enum MenuItemType
@@ -60,10 +60,8 @@ namespace BlazorTUI.TUI
             Separator
         }
 
-        public MenuItemType menuItemType;
+        internal MenuItemType menuItemType;
         public MenuItemType Type { get => menuItemType; set => menuItemType = value; }
-
-        public Action? OnClick;
 
         public event EventHandler? Clicked;
 
@@ -99,9 +97,6 @@ namespace BlazorTUI.TUI
 
             if (command is not null && !command.Execute())
                 return false;
-
-            if (command is null)
-                OnClick?.Invoke();
 
             Clicked?.Invoke(this, EventArgs.Empty);
             return true;

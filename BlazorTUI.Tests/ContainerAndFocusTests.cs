@@ -15,7 +15,7 @@ public class ContainerAndFocusTests
         container.AddControl(first);
         container.AddControl(second);
 
-        Assert.Same(container, first.container);
+        Assert.Same(container, first.ParentContainer);
         Assert.Equal((short)1, first.TabIndex);
         Assert.Equal((short)2, second.TabIndex);
         Assert.Equal((short)1, first.ZOrder);
@@ -36,12 +36,12 @@ public class ContainerAndFocusTests
     public void TabAndShiftTabMoveFocusWithinNestedContainer()
     {
         var screen = new Screen(20, 10);
-        var frame = new Frame("frame", "", 0, 0, 20, 10, Frame.BorderStyle.none, Color.White, Color.Black);
+        var frame = new Frame("frame", "", 0, 0, 20, 10, Frame.BorderStyle.None, Color.White, Color.Black);
         var first = TextBox("first", 1);
         var second = TextBox("second", 2);
         frame.AddControl(first);
         frame.AddControl(second);
-        screen.topContainer.AddContainer(frame);
+        screen.TopContainer.AddContainer(frame);
         screen.SetFocus("first");
 
         screen.KeyDown("Tab", false);
@@ -57,46 +57,46 @@ public class ContainerAndFocusTests
     public void BringToFrontAndBottomChangeVisibleControlOrder()
     {
         var screen = new Screen(8, 4);
-        var frame = new Frame("frame", "", 0, 0, 8, 4, Frame.BorderStyle.none, Color.White, Color.Black);
+        var frame = new Frame("frame", "", 0, 0, 8, 4, Frame.BorderStyle.None, Color.White, Color.Black);
         var first = new Label("first", "A", 1, 1, 1, Color.White, Color.Black);
         var second = new Label("second", "B", 1, 1, 1, Color.White, Color.Black);
         frame.AddControl(first);
         frame.AddControl(second);
-        screen.topContainer.AddContainer(frame);
+        screen.TopContainer.AddContainer(frame);
 
         screen.Render();
-        Assert.Equal("B", screen.rows[1].Cells[1].character);
+        Assert.Equal("B", screen.Rows[1].Cells[1].Character);
 
         frame.BringToFront(first);
         screen.Render();
-        Assert.Equal("A", screen.rows[1].Cells[1].character);
+        Assert.Equal("A", screen.Rows[1].Cells[1].Character);
 
         frame.BringToBottom(first);
         screen.Render();
-        Assert.Equal("B", screen.rows[1].Cells[1].character);
+        Assert.Equal("B", screen.Rows[1].Cells[1].Character);
     }
 
     [Fact]
     public void BringToFrontAndBottomChangeVisibleContainerOrder()
     {
         var screen = new Screen(8, 4);
-        var first = new Frame("firstFrame", "", 0, 0, 8, 4, Frame.BorderStyle.none, Color.White, Color.Black);
-        var second = new Frame("secondFrame", "", 0, 0, 8, 4, Frame.BorderStyle.none, Color.White, Color.Black);
+        var first = new Frame("firstFrame", "", 0, 0, 8, 4, Frame.BorderStyle.None, Color.White, Color.Black);
+        var second = new Frame("secondFrame", "", 0, 0, 8, 4, Frame.BorderStyle.None, Color.White, Color.Black);
         first.AddControl(new Label("firstLabel", "A", 1, 1, 1, Color.White, Color.Black));
         second.AddControl(new Label("secondLabel", "B", 1, 1, 1, Color.White, Color.Black));
-        screen.topContainer.AddContainer(first);
-        screen.topContainer.AddContainer(second);
+        screen.TopContainer.AddContainer(first);
+        screen.TopContainer.AddContainer(second);
 
         screen.Render();
-        Assert.Equal("B", screen.rows[1].Cells[1].character);
+        Assert.Equal("B", screen.Rows[1].Cells[1].Character);
 
-        screen.topContainer.BringToFront(first);
+        screen.TopContainer.BringToFront(first);
         screen.Render();
-        Assert.Equal("A", screen.rows[1].Cells[1].character);
+        Assert.Equal("A", screen.Rows[1].Cells[1].Character);
 
-        screen.topContainer.BringToBottom(first);
+        screen.TopContainer.BringToBottom(first);
         screen.Render();
-        Assert.Equal("B", screen.rows[1].Cells[1].character);
+        Assert.Equal("B", screen.Rows[1].Cells[1].Character);
     }
 
     private static TextBox TextBox(string name, short y) =>

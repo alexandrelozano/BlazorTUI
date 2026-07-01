@@ -12,7 +12,7 @@ namespace BlazorTUI.TUI
         internal short cursor;
         private short? selectionAnchor;
 
-        public string value
+        internal string value
         {
             get => text;
             set

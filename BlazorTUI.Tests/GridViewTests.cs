@@ -266,7 +266,9 @@ public class GridViewTests
         Assert.Equal("Value must be numeric.", grid.EditValidationMessage);
         Assert.True(grid.CancelEdit());
 
-        grid.Rows[0].cells[3] = "not-date";
+        string[] invalidDateCells = grid.Rows[0].Cells.ToArray();
+        invalidDateCells[3] = "not-date";
+        grid.Rows[0].Cells = invalidDateCells;
 
         Assert.True(grid.BeginEdit(0, 3));
         Assert.False(grid.CommitEdit());
@@ -282,7 +284,9 @@ public class GridViewTests
         grid.Columns[1].ValidationRules.Add(
             value => value is string text && text.Length >= 3,
             "Pizza must have at least 3 characters.");
-        grid.Rows[1].cells[1] = "AB";
+        string[] invalidPizzaCells = grid.Rows[1].Cells.ToArray();
+        invalidPizzaCells[1] = "AB";
+        grid.Rows[1].Cells = invalidPizzaCells;
 
         Assert.True(grid.BeginEditSourceRow(1, 1));
         Assert.False(grid.CommitEdit());

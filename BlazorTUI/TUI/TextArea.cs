@@ -14,12 +14,12 @@ namespace BlazorTUI.TUI
         private short scrollX;
         private TextPosition? selectionAnchor;
 
-        public short maxLines;
+        internal short maxLines;
         public short MaxLines { get => maxLines; set => maxLines = value; }
-        public short maxTextWidth;
+        internal short maxTextWidth;
         public short MaxTextWidth { get => maxTextWidth; set => maxTextWidth = value; }
 
-        public string value
+        internal string value
         {
             get => string.Join(Environment.NewLine, text);
             set
