@@ -60,6 +60,9 @@ public class SampleAppSmokeTests : IClassFixture<WebApplicationFactory<Program>>
         Assert.Contains("Screenshot-ready previews", html);
         Assert.Contains("API notes", html);
         Assert.Contains("Migration guidance", html);
+        Assert.Contains("Screen=&quot;@screen&quot;", html);
+        Assert.Contains("The 1.0 line keeps existing lowercase members", html);
+        Assert.Contains("BlazorTUI.Analyzers", html);
         Assert.Contains("href=\"/examples/grid-view\"", html);
         Assert.Contains("GridView", html);
         Assert.Contains("ExportCsv", html);

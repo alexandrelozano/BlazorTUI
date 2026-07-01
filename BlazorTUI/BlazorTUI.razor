@@ -40,8 +40,14 @@
 </div>
 
 @code {
-    [Parameter, EditorRequired]
     public Screen screen { get; set; } = null!;
+
+    [Parameter]
+    public Screen Screen
+    {
+        get => screen;
+        set => screen = value;
+    }
 
     [Parameter]
     public string AriaLabel { get; set; } = "Text user interface";

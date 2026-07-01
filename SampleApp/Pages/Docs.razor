@@ -137,9 +137,11 @@
     <section class="docs-section" id="migration">
         <h2>Migration guidance</h2>
         <ol>
+            <li>Use the component parameter `Screen="@@screen"`; the lowercase `screen` attribute spelling remains accepted only for compatibility.</li>
             <li>Prefer PascalCase APIs such as `TopContainer`, `Rows`, `Cells`, `ForeColor`, `Clicked`, `GotFocus`, and `LostFocus`.</li>
-            <li>Keep legacy lowercase members only for existing `0.8.x` compatibility; new code should avoid them.</li>
-            <li>Use `AddMenu` and `AddItem` for menus instead of mutating internal lists directly.</li>
+            <li>The 1.0 line keeps existing lowercase members, legacy callbacks, and lowercase enum values for compatibility, but new code should avoid them.</li>
+            <li>Move from direct list mutation such as `menu.menuItems` and `menuBar.menus` to `AddItem`, `AddMenu`, `Items`, and `Menus`.</li>
+            <li>Use the optional `BlazorTUI.Analyzers` package to catch duplicate names, invalid literal dimensions, and static focus mistakes.</li>
             <li>Use `System.Drawing.Color` from `System.Drawing.Primitives`; do not add `System.Drawing.Common`.</li>
             <li>When upgrading examples, preserve unique non-empty control names and positive dimensions.</li>
             <li>Run the package smoke test after changing public API, README snippets, or NuGet metadata.</li>
@@ -177,7 +179,7 @@
         @using BlazorTUI.TUI
         @using Color = System.Drawing.Color
 
-        <BlazorTUI.BlazorTUI screen="@screen" />
+        <BlazorTUI.BlazorTUI Screen="@screen" />
 
         @code {
             private readonly Screen screen = new(80, 40);

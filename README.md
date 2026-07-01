@@ -60,7 +60,7 @@ Add the BlazorTUI namespace to a Razor page, create a `Screen`, and render it wi
 @using global::BlazorTUI.TUI
 @using Color = System.Drawing.Color
 
-<BlazorTUI.BlazorTUI screen="@screen" />
+<BlazorTUI.BlazorTUI Screen="@screen" />
 
 @code {
     private readonly Screen screen = CreateScreen();
@@ -215,13 +215,38 @@ Control constructors accept `System.Drawing.Color` values for foreground and bac
 The recommended API follows standard .NET naming and event conventions:
 
 - Use properties such as `Screen.Width`, `Screen.Rows`, `Screen.TopContainer`, `Control.Name`, `Control.Width`, and `TextBox.Value`.
+- Pass the terminal model to the Razor component with `Screen="@screen"`.
 - Use `IClipboardControl` when application code needs to select, inspect, cut, or paste text programmatically.
 - Use `IUndoableControl` to inspect, clear, undo, or redo a text control's bounded edit history programmatically.
 - Subscribe to `Clicked`, `GotFocus`, and `LostFocus` with `+=`. These events work consistently for mouse and keyboard activation.
 - Use `MenuBar.AddMenu` and `Menu.AddItem` to build menus. Their `Menus` and `Items` properties provide read-only views.
 - Use PascalCase enum members such as `BorderStyle.Line` and `Frame.BorderStyle.Solid`.
 
-Lowercase members from earlier releases remain available in the `0.8.x` line for source and binary compatibility. New code should use the recommended members above.
+## 1.0 compatibility and migration
+
+BlazorTUI keeps the current `0.8.x` public surface compatible for the 1.0 release. Existing lowercase members, legacy callback properties, lowercase enum values, and the lowercase `screen` component attribute spelling remain available so current applications can upgrade without source or binary breaks. They are compatibility shims; new code should use the PascalCase API, standard events, and read-only collection views.
+
+No new lowercase public API is planned for 1.0. The test suite freezes the existing lowercase compatibility surface so new public members require an explicit compatibility decision.
+
+Recommended migrations:
+
+| Legacy style | 1.0-ready style |
+| --- | --- |
+| `<BlazorTUI.BlazorTUI screen="@screen" />` | `<BlazorTUI.BlazorTUI Screen="@screen" />` |
+| `screen.topContainer` | `screen.TopContainer` |
+| `screen.rows` | `screen.Rows` |
+| `screen.menuBar` | `screen.MenuBar` |
+| `control.name`, `control.width`, `control.height` | `control.Name`, `control.Width`, `control.Height` |
+| `control.foreColor`, `control.backgroundColor` | `control.ForeColor`, `control.BackgroundColor` |
+| `textBox.value` | `textBox.Value` |
+| `row.Cells[x].character` | `row.Cells[x].Character` |
+| `button.OnClick = ...` | `button.Clicked += ...` |
+| `control.OnFocus`, `control.OnLostFocus` | `control.GotFocus`, `control.LostFocus` |
+| `menu.menuItems` | `menu.Items` |
+| `menuBar.menus` | `menuBar.Menus` |
+| `BorderStyle.line`, `Frame.BorderStyle.solid` | `BorderStyle.Line`, `Frame.BorderStyle.Solid` |
+
+Use the optional `BlazorTUI.Analyzers` package during migration to catch duplicate control names, invalid literal dimensions, duplicate menu/item/node names, and static `SetFocus` targets that do not exist in the analyzed scope.
 
 ## Form validation
 
@@ -679,7 +704,7 @@ The component exposes the terminal as a labelled interactive region and provides
 
 ```razor
 <BlazorTUI.BlazorTUI
-    screen="@screen"
+    Screen="@screen"
     AriaLabel="Order entry terminal"
     AriaDescription="Enter customer and delivery details, then submit the order." />
 ```
@@ -1283,6 +1308,7 @@ Run `dotnet run --project SampleApp` from the repository root and open `/`, `/ex
 - Documented accessible terminal patterns for consumer applications and added regression coverage for semantic summaries, custom descriptions, validation summaries, and focus announcements.
 - Added `BlazorTUI.Analyzers`, an optional Roslyn analyzer package for duplicate control/container names, invalid dimensions, duplicate menu/item/node names, and missing static `SetFocus` targets.
 - Added analyzer package documentation, CI artifact publishing, and regression tests for diagnostics `BTUI001` through `BTUI004`.
+- Stabilized the 1.0 API compatibility policy, added the PascalCase `Screen` component parameter while preserving lowercase `screen` attribute compatibility, documented migration guidance, and froze the approved lowercase compatibility surface in regression tests.
 
 ### 0.8.14 — 2026-06-30
 

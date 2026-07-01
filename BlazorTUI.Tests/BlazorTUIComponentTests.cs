@@ -23,7 +23,7 @@ public class BlazorTUIComponentTests : BunitContext
         screen.Render();
 
         var component = Render<global::BlazorTUI.BlazorTUI>(parameters =>
-            parameters.Add(instance => instance.screen, screen));
+            parameters.Add(instance => instance.Screen, screen));
 
         string style = component.FindAll(".tilefs")[0].GetAttribute("style") ?? "";
         Assert.Contains("box-shadow:inset 0 -0.08em currentColor", style);
@@ -34,7 +34,7 @@ public class BlazorTUIComponentTests : BunitContext
     {
         var screen = new Screen(8, 4);
         var component = Render<global::BlazorTUI.BlazorTUI>(parameters =>
-            parameters.Add(instance => instance.screen, screen));
+            parameters.Add(instance => instance.Screen, screen));
         int initialRenderCount = component.RenderCount;
 
         await Task.Delay(700);
@@ -49,14 +49,14 @@ public class BlazorTUIComponentTests : BunitContext
         var label = new Label("label", "X", 0, 0, 1, Color.White, Color.Black);
         screen.topContainer.AddControl(label);
         var component = Render<global::BlazorTUI.BlazorTUI>(parameters =>
-            parameters.Add(instance => instance.screen, screen));
+            parameters.Add(instance => instance.Screen, screen));
         IReadOnlyList<IRenderedComponent<global::BlazorTUI.TuiRow>> rows =
             component.FindComponents<global::BlazorTUI.TuiRow>();
         int firstRowRenderCount = rows[0].RenderCount;
         int secondRowRenderCount = rows[1].RenderCount;
 
         label.foreColor = Color.Yellow;
-        component.Render(parameters => parameters.Add(instance => instance.screen, screen));
+        component.Render(parameters => parameters.Add(instance => instance.Screen, screen));
 
         Assert.Equal(firstRowRenderCount + 1, rows[0].RenderCount);
         Assert.Equal(secondRowRenderCount, rows[1].RenderCount);
@@ -70,12 +70,26 @@ public class BlazorTUIComponentTests : BunitContext
         screen.topContainer.AddControl(new Label("label", "OK", 0, 0, 2, Color.White, Color.Black));
 
         var component = Render<global::BlazorTUI.BlazorTUI>(parameters =>
-            parameters.Add(instance => instance.screen, screen));
+            parameters.Add(instance => instance.Screen, screen));
 
         Assert.Equal(8, component.FindAll(".tilefs").Count);
         Assert.All(component.FindAll(".tilefs"), tile => Assert.True(tile.HasAttribute("b-blazortui")));
         Assert.Contains(">O</div>", component.Markup);
         Assert.Contains(">K</div>", component.Markup);
+    }
+
+    [Fact]
+    public void ComponentAcceptsPascalCaseScreenParameter()
+    {
+        var screen = new Screen(4, 2);
+        screen.TopContainer.AddControl(new Label("label", "OK", 0, 0, 2, Color.White, Color.Black));
+
+        var component = Render<global::BlazorTUI.BlazorTUI>(parameters =>
+            parameters.Add(instance => instance.Screen, screen));
+
+        Assert.Same(screen, component.Instance.screen);
+        Assert.Same(screen, component.Instance.Screen);
+        Assert.Contains(">O</div>", component.Markup);
     }
 
     [Fact]
@@ -85,7 +99,7 @@ public class BlazorTUIComponentTests : BunitContext
         screen.TopContainer.AddControl(new Label("label", "OK", 0, 0, 2, Color.White, Color.Black));
 
         var component = Render<global::BlazorTUI.BlazorTUI>(parameters => parameters
-            .Add(instance => instance.screen, screen)
+            .Add(instance => instance.Screen, screen)
             .Add(instance => instance.AriaLabel, "Order entry terminal")
             .Add(instance => instance.AriaDescription, "Enter and submit an order."));
 
@@ -139,7 +153,7 @@ public class BlazorTUIComponentTests : BunitContext
         screen.TopContainer.AddContainer(tabs);
 
         var component = Render<global::BlazorTUI.BlazorTUI>(parameters =>
-            parameters.Add(instance => instance.screen, screen));
+            parameters.Add(instance => instance.Screen, screen));
 
         string summaries = component.Find("[aria-label=\"Control summaries\"]").TextContent;
         Assert.Contains("GridView ordersGrid: materialized, 1 rows, 2 columns, page 1 of 1", summaries);
@@ -166,7 +180,7 @@ public class BlazorTUIComponentTests : BunitContext
         screen.SetFocus("first");
 
         var component = Render<global::BlazorTUI.BlazorTUI>(parameters =>
-            parameters.Add(instance => instance.screen, screen));
+            parameters.Add(instance => instance.Screen, screen));
 
         component.Find(".gridfs").KeyDown(new KeyboardEventArgs { Key = "Tab" });
 
@@ -200,7 +214,7 @@ public class BlazorTUIComponentTests : BunitContext
         var screen = new Screen(10, 50);
 
         var component = Render<global::BlazorTUI.BlazorTUI>(parameters =>
-            parameters.Add(instance => instance.screen, screen));
+            parameters.Add(instance => instance.Screen, screen));
 
         var grid = component.Find(".gridfs");
         string style = grid.GetAttribute("style") ?? "";
@@ -230,7 +244,7 @@ public class BlazorTUIComponentTests : BunitContext
         screen.SetFocus("first");
 
         var component = Render<global::BlazorTUI.BlazorTUI>(parameters =>
-            parameters.Add(instance => instance.screen, screen));
+            parameters.Add(instance => instance.Screen, screen));
 
         component.Find(".gridfs").KeyDown(new KeyboardEventArgs { Key = "Tab" });
         Assert.True(second.Focus);
@@ -248,7 +262,7 @@ public class BlazorTUIComponentTests : BunitContext
         screen.SetFocus("text");
 
         var component = Render<global::BlazorTUI.BlazorTUI>(parameters =>
-            parameters.Add(instance => instance.screen, screen));
+            parameters.Add(instance => instance.Screen, screen));
         var grid = component.Find(".gridfs");
 
         grid.KeyDown(new KeyboardEventArgs { Key = "c", CtrlKey = true });
@@ -269,7 +283,7 @@ public class BlazorTUIComponentTests : BunitContext
         screen.SetFocus("toggle");
 
         var component = Render<global::BlazorTUI.BlazorTUI>(parameters =>
-            parameters.Add(instance => instance.screen, screen));
+            parameters.Add(instance => instance.Screen, screen));
         var grid = component.Find(".gridfs");
 
         Exception? exception = Record.Exception(() => grid.KeyDown(new KeyboardEventArgs { Key = "" }));
@@ -285,11 +299,11 @@ public class BlazorTUIComponentTests : BunitContext
     {
         var screen = new Screen(12, 6);
         var component = Render<global::BlazorTUI.BlazorTUI>(parameters =>
-            parameters.Add(instance => instance.screen, screen));
+            parameters.Add(instance => instance.Screen, screen));
         var dialog = new Dialog("confirm", "Confirm", 10, 4, BorderStyle.Line, Color.White, Color.Black, screen);
 
         dialog.Show();
-        component.Render(parameters => parameters.Add(instance => instance.screen, screen));
+        component.Render(parameters => parameters.Add(instance => instance.Screen, screen));
 
         Assert.Contains("Dialog opened: Confirm", component.Find("[role=status]").TextContent);
     }
@@ -305,7 +319,7 @@ public class BlazorTUIComponentTests : BunitContext
         screen.SetFocus("name");
 
         var component = Render<global::BlazorTUI.BlazorTUI>(parameters =>
-            parameters.Add(instance => instance.screen, screen));
+            parameters.Add(instance => instance.Screen, screen));
 
         Assert.Equal("true", component.Find(".gridfs").GetAttribute("data-clipboard-enabled"));
         Assert.Equal("true", component.Find(".gridfs").GetAttribute("data-edit-history-enabled"));
@@ -329,7 +343,7 @@ public class BlazorTUIComponentTests : BunitContext
         Assert.Equal("Jo", textBox.Value);
 
         screen.SetFocus("save");
-        component.Render(parameters => parameters.Add(instance => instance.screen, screen));
+        component.Render(parameters => parameters.Add(instance => instance.Screen, screen));
         Assert.Equal("false", component.Find(".gridfs").GetAttribute("data-clipboard-enabled"));
         Assert.Equal("false", component.Find(".gridfs").GetAttribute("data-edit-history-enabled"));
     }
@@ -343,7 +357,7 @@ public class BlazorTUIComponentTests : BunitContext
         screen.SetFocus("password");
 
         var component = Render<global::BlazorTUI.BlazorTUI>(parameters =>
-            parameters.Add(instance => instance.screen, screen));
+            parameters.Add(instance => instance.Screen, screen));
         var grid = component.Find(".gridfs");
 
         Assert.Equal("false", grid.GetAttribute("data-clipboard-copy-enabled"));
@@ -358,13 +372,13 @@ public class BlazorTUIComponentTests : BunitContext
         Assert.Equal("new", password.Value);
 
         password.AllowCopy = true;
-        component.Render(parameters => parameters.Add(instance => instance.screen, screen));
+        component.Render(parameters => parameters.Add(instance => instance.Screen, screen));
         Assert.Equal("true", component.Find(".gridfs").GetAttribute("data-clipboard-copy-enabled"));
         await component.InvokeAsync(component.Instance.SelectAllForClipboard);
         Assert.Equal("new", component.Instance.CopySelectionForClipboard());
 
         password.AllowPaste = false;
-        component.Render(parameters => parameters.Add(instance => instance.screen, screen));
+        component.Render(parameters => parameters.Add(instance => instance.Screen, screen));
         Assert.Equal("false", component.Find(".gridfs").GetAttribute("data-clipboard-paste-enabled"));
         await component.InvokeAsync(() => component.Instance.PasteFromClipboard("blocked"));
         Assert.Equal("new", password.Value);
@@ -386,7 +400,7 @@ public class BlazorTUIComponentTests : BunitContext
         screen.SetFocus("firstInput");
 
         var component = Render<global::BlazorTUI.BlazorTUI>(parameters =>
-            parameters.Add(instance => instance.screen, screen));
+            parameters.Add(instance => instance.Screen, screen));
 
         Assert.Equal("true", component.Find(".gridfs").GetAttribute("data-tab-navigation-enabled"));
         Assert.Contains("Control+Tab", component.Find(".gridfs").GetAttribute("aria-keyshortcuts"));
@@ -420,7 +434,7 @@ public class BlazorTUIComponentTests : BunitContext
         screen.TopContainer.AddControl(palette);
 
         var component = Render<global::BlazorTUI.BlazorTUI>(parameters =>
-            parameters.Add(instance => instance.screen, screen));
+            parameters.Add(instance => instance.Screen, screen));
 
         var grid = component.Find(".gridfs");
         Assert.Equal("true", grid.GetAttribute("data-command-palette-enabled"));
@@ -450,7 +464,7 @@ public class BlazorTUIComponentTests : BunitContext
         screen.TopContainer.AddControl(palette);
 
         var component = Render<global::BlazorTUI.BlazorTUI>(parameters =>
-            parameters.Add(instance => instance.screen, screen));
+            parameters.Add(instance => instance.Screen, screen));
 
         var grid = component.Find(".gridfs");
         Assert.Contains("F9", grid.GetAttribute("aria-keyshortcuts"));
@@ -479,7 +493,7 @@ public class BlazorTUIComponentTests : BunitContext
         screen.SetFocus("firstInput");
 
         var component = Render<global::BlazorTUI.BlazorTUI>(parameters =>
-            parameters.Add(instance => instance.screen, screen));
+            parameters.Add(instance => instance.Screen, screen));
         var grid = component.Find(".gridfs");
 
         grid.KeyDown(new KeyboardEventArgs { Key = "n", AltKey = true });
@@ -506,7 +520,7 @@ public class BlazorTUIComponentTests : BunitContext
         screen.SetFocus("name");
 
         var component = Render<global::BlazorTUI.BlazorTUI>(parameters =>
-            parameters.Add(instance => instance.screen, screen));
+            parameters.Add(instance => instance.Screen, screen));
         var grid = component.Find(".gridfs");
 
         grid.KeyDown(new KeyboardEventArgs { Key = "a", CtrlKey = true });

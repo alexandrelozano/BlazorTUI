@@ -38,7 +38,7 @@ public class VisualRegressionTests : BunitContext
     {
         Screen screen = CreateThemesAndUnicodeScreen();
         var component = Render<global::BlazorTUI.BlazorTUI>(parameters => parameters
-            .Add(instance => instance.screen, screen)
+            .Add(instance => instance.Screen, screen)
             .Add(instance => instance.AriaLabel, "Visual regression terminal")
             .Add(instance => instance.AriaDescription, "DOM projection baseline."));
 
