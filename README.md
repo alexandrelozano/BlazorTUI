@@ -1529,6 +1529,10 @@ Run `dotnet run --project SampleApp` from the repository root and open `/`, `/ex
 
 ## Changelog
 
+### 1.0.1 — 2026-07-01
+
+- Added focus scopes, validation groups, first/last focus helpers, and `TuiWizard` step navigation for form and modal workflows.
+
 ### 1.0.0 — 2026-07-01
 
 - Added provider-driven virtual data operations for large `GridView`, `ListBox`, `TreeView`, and `CommandPalette` data sources.
@@ -1536,7 +1540,6 @@ Run `dotnet run --project SampleApp` from the repository root and open `/`, `/ex
 - Added async/cancellable `RefreshVirtualQueryAsync` hooks for virtual controls using operations providers.
 - Added a unified command model with `TuiCommand` and `TuiCommandRegistry`, plus command binding for buttons, menus, command palettes, context menus, status bars, and tooltips.
 - Added localization and culture support with `TuiCultureOptions`, culture-aware date/month/time/number/currency formatting, localized validation messages, and a focused localization example.
-- Added focus scopes, validation groups, first/last focus helpers, and `TuiWizard` step navigation for form and modal workflows.
 - Removed pre-1.0 compatibility shims: lowercase public members, legacy callback properties, lowercase enum values, and the lowercase `screen` component attribute.
 - Updated NuGet consumer coverage and virtualization regression tests for the new provider-driven API.
 
